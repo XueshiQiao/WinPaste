@@ -22,3 +22,6 @@ data/
 
 # Logs
 *.log
+
+# Don't know why this file is always created...
+nul

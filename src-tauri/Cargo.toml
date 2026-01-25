@@ -13,12 +13,16 @@ tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-clipboard-manager = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.7", features = ["sqlite", "chrono", "uuid"] }
+sqlx = { version = "0.7", features = ["sqlite", "chrono", "uuid", "runtime-tokio"] }
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 sha2 = "0.10"
 image = "0.24"
 thiserror = "1"
+futures = "0.3"
+dirs = "5"
+parking_lot = "0.12"
+tokio = { version = "1", features = ["full"] }
 
 [features]
 default = ["custom-protocol"]

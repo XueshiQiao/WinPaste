@@ -11,44 +11,40 @@ mod database;
 mod models;
 mod commands;
 
-use models::AppState;
+use models::set_db_path;
 use database::Database;
 
 pub fn run_app() {
     let data_dir = get_data_dir();
     fs::create_dir_all(&data_dir).ok();
     let db_path = data_dir.join("winpaste.db");
-    let db = Database::new(db_path.to_str().unwrap());
-    futures::executor::block_on(async {
+    let db_path_str = db_path.to_str().unwrap().to_string();
+    set_db_path(db_path_str.clone());
+
+    let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
+    
+    let db = rt.block_on(async {
+        Database::new(&db_path_str).await
+    });
+
+    rt.block_on(async {
         db.migrate().await.ok();
     });
 
-    let app_state = AppState {
-        inner: std::sync::Mutex::new(models::AppStateInner {
-            database: db,
-            clipboard_change_count: 0,
-        }),
-    };
-
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
-        .manage(app_state)
         .setup(|app| {
-            let window = app.get_webview_window("main").unwrap();
-            let _ = window.show();
-            let _ = window.set_focus();
-
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "Show WinPaste", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
             let icon_data = include_bytes!("../icons/tray.png");
-            let icon = Image::from_bytes(icon_data.to_vec()).map_err(|e| {
+            let icon = Image::from_bytes(icon_data).map_err(|e| {
                 eprintln!("Failed to load icon: {:?}", e);
                 e
             })?;
 
-            let tray = TrayIconBuilder::new()
+            let _tray = TrayIconBuilder::new()
                 .icon(icon)
                 .menu(&menu)
                 .tooltip("WinPaste")
@@ -99,7 +95,9 @@ pub fn run_app() {
 }
 
 fn get_data_dir() -> std::path::PathBuf {
-    let mut path = dirs::data_dir().unwrap_or_else(|_| std::env::current_dir().unwrap());
-    path.push("WinPaste");
-    path
+    let current_dir = std::env::current_dir().unwrap_or(std::path::PathBuf::from("."));
+    match dirs::data_dir() {
+        Some(path) => path.join("WinPaste"),
+        None => current_dir.join("WinPaste"),
+    }
 }

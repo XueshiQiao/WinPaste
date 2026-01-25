@@ -1,19 +1,18 @@
-use sqlx::{SqlitePool, Connection};
+use sqlx::SqlitePool;
 use crate::models::{Clip, Folder};
 
+#[derive(Clone)]
 pub struct Database {
     pool: SqlitePool,
 }
 
 impl Database {
-    pub fn new(db_path: &str) -> Self {
+    pub async fn new(db_path: &str) -> Self {
         let options = sqlx::sqlite::SqliteConnectOptions::new()
             .filename(db_path)
             .create_if_missing(true);
 
-        let pool = futures::executor::block_on(async {
-            SqlitePool::connect_with(options).await.unwrap()
-        });
+        let pool = SqlitePool::connect_with(options).await.unwrap();
 
         Self { pool }
     }

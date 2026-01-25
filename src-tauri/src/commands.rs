@@ -1,23 +1,23 @@
-use tauri::{State, AppHandle};
-use serde::Serialize;
-use crate::models::{AppState, ClipboardItem, FolderItem};
+use tauri::Emitter;
+use crate::database::Database;
+use crate::models::{ClipboardItem, FolderItem, get_db_path};
 
 #[tauri::command]
-pub async fn get_clips(
+pub fn get_clips(
     folder_id: Option<String>,
     limit: i64,
     offset: i64,
-    state: State<'static, AppState>,
 ) -> Result<Vec<ClipboardItem>, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
     let folder_id = match folder_id {
         Some(id) => Some(id.parse::<i64>().map_err(|_| "Invalid folder ID")?),
         None => None,
     };
 
-    let clips = futures::executor::block_on(async {
+    let clips = rt.block_on(async {
         db.get_clips(folder_id, limit, offset).await
     }).map_err(|e| e.to_string())?;
 
@@ -40,14 +40,14 @@ pub async fn get_clips(
 }
 
 #[tauri::command]
-pub async fn get_clip(
+pub fn get_clip(
     id: String,
-    state: State<'static, AppState>,
 ) -> Result<ClipboardItem, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let clip = futures::executor::block_on(async {
+    let clip = rt.block_on(async {
         db.get_clip_by_uuid(&id).await
     }).map_err(|e| e.to_string())?;
 
@@ -71,21 +71,22 @@ pub async fn get_clip(
 }
 
 #[tauri::command]
-pub async fn paste_clip(
+pub fn paste_clip(
     id: String,
-    state: State<'static, AppState>,
+    window: tauri::Window,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let clip = futures::executor::block_on(async {
+    let clip = rt.block_on(async {
         db.get_clip_by_uuid(&id).await
     }).map_err(|e| e.to_string())?;
 
     match clip {
         Some(clip) => {
             let content = String::from_utf8_lossy(&clip.content).to_string();
-            let _ = tauri_plugin_clipboard_manager::ClipboardExt::write_text(&tauri::AppHandle::default(), content);
+            let _ = window.emit("clipboard-write", &content);
             Ok(())
         }
         None => Err("Clip not found".to_string()),
@@ -93,56 +94,52 @@ pub async fn paste_clip(
 }
 
 #[tauri::command]
-pub async fn delete_clip(
+pub fn delete_clip(
     id: String,
     hard_delete: bool,
-    state: State<'static, AppState>,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
     if hard_delete {
-        let clip = futures::executor::block_on(async {
+        let clip = rt.block_on(async {
             db.get_clip_by_uuid(&id).await
         }).map_err(|e| e.to_string())?;
         if let Some(clip) = clip {
-            futures::executor::block_on(async {
-                db.hard_delete_clip(clip.id).await.map_err(|e| e.to_string())?;
-                Ok::<(), String>(())
-            })?;
+            rt.block_on(async {
+                db.hard_delete_clip(clip.id).await
+            }).map_err(|e| e.to_string())?;
         }
     } else {
-        let clip = futures::executor::block_on(async {
+        let clip = rt.block_on(async {
             db.get_clip_by_uuid(&id).await
         }).map_err(|e| e.to_string())?;
         if let Some(clip) = clip {
-            futures::executor::block_on(async {
-                db.delete_clip(clip.id).await.map_err(|e| e.to_string())?;
-                Ok::<(), String>(())
-            })?;
+            rt.block_on(async {
+                db.delete_clip(clip.id).await
+            }).map_err(|e| e.to_string())?;
         }
     }
     Ok(())
 }
 
 #[tauri::command]
-pub async fn pin_clip(
+pub fn pin_clip(
     id: String,
-    state: State<'static, AppState>,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let clip = futures::executor::block_on(async {
+    let clip = rt.block_on(async {
         db.get_clip_by_uuid(&id).await
     }).map_err(|e| e.to_string())?;
-
     match clip {
         Some(clip) => {
-            futures::executor::block_on(async {
-                db.pin_clip(clip.id).await.map_err(|e| e.to_string())?;
-                Ok::<(), String>(())
-            })?;
+            rt.block_on(async {
+                db.pin_clip(clip.id).await
+            }).map_err(|e| e.to_string())?;
             Ok(())
         }
         None => Err("Clip not found".to_string()),
@@ -150,23 +147,21 @@ pub async fn pin_clip(
 }
 
 #[tauri::command]
-pub async fn unpin_clip(
+pub fn unpin_clip(
     id: String,
-    state: State<'static, AppState>,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let clip = futures::executor::block_on(async {
+    let clip = rt.block_on(async {
         db.get_clip_by_uuid(&id).await
     }).map_err(|e| e.to_string())?;
-
     match clip {
         Some(clip) => {
-            futures::executor::block_on(async {
-                db.unpin_clip(clip.id).await.map_err(|e| e.to_string())?;
-                Ok::<(), String>(())
-            })?;
+            rt.block_on(async {
+                db.unpin_clip(clip.id).await
+            }).map_err(|e| e.to_string())?;
             Ok(())
         }
         None => Err("Clip not found".to_string()),
@@ -174,29 +169,27 @@ pub async fn unpin_clip(
 }
 
 #[tauri::command]
-pub async fn move_to_folder(
+pub fn move_to_folder(
     clip_id: String,
     folder_id: Option<String>,
-    state: State<'static, AppState>,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
     let folder_id = match folder_id {
         Some(id) => Some(id.parse::<i64>().map_err(|_| "Invalid folder ID")?),
         None => None,
     };
 
-    let clip = futures::executor::block_on(async {
+    let clip = rt.block_on(async {
         db.get_clip_by_uuid(&clip_id).await
     }).map_err(|e| e.to_string())?;
-
     match clip {
         Some(clip) => {
-            futures::executor::block_on(async {
-                db.update_clip_folder(clip.id, folder_id).await.map_err(|e| e.to_string())?;
-                Ok::<(), String>(())
-            })?;
+            rt.block_on(async {
+                db.update_clip_folder(clip.id, folder_id).await
+            }).map_err(|e| e.to_string())?;
             Ok(())
         }
         None => Err("Clip not found".to_string()),
@@ -204,16 +197,16 @@ pub async fn move_to_folder(
 }
 
 #[tauri::command]
-pub async fn create_folder(
+pub fn create_folder(
     name: String,
     icon: Option<String>,
     color: Option<String>,
-    state: State<'static, AppState>,
 ) -> Result<FolderItem, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let folder_id = futures::executor::block_on(async {
+    let folder_id = rt.block_on(async {
         db.create_folder(&name, icon.as_deref(), color.as_deref()).await
     }).map_err(|e| e.to_string())?;
 
@@ -228,33 +221,31 @@ pub async fn create_folder(
 }
 
 #[tauri::command]
-pub async fn delete_folder(
+pub fn delete_folder(
     id: String,
-    state: State<'static, AppState>,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let folder_id = id.parse::<i64>().map_err(|_| "Invalid folder ID")?;
-
-    futures::executor::block_on(async {
-        db.delete_folder(folder_id).await.map_err(|e| e.to_string())?;
-        Ok::<(), String>(())
-    })?;
+    let folder_id: i64 = id.parse().map_err(|_| "Invalid folder ID")?;
+    rt.block_on(async {
+        db.delete_folder(folder_id).await
+    }).map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub async fn search_clips(
+pub fn search_clips(
     query: String,
     limit: i64,
-    state: State<'static, AppState>,
 ) -> Result<Vec<ClipboardItem>, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let clips = futures::executor::block_on(async {
+    let clips = rt.block_on(async {
         db.search_clips(&query, limit).await
     }).map_err(|e| e.to_string())?;
 
@@ -277,13 +268,12 @@ pub async fn search_clips(
 }
 
 #[tauri::command]
-pub async fn get_folders(
-    state: State<'static, AppState>,
-) -> Result<Vec<FolderItem>, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+pub fn get_folders() -> Result<Vec<FolderItem>, String> {
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let folders = futures::executor::block_on(async {
+    let folders = rt.block_on(async {
         db.get_folders().await
     }).map_err(|e| e.to_string())?;
 
@@ -302,27 +292,26 @@ pub async fn get_folders(
 }
 
 #[tauri::command]
-pub async fn get_settings(
-    state: State<'static, AppState>,
-) -> Result<super::models::Settings, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+pub fn get_settings() -> Result<super::models::Settings, String> {
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
     let mut settings = super::models::Settings::default();
 
-    if let Ok(Some(value)) = futures::executor::block_on(async {
+    if let Ok(Some(value)) = rt.block_on(async {
         db.get_setting("max_items").await
     }) {
         settings.max_items = value.parse().unwrap_or(1000);
     }
 
-    if let Ok(Some(value)) = futures::executor::block_on(async {
+    if let Ok(Some(value)) = rt.block_on(async {
         db.get_setting("auto_delete_days").await
     }) {
         settings.auto_delete_days = value.parse().unwrap_or(30);
     }
 
-    if let Ok(Some(value)) = futures::executor::block_on(async {
+    if let Ok(Some(value)) = rt.block_on(async {
         db.get_setting("theme").await
     }) {
         settings.theme = value;
@@ -332,53 +321,51 @@ pub async fn get_settings(
 }
 
 #[tauri::command]
-pub async fn save_settings(
+pub fn save_settings(
     settings: super::models::Settings,
-    state: State<'static, AppState>,
 ) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    futures::executor::block_on(async {
-        db.set_setting("max_items", &settings.max_items.to_string()).await.map_err(|e| e.to_string())?;
-        db.set_setting("auto_delete_days", &settings.auto_delete_days.to_string()).await.map_err(|e| e.to_string())?;
-        db.set_setting("theme", &settings.theme).await.map_err(|e| e.to_string())?;
-        Ok::<(), String>(())
-    })?;
+    rt.block_on(async {
+        db.set_setting("max_items", &settings.max_items.to_string()).await
+    }).map_err(|e| e.to_string())?;
+    rt.block_on(async {
+        db.set_setting("auto_delete_days", &settings.auto_delete_days.to_string()).await
+    }).map_err(|e| e.to_string())?;
+    rt.block_on(async {
+        db.set_setting("theme", &settings.theme).await
+    }).map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub async fn hide_window(window: tauri::Window) -> Result<(), String> {
+pub fn hide_window(window: tauri::Window) -> Result<(), String> {
     window.hide().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn get_clipboard_history_size(
-    state: State<'static, AppState>,
-) -> Result<i64, String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+pub fn get_clipboard_history_size() -> Result<i64, String> {
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    let size = futures::executor::block_on(async {
+    let size = rt.block_on(async {
         db.get_clipboard_history_size().await
     }).map_err(|e| e.to_string())?;
-
     Ok(size)
 }
 
 #[tauri::command]
-pub async fn clear_clipboard_history(
-    state: State<'static, AppState>,
-) -> Result<(), String> {
-    let inner = state.inner.lock().map_err(|e| e.to_string())?;
-    let db = &inner.database;
+pub fn clear_clipboard_history() -> Result<(), String> {
+    let db_path = get_db_path();
+    let rt = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
+    let db = rt.block_on(async { Database::new(db_path).await });
 
-    futures::executor::block_on(async {
-        db.clear_history().await.map_err(|e| e.to_string())?;
-        Ok::<(), String>(())
-    })?;
-
+    rt.block_on(async {
+        db.clear_history().await
+    }).map_err(|e| e.to_string())?;
     Ok(())
 }

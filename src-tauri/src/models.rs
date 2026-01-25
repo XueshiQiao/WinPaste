@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use std::sync::Mutex;
+use std::sync::{Arc, OnceLock};
 
 pub enum ClipType {
     Text,
@@ -61,13 +61,14 @@ impl Default for Settings {
     }
 }
 
-pub struct AppState {
-    pub inner: Mutex<AppStateInner>,
+static DB_PATH: OnceLock<Arc<String>> = OnceLock::new();
+
+pub fn set_db_path(path: String) {
+    DB_PATH.set(Arc::new(path)).ok();
 }
 
-pub struct AppStateInner {
-    pub database: super::Database,
-    pub clipboard_change_count: u32,
+pub fn get_db_path() -> &'static str {
+    DB_PATH.get().map(|s| s.as_str()).unwrap_or("")
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
