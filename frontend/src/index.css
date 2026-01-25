@@ -123,10 +123,7 @@
 
   .drag-area {
     -webkit-app-region: drag;
-  }
-
-  .drag-area * {
-    -webkit-app-region: no-drag;
+    user-select: none;
   }
 
   .resize-handle {

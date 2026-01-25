@@ -54,16 +54,14 @@ pub(crate) struct FolderItem {
 }
 
 #[tauri::command]
-pub async fn get_clips(folder_id: Option<String>, limit: i64, offset: i64, db: tauri::State<'_, Arc<Database>>) -> Result<Vec<ClipboardItem>, String> {
-    let folder_id = match folder_id {
-        Some(id) => Some(id.parse::<i64>().map_err(|_| "Invalid folder ID")?),
-        None => None,
-    };
-
+pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, db: tauri::State<'_, Arc<Database>>) -> Result<Vec<ClipboardItem>, String> {
     let pool = &db.pool;
 
-    let clips: Vec<Clip> = match folder_id {
-        Some(2) => {
+    eprintln!("get_clips called with filter_id: {:?}", filter_id);
+
+    let clips: Vec<Clip> = match filter_id.as_deref() {
+        Some("pinned") => {
+            eprintln!("Querying for pinned items");
             sqlx::query_as(r#"
                 SELECT * FROM clips WHERE is_deleted = 0 AND is_pinned = 1
                 ORDER BY created_at DESC LIMIT ? OFFSET ?
@@ -72,26 +70,25 @@ pub async fn get_clips(folder_id: Option<String>, limit: i64, offset: i64, db: t
             .bind(offset)
             .fetch_all(pool).await.map_err(|e| e.to_string())?
         }
-        Some(3) => {
-            sqlx::query_as(r#"
-                SELECT * FROM clips WHERE is_deleted = 0
-                ORDER BY created_at DESC LIMIT ? OFFSET ?
-            "#)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool).await.map_err(|e| e.to_string())?
-        }
         Some(id) => {
-            sqlx::query_as(r#"
-                SELECT * FROM clips WHERE is_deleted = 0 AND folder_id = ?
-                ORDER BY is_pinned DESC, created_at DESC LIMIT ? OFFSET ?
-            "#)
-            .bind(id)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool).await.map_err(|e| e.to_string())?
+            let folder_id_num = id.parse::<i64>().ok();
+            if let Some(numeric_id) = folder_id_num {
+                eprintln!("Querying for folder_id: {}", numeric_id);
+                sqlx::query_as(r#"
+                    SELECT * FROM clips WHERE is_deleted = 0 AND folder_id = ?
+                    ORDER BY is_pinned DESC, created_at DESC LIMIT ? OFFSET ?
+                "#)
+                .bind(numeric_id)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(pool).await.map_err(|e| e.to_string())?
+            } else {
+                eprintln!("Unknown folder_id, returning empty");
+                Vec::new()
+            }
         }
         None => {
+            eprintln!("Querying for all items");
             sqlx::query_as(r#"
                 SELECT * FROM clips WHERE is_deleted = 0
                 ORDER BY is_pinned DESC, created_at DESC LIMIT ? OFFSET ?

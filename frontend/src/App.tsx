@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -27,19 +27,19 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   const window = getCurrentWindow();
+  const selectedFolderRef = useRef(selectedFolder);
+  selectedFolderRef.current = selectedFolder;
 
   const loadClips = useCallback(async (folderId: string | null) => {
     try {
-      console.log('Loading clips...', folderId);
+      console.log('loadClips called with folderId:', folderId);
       setIsLoading(true);
       const data = await invoke<ClipboardItem[]>('get_clips', {
-        folder_id: folderId,
+        filterId: folderId,
         limit: 100,
         offset: 0,
       });
-      console.log('Clips loaded:', data);
-      console.log('First clip preview:', data[0]?.preview);
-      console.log('All clip types:', data.map(c => c.clip_type));
+      console.log('Clips loaded:', data.length);
       setClips(data);
     } catch (error) {
       console.error('Failed to load clips:', error);
@@ -59,25 +59,29 @@ function App() {
     }
   }, []);
 
-  const loadSettings = useCallback(async () => {
-    try {
-      console.log('Loading settings...');
-      const data = await invoke<Settings>('get_settings');
-      console.log('Settings loaded:', data);
-      setSettings(data);
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    }
+  const refreshCurrentFolder = useCallback(() => {
+    console.log('Refreshing folder:', selectedFolderRef.current);
+    loadClips(selectedFolderRef.current);
+  }, [loadClips]);
+
+  useEffect(() => {
+    console.log('Loading settings...');
+    invoke<Settings>('get_settings')
+      .then(setSettings)
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
-    console.log('Initial load effect running');
+    console.log('Folder changed to:', selectedFolder);
     loadFolders();
     loadClips(selectedFolder);
-    loadSettings();
+  }, [selectedFolder, loadFolders, loadClips]);
 
+  useEffect(() => {
+    console.log('Setting up clipboard listener');
     const unlistenClipboard = listen('clipboard-change', () => {
-      loadClips(selectedFolder);
+      console.log('Clipboard changed event received');
+      refreshCurrentFolder();
     });
 
     return () => {
@@ -85,7 +89,7 @@ function App() {
         if (typeof unlisten === 'function') unlisten();
       });
     };
-  }, [selectedFolder, loadClips, loadFolders, loadSettings]);
+  }, [refreshCurrentFolder]);
 
   useKeyboard({
     onClose: () => window.hide(),
@@ -130,9 +134,12 @@ function App() {
       } else {
         await invoke('pin_clip', { id: clipId });
       }
-      setClips(clips.map(c =>
-        c.id === clipId ? { ...c, is_pinned: !c.is_pinned } : c
-      ));
+      setClips(prev => {
+        const updated = prev.map(c =>
+          c.id === clipId ? { ...c, is_pinned: !c.is_pinned } : c
+        );
+        return [...updated.filter(c => c.is_pinned), ...updated.filter(c => !c.is_pinned)];
+      });
     } catch (error) {
       console.error('Failed to pin/unpin clip:', error);
     }
@@ -144,6 +151,17 @@ function App() {
       window.hide();
     } catch (error) {
       console.error('Failed to paste clip:', error);
+    }
+  };
+
+  const handleCopy = async (clipId: string) => {
+    const clip = clips.find(c => c.id === clipId);
+    if (clip) {
+      try {
+        await navigator.clipboard.writeText(clip.content);
+      } catch (error) {
+        console.error('Failed to copy to clipboard:', error);
+      }
     }
   };
 
@@ -185,6 +203,7 @@ function App() {
             selectedClipId={selectedClipId}
             onSelectClip={setSelectedClipId}
             onPaste={handlePaste}
+            onCopy={handleCopy}
             onDelete={handleDelete}
             onPin={handlePin}
           />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FolderItem } from "../types";
-import { Folder, Pin, Clock, Settings, Plus } from "lucide-react";
+import { Folder, Pin, Settings, Plus } from "lucide-react";
 import { clsx } from "clsx";
 
 interface SidebarProps {
@@ -13,8 +13,7 @@ interface SidebarProps {
 
 const SYSTEM_FOLDERS = [
   { id: null, name: "All", icon: Folder, is_system: true },
-  { id: "2", name: "Pinned", icon: Pin, is_system: true },
-  { id: "3", name: "Recent", icon: Clock, is_system: true },
+  { id: "pinned", name: "Pinned", icon: Pin, is_system: true },
 ];
 
 export function Sidebar({
@@ -39,11 +38,10 @@ export function Sidebar({
 
   return (
     <aside className="w-64 flex-shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-4 pb-6 drag-area cursor-move border-b border-sidebar-border/50">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent select-none">
+      <div className="p-4 drag-area cursor-move select-none">
+        <h1 className="text-xl font-bold text-white select-none">
           WinPaste
         </h1>
-        <p className="text-xs text-muted-foreground mt-1 select-none">Clipboard History Manager</p>
       </div>
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">

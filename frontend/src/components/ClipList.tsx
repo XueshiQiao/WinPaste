@@ -20,6 +20,7 @@ interface ClipListProps {
   selectedClipId: string | null;
   onSelectClip: (clipId: string) => void;
   onPaste: (clipId: string) => void;
+  onCopy: (clipId: string) => void;
   onDelete: (clipId: string) => void;
   onPin: (clipId: string) => void;
 }
@@ -39,6 +40,7 @@ export function ClipList({
   selectedClipId,
   onSelectClip,
   onPaste,
+  onCopy,
   onDelete,
   onPin,
 }: ClipListProps) {
@@ -133,10 +135,10 @@ export function ClipList({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onPaste(clip.id);
+                    onCopy(clip.id);
                   }}
                   className="icon-button"
-                  title="Paste (Enter)"
+                  title="Copy to Clipboard"
                 >
                   <Copy size={16} />
                 </button>

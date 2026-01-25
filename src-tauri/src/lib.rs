@@ -80,11 +80,7 @@ pub fn run_app() {
             let win = app_handle.get_webview_window("main").unwrap();
             let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().build())?;
             
-            if let Err(e) = app_handle.global_shortcut().register("Ctrl+Alt+V") {
-                eprintln!("Failed to register global shortcut: {:?}", e);
-            }
-
-            app_handle.global_shortcut().on_shortcut("Ctrl+Alt+V", move |_, _, _| {
+            let _ = app_handle.global_shortcut().on_shortcut("Ctrl+Alt+V", move |_, _, _| {
                 let _ = win.show();
                 let _ = win.set_focus();
             });
