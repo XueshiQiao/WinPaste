@@ -27,7 +27,7 @@ export function ControlBar({
   ];
 
   return (
-    <div className="flex items-center gap-4 p-4 border-b border-border bg-background/90 drag-area">
+    <div className="flex items-center gap-4 px-6 py-4 border-b border-border bg-background/90 drag-area">
       {/* Search Icon */}
       <button
         onClick={onSearchClick}

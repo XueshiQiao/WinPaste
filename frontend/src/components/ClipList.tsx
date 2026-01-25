@@ -66,13 +66,13 @@ export function ClipList({
   const GAP = 24;
   const COLUMN_WIDTH = ITEM_WIDTH + GAP;
 
-  const listWidth = width > 0 ? width : window.innerWidth - 48;
-  const listHeight = height > 0 ? height : 280;
+  const listWidth = width > 0 ? width : window.innerWidth;
+  const listHeight = height > 0 ? height : 300;
 
   return (
     <div 
       ref={containerRef} 
-      className="h-full w-full p-6 no-scrollbar overflow-hidden"
+      className="h-full w-full no-scrollbar overflow-hidden"
       onWheel={(e) => {
         if (gridRef.current?.element && e.deltaY !== 0) {
           gridRef.current.element.scrollLeft += e.deltaY;
@@ -122,10 +122,11 @@ function ClipCell({
   const isSelected = selectedClipId === clip.id;
   const title = clip.source_app || clip.clip_type.toUpperCase();
 
-  // Adjust style to account for gap
+  // Adjust style to account for gap and left padding
   const cardStyle: CSSProperties = {
     ...style,
-    width: Number(style.width) - 24, // Leave 24px gap
+    left: Number(style.left) + 24, // 24px starting padding
+    width: Number(style.width) - 24, // Leave 24px gap between items
     height: '100%',
   };
 
