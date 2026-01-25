@@ -145,7 +145,7 @@ pub async fn get_clip(id: String, db: tauri::State<'_, Arc<Database>>) -> Result
 }
 
 #[tauri::command]
-pub async fn paste_clip(id: String, window: tauri::Window, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
+pub async fn paste_clip(id: String, window: tauri::WebviewWindow, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
     let pool = &db.pool;
     
     let clip: Option<Clip> = sqlx::query_as(r#"SELECT * FROM clips WHERE uuid = ?"#)
@@ -364,7 +364,7 @@ pub async fn save_settings(settings: serde_json::Value, db: tauri::State<'_, Arc
 }
 
 #[tauri::command]
-pub fn hide_window(window: tauri::Window) -> Result<(), String> {
+pub fn hide_window(window: tauri::WebviewWindow) -> Result<(), String> {
     window.hide().map_err(|e| e.to_string())
 }
 
@@ -418,7 +418,7 @@ pub async fn remove_duplicate_clips(db: tauri::State<'_, Arc<Database>>) -> Resu
 }
 
 #[tauri::command]
-pub async fn register_global_shortcut(hotkey: String, window: tauri::Window) -> Result<(), String> {
+pub async fn register_global_shortcut(hotkey: String, window: tauri::WebviewWindow) -> Result<(), String> {
     let app = window.app_handle();
     
     let shortcut = Shortcut::from_str(&hotkey).map_err(|e| format!("Invalid hotkey: {:?}", e))?;
@@ -431,7 +431,8 @@ pub async fn register_global_shortcut(hotkey: String, window: tauri::Window) -> 
 }
 
 #[tauri::command]
-pub fn show_window(window: tauri::Window) -> Result<(), String> {
+pub fn show_window(window: tauri::WebviewWindow) -> Result<(), String> {
+    crate::position_window_at_bottom(&window);
     if let Err(e) = window.show() {
         return Err(format!("Failed to show window: {:?}", e));
     }

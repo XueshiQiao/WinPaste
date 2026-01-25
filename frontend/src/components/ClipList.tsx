@@ -1,16 +1,4 @@
 import { ClipboardItem } from '../types';
-import { formatDistanceToNow } from 'date-fns';
-import {
-  Pin,
-  Copy,
-  Trash2,
-  MoreVertical,
-  FileText,
-  Image,
-  Code,
-  Link,
-  File,
-} from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState, useRef, useEffect } from 'react';
 
@@ -25,26 +13,15 @@ interface ClipListProps {
   onPin: (clipId: string) => void;
 }
 
-const CLIP_TYPE_ICONS_MAP: Record<string, typeof FileText> = {
-  text: FileText,
-  image: Image,
-  html: Code,
-  rtf: FileText,
-  file: File,
-  url: Link,
-};
-
 export function ClipList({
   clips,
   isLoading,
   selectedClipId,
   onSelectClip,
   onPaste,
-  onCopy,
-  onDelete,
-  onPin,
 }: ClipListProps) {
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setMenuOpenId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,7 +37,7 @@ export function ClipList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-full w-full">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-sm text-muted-foreground">Loading clips...</p>
@@ -71,144 +48,66 @@ export function ClipList({
 
   if (clips.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mb-4">
-          <FileText size={32} className="text-muted-foreground" />
-        </div>
-        <h3 className="text-lg font-semibold mb-2">No clips yet</h3>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          Copy something to your clipboard and it will appear here.
+      <div className="flex flex-col items-center justify-center h-full w-full text-center p-8">
+        <h3 className="text-lg font-semibold mb-2 text-gray-400">No clips found</h3>
+        <p className="text-sm text-gray-500 max-w-xs">
+          Your clipboard history is empty for this category.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-row overflow-x-auto gap-6 p-6 items-start h-full min-h-[300px] w-full snap-x no-scrollbar">
       {clips.map((clip) => {
         const isSelected = selectedClipId === clip.id;
-        const Icon = CLIP_TYPE_ICONS_MAP[clip.clip_type] || FileText;
-
+        // Determine title from app or type
+        const title = clip.source_app || clip.clip_type.toUpperCase();
+        
         return (
           <div
             key={clip.id}
-            className={clsx(
-              'clip-card cursor-pointer group',
-              isSelected && 'selected'
-            )}
             onClick={() => onSelectClip(clip.id)}
             onDoubleClick={() => onPaste(clip.id)}
+            className={clsx(
+              'flex-shrink-0 w-[300px] h-[400px] flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all snap-center shadow-lg',
+              isSelected 
+                ? 'ring-4 ring-blue-500 transform scale-[1.02] z-10' 
+                : 'hover:ring-2 hover:ring-purple-500/30 hover:-translate-y-1'
+            )}
           >
-            <div className="flex items-start gap-3">
-              <div className={clsx(
-                'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                'bg-accent text-muted-foreground'
-              )}>
-                <Icon size={20} />
-              </div>
+            {/* Header: Solid Purple Block */}
+            <div className="bg-[#6D28D9] px-4 py-3 flex items-center justify-between">
+              <span className="font-bold text-white text-sm truncate w-full">
+                {title}
+              </span>
+            </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                    {clip.clip_type}
-                  </span>
-                  {clip.is_pinned && (
-                    <Pin size={12} className="text-primary fill-primary" />
-                  )}
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    {formatDistanceToNow(new Date(clip.created_at), { addSuffix: true })}
-                  </span>
-                </div>
+            {/* Body: Code Snippet View */}
+            <div className="flex-1 bg-[#1E1E1E] p-4 overflow-hidden relative">
+              <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap break-all text-gray-300">
+                {/* Simulated syntax highlighting colors for demo purposes since we don't have a parser yet */}
+                {clip.content.split(/(\s+)/).map((word, i) => {
+                  // Simple heuristic for coloring to simulate syntax highlighting
+                  let colorClass = "text-[#D4D4D4]"; // Default
+                  if (/^(const|let|var|function|return|import|from|class|if|else|export|default|async|await)$/.test(word)) colorClass = "text-[#569CD6]"; // Blue keywords
+                  else if (/^('.*'|".*"|`.*`)$/.test(word)) colorClass = "text-[#6A9955]"; // Green Strings
+                  else if (/^\d+$/.test(word)) colorClass = "text-[#B5CEA8]"; // Light Green Numbers
+                  else if (/[{}()[\]]/.test(word)) colorClass = "text-[#FFD700]"; // Yellow Brackets
+                  
+                  return <span key={i} className={colorClass}>{word}</span>
+                })}
+              </pre>
+              
+              {/* Fade out at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#1E1E1E] to-transparent pointer-events-none" />
+            </div>
 
-                <p className="text-sm text-foreground line-clamp-2 break-all">
-                  {clip.preview}
-                </p>
-
-                {clip.preview.length > 100 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {clip.content.length} characters
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopy(clip.id);
-                  }}
-                  className="icon-button"
-                  title="Copy to Clipboard"
-                >
-                  <Copy size={16} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPin(clip.id);
-                  }}
-                  className={clsx(
-                    'icon-button',
-                    clip.is_pinned && 'text-primary'
-                  )}
-                  title={clip.is_pinned ? 'Unpin' : 'Pin'}
-                >
-                  <Pin size={16} />
-                </button>
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpenId(menuOpenId === clip.id ? null : clip.id);
-                    }}
-                    className="icon-button"
-                    title="More options"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-
-                  {menuOpenId === clip.id && (
-                    <div
-                      ref={menuRef}
-                      className="absolute right-0 top-full mt-1 w-40 py-1 bg-popover border border-border rounded-lg shadow-lg animate-scale-in z-10"
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPaste(clip.id);
-                          setMenuOpenId(null);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
-                      >
-                        <Copy size={14} />
-                        Paste
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPin(clip.id);
-                          setMenuOpenId(null);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
-                      >
-                        <Pin size={14} />
-                        {clip.is_pinned ? 'Unpin' : 'Pin'}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(clip.id);
-                          setMenuOpenId(null);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent text-destructive flex items-center gap-2"
-                      >
-                        <Trash2 size={14} />
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {/* Footer: Size Indicator */}
+            <div className="bg-[#252526] px-4 py-2 border-t border-[#333]">
+              <span className="text-xs text-gray-500 font-medium">
+                {clip.content.length} characters
+              </span>
             </div>
           </div>
         );

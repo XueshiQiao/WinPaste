@@ -71,6 +71,21 @@ WinPaste/
 └── README.md
 ```
 
+## Development Notes
+
+### Tauri Command Argument Mapping
+
+Tauri v2 enforces a strict case mapping between JavaScript/TypeScript and Rust:
+
+- **JavaScript/Frontend:** Use `camelCase` for argument names in `invoke` calls (e.g., `filterId`).
+- **Rust/Backend:** Use `snake_case` for function arguments in `#[tauri::command]` (e.g., `filter_id`).
+
+**Example:**
+*   **Frontend:** `invoke('get_clips', { filterId: 'pinned' })`
+*   **Backend:** `pub fn get_clips(filter_id: Option<String>)`
+
+Failure to follow this convention (e.g., passing `snake_case` from the frontend) will result in arguments being passed as `null` or `None` to the backend.
+
 ## Keyboard Shortcuts
 
 - `Ctrl + F` - Focus search

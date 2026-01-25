@@ -61,6 +61,7 @@ pub fn run_app() {
                         app.exit(0);
                     } else if event.id.as_ref() == "show" {
                         if let Some(win) = app.get_webview_window("main") {
+                            position_window_at_bottom(&win);
                             let _ = win.show();
                             let _ = win.set_focus();
                         }
@@ -69,6 +70,7 @@ pub fn run_app() {
                 .on_tray_icon_event(|tray, event| {
                     if let tauri::tray::TrayIconEvent::Click { button: tauri::tray::MouseButton::Left, .. } = event {
                         if let Some(win) = tray.app_handle().get_webview_window("main") {
+                            position_window_at_bottom(&win);
                             let _ = win.show();
                             let _ = win.set_focus();
                         }
@@ -80,9 +82,11 @@ pub fn run_app() {
             let win = app_handle.get_webview_window("main").unwrap();
             let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().build())?;
             
+            let win_clone = win.clone();
             let _ = app_handle.global_shortcut().on_shortcut("Ctrl+Alt+V", move |_, _, _| {
-                let _ = win.show();
-                let _ = win.set_focus();
+                position_window_at_bottom(&win_clone);
+                let _ = win_clone.show();
+                let _ = win_clone.set_focus();
             });
 
             std::thread::spawn(move || {
@@ -116,6 +120,33 @@ pub fn run_app() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+pub fn position_window_at_bottom(window: &tauri::WebviewWindow) {
+    if let Some(monitor) = window.current_monitor().ok().flatten() {
+        let scale_factor = monitor.scale_factor();
+        let screen_size = monitor.size();
+        let monitor_pos = monitor.position();
+        let work_area = monitor.work_area();
+        
+        // Logical height of 540 converted to physical
+        let window_height_px = (540.0 * scale_factor) as u32;
+        
+        // Set size to full physical width of the monitor
+        let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+            width: screen_size.width,
+            height: window_height_px,
+        }));
+
+        // Position at the monitor's physical X origin (left edge)
+        // Y position is the bottom of the work area minus window height
+        let y_pos = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
+        
+        let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: monitor_pos.x,
+            y: y_pos,
+        }));
+    }
 }
 
 fn get_data_dir() -> std::path::PathBuf {

@@ -13,17 +13,16 @@
     "windows": [
       {
         "title": "WinPaste",
-        "width": 900,
-        "height": 700,
+        "width": 1920,
+        "height": 540,
         "minWidth": 700,
-        "minHeight": 500,
-        "resizable": true,
+        "minHeight": 400,
+        "resizable": false,
         "fullscreen": false,
         "decorations": false,
         "transparent": true,
-        "alwaysOnTop": false,
         "visible": false,
-        "center": true,
+        "center": false,
         "label": "main"
       }
     ],

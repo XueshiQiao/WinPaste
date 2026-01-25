@@ -3,10 +3,10 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { ClipboardItem, FolderItem, Settings } from './types';
-import { Sidebar } from './components/Sidebar';
 import { ClipList } from './components/ClipList';
 import { SearchBar } from './components/SearchBar';
 import { SettingsPanel } from './components/SettingsPanel';
+import { ControlBar } from './components/ControlBar';
 import { useKeyboard } from './hooks/useKeyboard';
 
 function App() {
@@ -14,6 +14,7 @@ function App() {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<Settings>({
@@ -93,7 +94,7 @@ function App() {
 
   useKeyboard({
     onClose: () => window.hide(),
-    onSearch: () => document.getElementById('search-input')?.focus(),
+    onSearch: () => setShowSearch(true),
     onDelete: () => handleDelete(selectedClipId),
     onPin: () => handlePin(selectedClipId),
   });
@@ -175,56 +176,63 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <Sidebar
+    <div className="flex flex-col h-screen bg-[#1E1E1E] text-white overflow-hidden font-sans">
+      <ControlBar
         folders={folders}
         selectedFolder={selectedFolder}
         onSelectFolder={setSelectedFolder}
-        onCreateFolder={handleCreateFolder}
-        onOpenSettings={() => setShowSettings(true)}
+        onSearchClick={() => setShowSearch(!showSearch)}
+        onAddClick={() => {
+           // For now, prompt for new folder creation as a placeholder for "Add"
+           const name = prompt("Enter new folder name:");
+           if (name) handleCreateFolder(name);
+        }}
+        onMoreClick={() => setShowSettings(true)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex-shrink-0 p-4 border-b border-border drag-area">
+      {showSearch && (
+        <div className="p-4 border-b border-gray-800 bg-[#252526]">
           <SearchBar
             query={searchQuery}
             onQueryChange={handleSearch}
             onClear={() => {
               setSearchQuery('');
               loadClips(selectedFolder);
+              setShowSearch(false);
             }}
           />
-        </header>
+        </div>
+      )}
 
-        <main className="flex-1 overflow-y-auto p-4">
-          <ClipList
-            clips={clips}
-            isLoading={isLoading}
-            selectedClipId={selectedClipId}
-            onSelectClip={setSelectedClipId}
-            onPaste={handlePaste}
-            onCopy={handleCopy}
-            onDelete={handleDelete}
-            onPin={handlePin}
-          />
-        </main>
-
-        {showSettings && (
-          <SettingsPanel
-            settings={settings}
-            onClose={() => setShowSettings(false)}
-            onSave={async (newSettings) => {
-              await invoke('save_settings', { settings: newSettings });
-              setSettings(newSettings);
-              setShowSettings(false);
-            }}
-          />
-        )}
-
+      <main className="flex-1 overflow-hidden relative no-scrollbar">
+        <ClipList
+          clips={clips}
+          isLoading={isLoading}
+          selectedClipId={selectedClipId}
+          onSelectClip={setSelectedClipId}
+          onPaste={handlePaste}
+          onCopy={handleCopy}
+          onDelete={handleDelete}
+          onPin={handlePin}
+        />
+        
+        {/* Resize Handles */}
         <div className="resize-handle resize-handle-right" />
         <div className="resize-handle resize-handle-bottom" />
         <div className="resize-handle resize-handle-corner" />
-      </div>
+      </main>
+
+      {showSettings && (
+        <SettingsPanel
+          settings={settings}
+          onClose={() => setShowSettings(false)}
+          onSave={async (newSettings) => {
+            await invoke('save_settings', { settings: newSettings });
+            setSettings(newSettings);
+            setShowSettings(false);
+          }}
+        />
+      )}
     </div>
   );
 }
