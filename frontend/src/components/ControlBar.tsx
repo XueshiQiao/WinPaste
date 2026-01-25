@@ -71,7 +71,7 @@ export function ControlBar({
       </div>
 
       {/* Category Pills (Always visible) */}
-      <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar mask-gradient-right">
+      <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar mask-gradient-right p-1">
         {allCategories.map((cat) => {
             const isActive = selectedFolder === cat.id;
             return (
