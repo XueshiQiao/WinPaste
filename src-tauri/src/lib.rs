@@ -7,6 +7,9 @@ use tauri::{
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 use std::fs;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
 
 mod clipboard;
 mod database;
@@ -41,7 +44,13 @@ pub fn run_app() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Focused(focused) = event {
                 if !focused {
-                    let _ = window.hide();
+                    let label = window.label();
+                    if let Some(win) = window.app_handle().get_webview_window(label) {
+                         let win_clone = win.clone();
+                         std::thread::spawn(move || {
+                             crate::animate_window_hide(&win_clone);
+                         });
+                    }
                 }
             }
         })
@@ -130,30 +139,101 @@ pub fn run_app() {
 }
 
 pub fn position_window_at_bottom(window: &tauri::WebviewWindow) {
-    if let Some(monitor) = window.current_monitor().ok().flatten() {
-        let scale_factor = monitor.scale_factor();
-        let screen_size = monitor.size();
-        let monitor_pos = monitor.position();
-        let work_area = monitor.work_area();
-        
-        // Logical height of 540 converted to physical
-        let window_height_px = (540.0 * scale_factor) as u32;
-        
-        // Set size to full physical width of the monitor
-        let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-            width: screen_size.width,
-            height: window_height_px,
-        }));
+    animate_window_show(window);
+}
 
-        // Position at the monitor's physical X origin (left edge)
-        // Y position is the bottom of the work area minus window height
-        let y_pos = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
-        
-        let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-            x: monitor_pos.x,
-            y: y_pos,
-        }));
+pub fn animate_window_show(window: &tauri::WebviewWindow) {
+    // Atomically check if false and set to true. If already true, return.
+    if IS_ANIMATING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
+        return;
     }
+
+    let window = window.clone();
+    std::thread::spawn(move || {
+        if let Some(monitor) = window.current_monitor().ok().flatten() {
+            let scale_factor = monitor.scale_factor();
+            let screen_size = monitor.size();
+            let monitor_pos = monitor.position();
+            let work_area = monitor.work_area();
+            
+            let window_height_px = (540.0 * scale_factor) as u32;
+            
+            let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                width: screen_size.width,
+                height: window_height_px,
+            }));
+
+            let target_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
+            let start_y = work_area.position.y + (work_area.size.height as i32); // Just off screen
+            
+            // Initial setup
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                x: monitor_pos.x,
+                y: start_y,
+            }));
+            
+            let _ = window.show();
+            let _ = window.set_focus();
+
+            // Animation loop
+            let steps = 15;
+            let duration = std::time::Duration::from_millis(10);
+            let dy = (target_y - start_y) as f64 / steps as f64;
+
+            for i in 1..=steps {
+                let current_y = start_y as f64 + dy * i as f64;
+                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                    x: monitor_pos.x,
+                    y: current_y as i32,
+                }));
+                std::thread::sleep(duration);
+            }
+            
+            // Ensure final position is exact
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                x: monitor_pos.x,
+                y: target_y,
+            }));
+        }
+        IS_ANIMATING.store(false, Ordering::SeqCst);
+    });
+}
+
+pub fn animate_window_hide(window: &tauri::WebviewWindow) {
+    // Atomically check if false and set to true. If already true, return.
+    if IS_ANIMATING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
+        return;
+    }
+
+    let window = window.clone();
+    std::thread::spawn(move || {
+        if let Some(monitor) = window.current_monitor().ok().flatten() {
+            let scale_factor = monitor.scale_factor();
+            let work_area = monitor.work_area();
+            let monitor_pos = monitor.position();
+            
+            let window_height_px = (540.0 * scale_factor) as u32;
+            
+            let start_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
+            let target_y = work_area.position.y + (work_area.size.height as i32); // Off screen
+
+            let steps = 15;
+            let duration = std::time::Duration::from_millis(10);
+            let dy = (target_y - start_y) as f64 / steps as f64;
+
+            for i in 1..=steps {
+                let current_y = start_y as f64 + dy * i as f64;
+                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                    x: monitor_pos.x,
+                    y: current_y as i32,
+                }));
+                std::thread::sleep(duration);
+            }
+
+            let _ = window.hide();
+        }
+        IS_ANIMATING.store(false, Ordering::SeqCst);
+    });
 }
 
 fn get_data_dir() -> std::path::PathBuf {

@@ -215,11 +215,6 @@ function App() {
           onDelete={handleDelete}
           onPin={handlePin}
         />
-        
-        {/* Resize Handles */}
-        <div className="resize-handle resize-handle-right" />
-        <div className="resize-handle resize-handle-bottom" />
-        <div className="resize-handle resize-handle-corner" />
       </main>
 
       {showSettings && (

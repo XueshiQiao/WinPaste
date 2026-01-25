@@ -7,25 +7,16 @@
     @apply border-gray-700;
   }
 
+  html, body, #root {
+    @apply h-full w-full overflow-hidden bg-transparent m-0 p-0;
+  }
+
   body {
-    @apply bg-gray-950 text-gray-100 font-sans antialiased;
+    @apply font-sans antialiased text-gray-100;
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-600;
+    display: none;
   }
 
   ::selection {
