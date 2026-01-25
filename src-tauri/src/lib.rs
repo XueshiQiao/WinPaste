@@ -168,7 +168,7 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let screen_size = monitor.size();
             let monitor_pos = monitor.position();
             let work_area = monitor.work_area();
-            let window_height_px = (420.0 * scale_factor) as u32;
+            let window_height_px = (340.0 * scale_factor) as u32;
             
             let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                 width: screen_size.width,
@@ -224,7 +224,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
             let work_area = monitor.work_area();
             let monitor_pos = monitor.position();
             
-            let window_height_px = (420.0 * scale_factor) as u32;
+            let window_height_px = (340.0 * scale_factor) as u32;
             
             let start_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
             let target_y = work_area.position.y + (work_area.size.height as i32); // Off screen

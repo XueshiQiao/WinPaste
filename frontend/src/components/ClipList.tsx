@@ -67,7 +67,8 @@ export function ClipList({
   const COLUMN_WIDTH = ITEM_WIDTH + GAP;
 
   const listWidth = width > 0 ? width : window.innerWidth;
-  const listHeight = height > 0 ? height : 300;
+  // Use a more realistic height if not yet measured
+  const listHeight = height > 0 ? height : 280;
 
   return (
     <div 
@@ -81,10 +82,14 @@ export function ClipList({
     >
       <Grid
         gridRef={gridRef}
-        columnCount={clips.length}
-        columnWidth={COLUMN_WIDTH}
+        columnCount={clips.length + 1}
+        columnWidth={(index) => index === clips.length ? 48 : COLUMN_WIDTH}
         rowCount={1}
         rowHeight={listHeight}
+        // @ts-ignore - types in v2.2.5 seem buggy but props are required for virtualization
+        width={listWidth}
+        // @ts-ignore
+        height={listHeight}
         cellComponent={ClipCell}
         cellProps={{
           clips,
@@ -93,8 +98,8 @@ export function ClipList({
           onPaste,
         }}
         style={{ 
-          width: listWidth,
-          height: listHeight,
+          width: '100%',
+          height: '100%',
           overflow: 'hidden' 
         }}
         className="no-scrollbar"
@@ -116,6 +121,11 @@ function ClipCell({
   onSelectClip: (id: string) => void;
   onPaste: (id: string) => void;
 }>) {
+  // Trailing padding cell
+  if (columnIndex === clips.length) {
+    return <div style={style} />;
+  }
+
   const clip = clips[columnIndex];
   if (!clip) return null;
 
@@ -128,6 +138,7 @@ function ClipCell({
     left: Number(style.left) + 24, // 24px starting padding
     width: Number(style.width) - 24, // Leave 24px gap between items
     height: '100%',
+    padding: '12px 0', // Vertical buffer for hover animation
   };
 
   return (
@@ -135,10 +146,6 @@ function ClipCell({
       <div
         onClick={() => onSelectClip(clip.id)}
         onDoubleClick={() => onPaste(clip.id)}
-        style={{
-          marginTop: 12,
-          height: 'calc(100% - 24px)'
-        }}
         className={clsx(
           'w-full h-full flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all shadow-lg',
           isSelected 
