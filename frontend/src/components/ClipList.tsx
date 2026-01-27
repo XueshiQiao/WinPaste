@@ -7,23 +7,28 @@ import { LAYOUT, TOTAL_COLUMN_WIDTH } from '../constants';
 interface ClipListProps {
   clips: ClipboardItem[];
   isLoading: boolean;
+  hasMore: boolean;
   selectedClipId: string | null;
   onSelectClip: (clipId: string) => void;
   onPaste: (clipId: string) => void;
   onCopy: (clipId: string) => void;
   onDelete: (clipId: string) => void;
   onPin: (clipId: string) => void;
+  onLoadMore: () => void;
 }
 
 export function ClipList({
   clips,
   isLoading,
+  hasMore,
   selectedClipId,
   onSelectClip,
   onPaste,
+  onLoadMore,
 }: ClipListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<any>(null);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(window.innerWidth);
   const [height, setHeight] = useState(LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT);
 
@@ -41,7 +46,29 @@ export function ClipList({
     return () => observer.disconnect();
   }, []);
 
-  if (isLoading) {
+  // Infinite scroll: Load more when scrolling near the end
+  useEffect(() => {
+    if (!loadMoreTriggerRef.current || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          console.log('Loading more clips (infinite scroll)...');
+          onLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '200px', // Trigger 200px before reaching the end
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(loadMoreTriggerRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, onLoadMore]);
+
+  if (isLoading && clips.length === 0) {
     return (
       <div className="flex items-center justify-center h-full w-full">
         <div className="flex flex-col items-center gap-3">
@@ -66,37 +93,56 @@ export function ClipList({
   return (
     <div
       ref={containerRef}
-      className="flex-1 h-full w-full no-scrollbar overflow-hidden"
+      className="flex-1 h-full w-full no-scrollbar overflow-hidden flex flex-col"
       onWheel={(e) => {
         if (gridRef.current?.element && e.deltaY !== 0) {
           gridRef.current.element.scrollLeft += e.deltaY;
         }
       }}
     >
-      <Grid
-        gridRef={gridRef}
-        columnCount={clips.length + 1} // +1 for trailing padding
-        columnWidth={(index) => index === clips.length ? LAYOUT.SIDE_PADDING : TOTAL_COLUMN_WIDTH}
-        rowCount={1}
-        rowHeight={height}
-        // @ts-ignore
-        width={width}
-        // @ts-ignore
-        height={height}
-        cellComponent={ClipCell}
-        cellProps={{
-          clips,
-          selectedClipId,
-          onSelectClip,
-          onPaste,
-        }}
-        style={{
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden'
-        }}
-        className="no-scrollbar"
-      />
+      <div className="flex-1">
+        <Grid
+          gridRef={gridRef}
+          columnCount={clips.length + (hasMore ? 2 : 1)} // +1 for padding, +1 for trigger if hasMore
+          columnWidth={(index) => {
+            if (index === clips.length + 1) return 1; // Invisible trigger column
+            if (index === clips.length) return LAYOUT.SIDE_PADDING;
+            return TOTAL_COLUMN_WIDTH;
+          }}
+          rowCount={1}
+          rowHeight={height}
+          // @ts-ignore
+          width={width}
+          // @ts-ignore
+          height={height}
+          cellComponent={(props: any) => {
+            const { columnIndex } = props;
+            // Render the invisible trigger at the second-to-last position
+            if (columnIndex === clips.length && hasMore) {
+              return (
+                <div
+                  ref={loadMoreTriggerRef}
+                  style={props.style}
+                  className="w-1 h-full pointer-events-none"
+                />
+              );
+            }
+            return <ClipCell {...props} />;
+          }}
+          cellProps={{
+            clips,
+            selectedClipId,
+            onSelectClip,
+            onPaste,
+          }}
+          style={{
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden'
+          }}
+          className="no-scrollbar"
+        />
+      </div>
     </div>
   );
 }

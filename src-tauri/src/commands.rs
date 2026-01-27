@@ -55,10 +55,11 @@ pub(crate) struct FolderItem {
 }
 
 #[tauri::command]
-pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, db: tauri::State<'_, Arc<Database>>) -> Result<Vec<ClipboardItem>, String> {
+pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, preview_only: Option<bool>, db: tauri::State<'_, Arc<Database>>) -> Result<Vec<ClipboardItem>, String> {
     let pool = &db.pool;
+    let preview_only = preview_only.unwrap_or(false);
 
-    eprintln!("get_clips called with filter_id: {:?}", filter_id);
+    eprintln!("get_clips called with filter_id: {:?}, preview_only: {}", filter_id, preview_only);
 
     let clips: Vec<Clip> = match filter_id.as_deref() {
         Some("pinned") => {
@@ -103,7 +104,10 @@ pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, db: t
     eprintln!("DB: Found {} clips", clips.len());
 
     let items: Vec<ClipboardItem> = clips.iter().enumerate().map(|(idx, clip)| {
-        let content_str = if clip.clip_type == "image" {
+        let content_str = if preview_only && clip.clip_type == "image" {
+            // In preview mode, don't send full image data - just empty string
+            String::new()
+        } else if clip.clip_type == "image" {
             BASE64.encode(&clip.content)
         } else {
             String::from_utf8_lossy(&clip.content).to_string()

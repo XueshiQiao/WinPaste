@@ -17,6 +17,7 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
   const [theme, setTheme] = useState('dark');
 
   useTheme(theme);
@@ -64,23 +65,39 @@ function App() {
     });
   }, []);
 
-  const loadClips = useCallback(async (folderId: string | null) => {
+  const loadClips = useCallback(async (folderId: string | null, append: boolean = false) => {
     try {
-      console.log('loadClips called with folderId:', folderId);
-      setIsLoading(true);
+      console.log('loadClips called with folderId:', folderId, 'append:', append);
+      if (!append) {
+        setIsLoading(true);
+      }
+
+      const currentOffset = append ? clips.length : 0;
       const data = await invoke<ClipboardItem[]>('get_clips', {
         filterId: folderId,
-        limit: 100, // Reduced from 10000 for better performance
-        offset: 0,
+        limit: 20, // Load 20 clips per page
+        offset: currentOffset,
+        previewOnly: false, // Load full image data directly
       });
+
       console.log('Clips loaded:', data.length);
-      setClips(data);
+
+      if (append) {
+        setClips(prev => [...prev, ...data]);
+      } else {
+        setClips(data);
+      }
+
+      // Track if there are more clips to load
+      setHasMore(data.length === 20);
     } catch (error) {
       console.error('Failed to load clips:', error);
     } finally {
-      setTimeout(() => setIsLoading(false), 100);
+      if (!append) {
+        setTimeout(() => setIsLoading(false), 100);
+      }
     }
-  }, []);
+  }, [clips.length]);
 
   const loadFolders = useCallback(async () => {
     try {
@@ -210,6 +227,12 @@ function App() {
     }
   };
 
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoading) {
+      loadClips(selectedFolder, true);
+    }
+  }, [hasMore, isLoading, selectedFolder, loadClips]);
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden font-sans">
       <ControlBar
@@ -237,12 +260,14 @@ function App() {
         <ClipList
           clips={clips}
           isLoading={isLoading}
+          hasMore={hasMore}
           selectedClipId={selectedClipId}
           onSelectClip={setSelectedClipId}
           onPaste={handlePaste}
           onCopy={handleCopy}
           onDelete={handleDelete}
           onPin={handlePin}
+          onLoadMore={loadMore}
         />
       </main>
     </div>
