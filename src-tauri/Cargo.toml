@@ -10,7 +10,6 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
-tauri-plugin-clipboard-manager = "2"
 tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -25,8 +24,9 @@ dirs = "5"
 parking_lot = "0.12"
 tokio = { version = "1", features = ["full"] }
 once_cell = "1"
-arboard = "3"
 base64 = "0.22.1"
+windows = { version = "0.62.2", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_System_Threading", "Win32_System_ProcessStatus", "Win32_Security"] }
+tauri-plugin-clipboard = "2.1.11"
 
 [features]
 default = ["custom-protocol"]

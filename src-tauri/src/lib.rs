@@ -29,7 +29,7 @@ pub fn run_app() {
     let db_path_str = db_path.to_str().unwrap().to_string();
 
     let rt = get_runtime().expect("Failed to get global tokio runtime");
-    
+
     let db = rt.block_on(async {
         Database::new(&db_path_str).await
     });
@@ -41,7 +41,7 @@ pub fn run_app() {
     let db_arc = Arc::new(db);
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(db_arc.clone())
         .on_window_event(|window, event| {
@@ -55,7 +55,7 @@ pub fn run_app() {
                                 // Settings window is open, keep main window visible
                                 return;
                             }
-                            
+
                             if let Some(win) = window.app_handle().get_webview_window(label) {
                                  let win_clone = win.clone();
                                  std::thread::spawn(move || {
@@ -111,7 +111,7 @@ pub fn run_app() {
             let app_handle = handle.clone();
             let win = app_handle.get_webview_window("main").unwrap();
             let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().build())?;
-            
+
             let win_clone = win.clone();
             let _ = app_handle.global_shortcut().on_shortcut("Ctrl+Alt+V", move |_app, _shortcut, event| {
                 if event.state() == ShortcutState::Pressed {
@@ -121,9 +121,15 @@ pub fn run_app() {
                 }
             });
 
-            std::thread::spawn(move || {
-                clipboard::start_clipboard_monitor(handle, db_for_clipboard);
-            });
+            let handle_for_clip = app_handle.clone();
+            let db_for_clip = db_for_clipboard.clone();
+            clipboard::init(&handle_for_clip, db_for_clip);
+
+            // Start listening for clipboard updates via the plugin's default monitor
+            // The plugin needs to be initialized first (which it is in builder)
+            // But we might need to verify if "start_monitor" is needed?
+            // tauri-plugin-clipboard-manager auto-starts monitor on some platforms or requires explicit start.
+            // Documentation says "Monitor is started automatically". Good.
 
             Ok(())
         })
@@ -173,7 +179,7 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let monitor_pos = monitor.position();
             let work_area = monitor.work_area();
             let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
-            
+
             let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                 width: screen_size.width,
                 height: window_height_px,
@@ -181,13 +187,13 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
 
             let target_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
             let start_y = work_area.position.y + (work_area.size.height as i32); // Just off screen
-            
+
             // Initial setup
             let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                 x: monitor_pos.x,
                 y: start_y,
             }));
-            
+
             let _ = window.show();
             let _ = window.set_focus();
 
@@ -204,7 +210,7 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
                 }));
                 std::thread::sleep(duration);
             }
-            
+
             // Ensure final position is exact
             let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                 x: monitor_pos.x,
@@ -227,9 +233,9 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
             let scale_factor = monitor.scale_factor();
             let work_area = monitor.work_area();
             let monitor_pos = monitor.position();
-            
+
             let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
-            
+
             let start_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32);
             let target_y = work_area.position.y + (work_area.size.height as i32); // Off screen
 

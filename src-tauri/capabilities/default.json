@@ -1,7 +1,9 @@
 {
   "identifier": "default",
   "description": "Default capabilities for the main window",
-  "windows": ["*"],
+  "windows": [
+    "*"
+  ],
   "permissions": [
     "core:default",
     "core:event:default",
@@ -10,6 +12,7 @@
     "core:app:default",
     "core:path:default",
     "core:webview:allow-create-webview-window",
-    "global-shortcut:default"
+    "global-shortcut:default",
+    "clipboard:default"
   ]
 }

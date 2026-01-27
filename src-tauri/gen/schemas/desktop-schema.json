@@ -177,82 +177,346 @@
       "description": "Permission identifier",
       "oneOf": [
         {
-          "description": "No features are enabled by default, as we believe\nthe clipboard can be inherently dangerous and it is \napplication specific if read and/or write access is needed.\n\nClipboard interaction needs to be explicitly enabled.\n",
+          "description": "Enables the available_types command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:default",
-          "markdownDescription": "No features are enabled by default, as we believe\nthe clipboard can be inherently dangerous and it is \napplication specific if read and/or write access is needed.\n\nClipboard interaction needs to be explicitly enabled.\n"
+          "const": "clipboard:allow-available-types",
+          "markdownDescription": "Enables the available_types command without any pre-configured scope."
         },
         {
           "description": "Enables the clear command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:allow-clear",
+          "const": "clipboard:allow-clear",
           "markdownDescription": "Enables the clear command without any pre-configured scope."
         },
         {
-          "description": "Enables the read_image command without any pre-configured scope.",
+          "description": "Enables the execute command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:allow-read-image",
-          "markdownDescription": "Enables the read_image command without any pre-configured scope."
+          "const": "clipboard:allow-execute",
+          "markdownDescription": "Enables the execute command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_files command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-has-files",
+          "markdownDescription": "Enables the has_files command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_html command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-has-html",
+          "markdownDescription": "Enables the has_html command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-has-image",
+          "markdownDescription": "Enables the has_image command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_rtf command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-has-rtf",
+          "markdownDescription": "Enables the has_rtf command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_text command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-has-text",
+          "markdownDescription": "Enables the has_text command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the is_monitor_running command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-is-monitor-running",
+          "markdownDescription": "Enables the is_monitor_running command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the ping command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-ping",
+          "markdownDescription": "Enables the ping command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_files command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-read-files",
+          "markdownDescription": "Enables the read_files command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_files_uris command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-read-files-uris",
+          "markdownDescription": "Enables the read_files_uris command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_html command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-read-html",
+          "markdownDescription": "Enables the read_html command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_image_base64 command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-read-image-base64",
+          "markdownDescription": "Enables the read_image_base64 command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_image_binary command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-read-image-binary",
+          "markdownDescription": "Enables the read_image_binary command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_rtf command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-read-rtf",
+          "markdownDescription": "Enables the read_rtf command without any pre-configured scope."
         },
         {
           "description": "Enables the read_text command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:allow-read-text",
+          "const": "clipboard:allow-read-text",
           "markdownDescription": "Enables the read_text command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the start_monitor command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-start-monitor",
+          "markdownDescription": "Enables the start_monitor command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the stop_monitor command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-stop-monitor",
+          "markdownDescription": "Enables the stop_monitor command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_files command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-write-files",
+          "markdownDescription": "Enables the write_files command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_files_uris command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-write-files-uris",
+          "markdownDescription": "Enables the write_files_uris command without any pre-configured scope."
         },
         {
           "description": "Enables the write_html command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:allow-write-html",
+          "const": "clipboard:allow-write-html",
           "markdownDescription": "Enables the write_html command without any pre-configured scope."
         },
         {
-          "description": "Enables the write_image command without any pre-configured scope.",
+          "description": "Enables the write_html_and_text command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:allow-write-image",
-          "markdownDescription": "Enables the write_image command without any pre-configured scope."
+          "const": "clipboard:allow-write-html-and-text",
+          "markdownDescription": "Enables the write_html_and_text command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_image_base64 command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-write-image-base64",
+          "markdownDescription": "Enables the write_image_base64 command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_image_binary command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-write-image-binary",
+          "markdownDescription": "Enables the write_image_binary command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the write_rtf command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:allow-write-rtf",
+          "markdownDescription": "Enables the write_rtf command without any pre-configured scope."
         },
         {
           "description": "Enables the write_text command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:allow-write-text",
+          "const": "clipboard:allow-write-text",
           "markdownDescription": "Enables the write_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the available_types command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-available-types",
+          "markdownDescription": "Denies the available_types command without any pre-configured scope."
         },
         {
           "description": "Denies the clear command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:deny-clear",
+          "const": "clipboard:deny-clear",
           "markdownDescription": "Denies the clear command without any pre-configured scope."
         },
         {
-          "description": "Denies the read_image command without any pre-configured scope.",
+          "description": "Denies the execute command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:deny-read-image",
-          "markdownDescription": "Denies the read_image command without any pre-configured scope."
+          "const": "clipboard:deny-execute",
+          "markdownDescription": "Denies the execute command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_files command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-has-files",
+          "markdownDescription": "Denies the has_files command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_html command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-has-html",
+          "markdownDescription": "Denies the has_html command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-has-image",
+          "markdownDescription": "Denies the has_image command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_rtf command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-has-rtf",
+          "markdownDescription": "Denies the has_rtf command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_text command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-has-text",
+          "markdownDescription": "Denies the has_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the is_monitor_running command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-is-monitor-running",
+          "markdownDescription": "Denies the is_monitor_running command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the ping command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-ping",
+          "markdownDescription": "Denies the ping command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_files command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-read-files",
+          "markdownDescription": "Denies the read_files command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_files_uris command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-read-files-uris",
+          "markdownDescription": "Denies the read_files_uris command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_html command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-read-html",
+          "markdownDescription": "Denies the read_html command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_image_base64 command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-read-image-base64",
+          "markdownDescription": "Denies the read_image_base64 command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_image_binary command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-read-image-binary",
+          "markdownDescription": "Denies the read_image_binary command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_rtf command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-read-rtf",
+          "markdownDescription": "Denies the read_rtf command without any pre-configured scope."
         },
         {
           "description": "Denies the read_text command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:deny-read-text",
+          "const": "clipboard:deny-read-text",
           "markdownDescription": "Denies the read_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the start_monitor command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-start-monitor",
+          "markdownDescription": "Denies the start_monitor command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the stop_monitor command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-stop-monitor",
+          "markdownDescription": "Denies the stop_monitor command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_files command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-write-files",
+          "markdownDescription": "Denies the write_files command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_files_uris command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-write-files-uris",
+          "markdownDescription": "Denies the write_files_uris command without any pre-configured scope."
         },
         {
           "description": "Denies the write_html command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:deny-write-html",
+          "const": "clipboard:deny-write-html",
           "markdownDescription": "Denies the write_html command without any pre-configured scope."
         },
         {
-          "description": "Denies the write_image command without any pre-configured scope.",
+          "description": "Denies the write_html_and_text command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:deny-write-image",
-          "markdownDescription": "Denies the write_image command without any pre-configured scope."
+          "const": "clipboard:deny-write-html-and-text",
+          "markdownDescription": "Denies the write_html_and_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_image_base64 command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-write-image-base64",
+          "markdownDescription": "Denies the write_image_base64 command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_image_binary command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-write-image-binary",
+          "markdownDescription": "Denies the write_image_binary command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the write_rtf command without any pre-configured scope.",
+          "type": "string",
+          "const": "clipboard:deny-write-rtf",
+          "markdownDescription": "Denies the write_rtf command without any pre-configured scope."
         },
         {
           "description": "Denies the write_text command without any pre-configured scope.",
           "type": "string",
-          "const": "clipboard-manager:deny-write-text",
+          "const": "clipboard:deny-write-text",
           "markdownDescription": "Denies the write_text command without any pre-configured scope."
+        },
+        {
+          "description": "This enables all monitor related commands",
+          "type": "string",
+          "const": "clipboard:monitor-all",
+          "markdownDescription": "This enables all monitor related commands"
+        },
+        {
+          "description": "This enables all read related commands to clipboard",
+          "type": "string",
+          "const": "clipboard:read-all",
+          "markdownDescription": "This enables all read related commands to clipboard"
+        },
+        {
+          "description": "This enables all write related commands to clipboard",
+          "type": "string",
+          "const": "clipboard:write-all",
+          "markdownDescription": "This enables all write related commands to clipboard"
         },
         {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
