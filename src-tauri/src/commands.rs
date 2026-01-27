@@ -1,4 +1,5 @@
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, AppHandle};
+use tauri_plugin_clipboard::Clipboard;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use std::str::FromStr;
 use crate::database::Database;
@@ -165,7 +166,7 @@ pub async fn get_clip(id: String, db: tauri::State<'_, Arc<Database>>) -> Result
 }
 
 #[tauri::command]
-pub async fn paste_clip(id: String, window: tauri::WebviewWindow, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
+pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
     let pool = &db.pool;
 
     let clip: Option<Clip> = sqlx::query_as(r#"SELECT * FROM clips WHERE uuid = ?"#)
@@ -174,6 +175,16 @@ pub async fn paste_clip(id: String, window: tauri::WebviewWindow, db: tauri::Sta
 
     match clip {
         Some(clip) => {
+            let clipboard = app.state::<Clipboard>();
+
+            if clip.clip_type == "image" {
+                let base64_img = BASE64.encode(&clip.content);
+                clipboard.write_image_base64(base64_img).map_err(|e| e.to_string())?;
+            } else {
+                let content = String::from_utf8_lossy(&clip.content).to_string();
+                clipboard.write_text(content).map_err(|e| e.to_string())?;
+            }
+
             let content = String::from_utf8_lossy(&clip.content).to_string();
             let _ = window.emit("clipboard-write", &content);
             Ok(())

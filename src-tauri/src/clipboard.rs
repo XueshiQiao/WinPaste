@@ -11,6 +11,7 @@ use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use windows::Win32::Foundation::{HWND, MAX_PATH};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
 use windows::Win32::System::ProcessStatus::GetModuleBaseNameW;
+use windows::Win32::System::DataExchange::GetClipboardOwner;
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
 pub fn init(app: &AppHandle, db: Arc<Database>) {
@@ -40,6 +41,19 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
 }
 
 async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
+    // Ignore updates from self
+    unsafe {
+        if let Ok(hwnd) = GetClipboardOwner() {
+            if !hwnd.0.is_null() {
+                let mut process_id = 0;
+                GetWindowThreadProcessId(hwnd, Some(&mut process_id));
+                if process_id == std::process::id() {
+                    return;
+                }
+            }
+        }
+    }
+
     // Initialize Clipboard struct
     let clipboard = app.state::<ClipboardPlugin>();
 
@@ -154,8 +168,20 @@ fn calculate_hash(content: &[u8]) -> String {
 
 fn get_active_app_name() -> Option<String> {
     unsafe {
-        let hwnd = GetForegroundWindow();
+        let hwnd = match GetClipboardOwner() {
+            Ok(h) if !h.0.is_null() => h,
+            Err(e) => {
+                eprintln!("CLIPBOARD: GetClipboardOwner failed: {:?}, falling back to foreground window", e);
+                GetForegroundWindow()
+            },
+            Ok(_) => {
+                eprintln!("CLIPBOARD: GetClipboardOwner returned null, falling back to foreground window");
+                GetForegroundWindow()
+            }
+        };
+
         if hwnd.0.is_null() {
+            // Last ditch effort if fallback also failed
             return None;
         }
 
