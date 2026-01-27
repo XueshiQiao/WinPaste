@@ -1,7 +1,6 @@
 import { ClipboardItem } from '../types';
 import { clsx } from 'clsx';
-import { useState, useRef, useEffect, CSSProperties } from 'react';
-import { Grid, type CellComponentProps } from 'react-window';
+import { useRef } from 'react';
 import { LAYOUT, TOTAL_COLUMN_WIDTH } from '../constants';
 
 interface ClipListProps {
@@ -27,46 +26,28 @@ export function ClipList({
   onLoadMore,
 }: ClipListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<any>(null);
-  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(window.innerWidth);
-  const [height, setHeight] = useState(LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  // Native onScroll handler for infinite scroll
+  const handleScroll = () => {
+    if (!containerRef.current || !hasMore || isLoading) return;
 
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.contentRect.width > 0) setWidth(entry.contentRect.width);
-        if (entry.contentRect.height > 0) setHeight(entry.contentRect.height);
-      }
-    });
+    // We check native scroll properties
+    const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
 
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
+    // If scrolled within 300px of the end
+    if (scrollLeft + clientWidth >= scrollWidth - 300) {
+      console.log('Scroll to end detected (native), loading more...');
+      onLoadMore();
+    }
+  };
 
-  // Infinite scroll: Load more when scrolling near the end
-  useEffect(() => {
-    if (!loadMoreTriggerRef.current || !hasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          console.log('Loading more clips (infinite scroll)...');
-          onLoadMore();
-        }
-      },
-      {
-        root: null,
-        rootMargin: '200px', // Trigger 200px before reaching the end
-        threshold: 0.1,
-      }
-    );
-
-    observer.observe(loadMoreTriggerRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, isLoading, onLoadMore]);
+  // Map vertical mouse wheel to horizontal scroll for better UX
+  const handleWheel = (e: React.WheelEvent) => {
+    if (containerRef.current && e.deltaY !== 0) {
+      // Multiply by 2 for faster scrolling as requested
+      containerRef.current.scrollLeft += e.deltaY * 1;
+    }
+  };
 
   if (isLoading && clips.length === 0) {
     return (
@@ -93,96 +74,61 @@ export function ClipList({
   return (
     <div
       ref={containerRef}
-      className="flex-1 h-full w-full no-scrollbar overflow-hidden flex flex-col"
-      onWheel={(e) => {
-        if (gridRef.current?.element && e.deltaY !== 0) {
-          gridRef.current.element.scrollLeft += e.deltaY;
-        }
+      className="flex-1 h-full w-full overflow-x-auto overflow-y-hidden no-scrollbar flex items-center px-4 gap-4"
+      onScroll={handleScroll}
+      onWheel={handleWheel}
+      style={{
+        // Smooth scrolling disabled per user request
+        scrollBehavior: 'auto'
       }}
     >
-      <div className="flex-1">
-        <Grid
-          gridRef={gridRef}
-          columnCount={clips.length + (hasMore ? 2 : 1)} // +1 for padding, +1 for trigger if hasMore
-          columnWidth={(index) => {
-            if (index === clips.length + 1) return 1; // Invisible trigger column
-            if (index === clips.length) return LAYOUT.SIDE_PADDING;
-            return TOTAL_COLUMN_WIDTH;
-          }}
-          rowCount={1}
-          rowHeight={height}
-          // @ts-ignore
-          width={width}
-          // @ts-ignore
-          height={height}
-          cellComponent={(props: any) => {
-            const { columnIndex } = props;
-            // Render the invisible trigger at the second-to-last position
-            if (columnIndex === clips.length && hasMore) {
-              return (
-                <div
-                  ref={loadMoreTriggerRef}
-                  style={props.style}
-                  className="w-1 h-full pointer-events-none"
-                />
-              );
-            }
-            return <ClipCell {...props} />;
-          }}
-          cellProps={{
-            clips,
-            selectedClipId,
-            onSelectClip,
-            onPaste,
-          }}
-          style={{
-            width: '100%',
-            height: '100%',
-            overflow: 'hidden'
-          }}
-          className="no-scrollbar"
+      {clips.map((clip) => (
+        <ClipCard
+          key={clip.id}
+          clip={clip}
+          isSelected={selectedClipId === clip.id}
+          onSelect={() => onSelectClip(clip.id)}
+          onPaste={() => onPaste(clip.id)}
         />
-      </div>
+      ))}
+
+      {/* Loading indicator at the end */}
+      {isLoading && clips.length > 0 && (
+         <div className="h-full flex items-center justify-center min-w-[100px]">
+            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+         </div>
+      )}
+
+      {/* Spacer end */}
+      <div className="min-w-[20px] h-full flex-shrink-0" />
     </div>
   );
 }
 
-function ClipCell({
-  columnIndex,
-  style,
-  clips,
-  selectedClipId,
-  onSelectClip,
-  onPaste,
-}: CellComponentProps<{
-  clips: ClipboardItem[];
-  selectedClipId: string | null;
-  onSelectClip: (id: string) => void;
-  onPaste: (id: string) => void;
-}>) {
-  if (columnIndex === clips.length) {
-    return <div style={style} />;
-  }
-
-  const clip = clips[columnIndex];
-  if (!clip) return null;
-
-  const isSelected = selectedClipId === clip.id;
+function ClipCard({
+  clip,
+  isSelected,
+  onSelect,
+  onPaste
+}: {
+  clip: ClipboardItem,
+  isSelected: boolean,
+  onSelect: () => void,
+  onPaste: () => void
+}) {
   const title = clip.source_app || clip.clip_type.toUpperCase();
 
-  const cardStyle: CSSProperties = {
-    ...style,
-    left: Number(style.left) + LAYOUT.SIDE_PADDING,
-    width: Number(style.width) - LAYOUT.CARD_GAP,
-    height: '100%',
-    padding: `${LAYOUT.CARD_VERTICAL_PADDING}px 0`, // Safe zones
-  };
-
   return (
-    <div style={cardStyle}>
+    <div
+      style={{
+        width: TOTAL_COLUMN_WIDTH - LAYOUT.CARD_GAP,
+        height: LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT - (LAYOUT.CARD_VERTICAL_PADDING * 2)
+      }}
+      className="flex-shrink-0"
+    >
       <div
-        onClick={() => onSelectClip(clip.id)}
-        onDoubleClick={() => onPaste(clip.id)}
+        onClick={onSelect}
+        onDoubleClick={onPaste}
         className={clsx(
           'w-full h-full flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all shadow-lg bg-card border border-border',
           isSelected
@@ -222,7 +168,7 @@ function ClipCell({
 
         <div className="bg-secondary px-3 py-1.5 border-t border-border flex-shrink-0">
           <span className="text-[10px] text-muted-foreground font-medium">
-            {clip.clip_type === 'image' ? `Image (${Math.round(clip.content.length * 0.75 / 1024)}KB)` : `${clip.content.length} characters`}
+             {clip.clip_type === 'image' ? `Image (${Math.round(clip.content.length * 0.75 / 1024)}KB)` : `${clip.content.length} characters`}
           </span>
         </div>
       </div>

@@ -67,15 +67,15 @@ function App() {
 
   const loadClips = useCallback(async (folderId: string | null, append: boolean = false) => {
     try {
-      console.log('loadClips called with folderId:', folderId, 'append:', append);
-      if (!append) {
-        setIsLoading(true);
-      }
+      console.log('loadClips START | folderId:', folderId, 'append:', append, 'currentClips:', clips.length);
+      setIsLoading(true);
 
       const currentOffset = append ? clips.length : 0;
+      console.log('Fetching with offset:', currentOffset);
+
       const data = await invoke<ClipboardItem[]>('get_clips', {
         filterId: folderId,
-        limit: 20, // Load 20 clips per page
+        limit: 20, // Reverted to 20 per user request
         offset: currentOffset,
         previewOnly: false, // Load full image data directly
       });
@@ -83,19 +83,21 @@ function App() {
       console.log('Clips loaded:', data.length);
 
       if (append) {
-        setClips(prev => [...prev, ...data]);
+        setClips(prev => {
+           console.log('Appending clips. Prev:', prev.length, 'New:', data.length);
+           return [...prev, ...data];
+        });
       } else {
+        console.log('Setting new clips');
         setClips(data);
       }
 
-      // Track if there are more clips to load
+      // If we got fewer than limit, no more clips
       setHasMore(data.length === 20);
     } catch (error) {
       console.error('Failed to load clips:', error);
     } finally {
-      if (!append) {
-        setTimeout(() => setIsLoading(false), 100);
-      }
+      setIsLoading(false);
     }
   }, [clips.length]);
 
