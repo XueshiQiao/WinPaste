@@ -23,6 +23,7 @@ pub struct Clip {
     pub is_pinned: bool,
     pub is_deleted: bool,
     pub source_app: Option<String>,
+    pub source_icon: Option<String>,
     pub metadata: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub last_accessed: chrono::DateTime<chrono::Utc>,
@@ -98,6 +99,8 @@ pub struct ClipboardItem {
     pub folder_id: Option<String>,
     pub created_at: String,
     pub source_app: Option<String>,
+    pub source_icon: Option<String>,
+    pub metadata: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

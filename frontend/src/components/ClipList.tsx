@@ -136,8 +136,15 @@ function ClipCard({
             : 'hover:ring-2 hover:ring-primary/30 hover:-translate-y-1'
         )}
       >
-        <div className="bg-primary px-4 py-2 flex items-center justify-between flex-shrink-0">
-          <span className="font-bold text-primary-foreground text-[10px] uppercase tracking-wider truncate w-full">
+        <div className="bg-primary px-4 py-2 flex items-center gap-2 flex-shrink-0">
+          {clip.source_icon && (
+            <img
+              src={`data:image/png;base64,${clip.source_icon}`}
+              alt=""
+              className="w-4 h-4 object-contain"
+            />
+          )}
+          <span className="font-bold text-primary-foreground text-[10px] uppercase tracking-wider truncate flex-1">
             {title}
           </span>
         </div>

@@ -7,6 +7,7 @@ export interface ClipboardItem {
   folder_id: string | null;
   created_at: string;
   source_app: string | null;
+  source_icon: string | null;
 }
 
 export interface FolderItem {

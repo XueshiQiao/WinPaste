@@ -41,11 +41,15 @@ impl Database {
                 is_pinned INTEGER DEFAULT 0,
                 is_deleted INTEGER DEFAULT 0,
                 source_app TEXT,
+                source_icon TEXT,
                 metadata TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         "#).execute(&self.pool).await?;
+
+        // Add source_icon column if it doesn't exist (migrations for existing dbs)
+        sqlx::query("ALTER TABLE clips ADD COLUMN source_icon TEXT").execute(&self.pool).await.ok();
 
         sqlx::query(r#"
             CREATE INDEX IF NOT EXISTS idx_clips_hash ON clips(content_hash);
@@ -83,8 +87,8 @@ impl Database {
 
     pub async fn add_clip(&self, clip: &Clip) -> Result<i64, sqlx::Error> {
         let id = sqlx::query(r#"
-            INSERT INTO clips (uuid, clip_type, content, text_preview, content_hash, folder_id, is_pinned, source_app, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO clips (uuid, clip_type, content, text_preview, content_hash, folder_id, is_pinned, source_app, source_icon, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#)
         .bind(&clip.uuid)
         .bind(&clip.clip_type)
@@ -94,6 +98,7 @@ impl Database {
         .bind(clip.folder_id)
         .bind(clip.is_pinned as i32)
         .bind(&clip.source_app)
+        .bind(&clip.source_icon)
         .bind(&clip.metadata)
         .execute(&self.pool)
         .await?

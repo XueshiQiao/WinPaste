@@ -18,6 +18,7 @@ struct Clip {
     is_pinned: bool,
     is_deleted: bool,
     source_app: Option<String>,
+    source_icon: Option<String>,
     metadata: Option<String>,
     created_at: chrono::DateTime<chrono::Utc>,
     last_accessed: chrono::DateTime<chrono::Utc>,
@@ -43,6 +44,7 @@ pub(crate) struct ClipboardItem {
     pub folder_id: Option<String>,
     pub created_at: String,
     pub source_app: Option<String>,
+    pub source_icon: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -128,6 +130,7 @@ pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, previ
             folder_id: clip.folder_id.map(|id| id.to_string()),
             created_at: clip.created_at.to_rfc3339(),
             source_app: clip.source_app.clone(),
+            source_icon: clip.source_icon.clone(),
         }
     }).collect();
 
@@ -159,6 +162,7 @@ pub async fn get_clip(id: String, db: tauri::State<'_, Arc<Database>>) -> Result
                 folder_id: clip.folder_id.map(|id| id.to_string()),
                 created_at: clip.created_at.to_rfc3339(),
                 source_app: clip.source_app,
+                source_icon: clip.source_icon,
             })
         }
         None => Err("Clip not found".to_string()),
@@ -338,6 +342,7 @@ pub async fn search_clips(query: String, filter_id: Option<String>, limit: i64, 
             folder_id: clip.folder_id.map(|id| id.to_string()),
             created_at: clip.created_at.to_rfc3339(),
             source_app: clip.source_app.clone(),
+            source_icon: clip.source_icon.clone(),
         }
     }).collect();
 
