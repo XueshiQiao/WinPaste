@@ -27,8 +27,13 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: install frontend dependencies
-        run: npm install
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install frontend dependencies
+        run: pnpm install
         working-directory: frontend
 
       - name: Build the app
