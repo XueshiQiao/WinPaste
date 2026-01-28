@@ -86,6 +86,20 @@ Tauri v2 enforces a strict case mapping between JavaScript/TypeScript and Rust:
 
 Failure to follow this convention (e.g., passing `snake_case` from the frontend) will result in arguments being passed as `null` or `None` to the backend.
 
+### Window Behavior & Multi-Monitor Support
+
+The application is designed to appear on the **active monitor** (the one containing the mouse cursor) whenever the global hotkey is pressed.
+
+- **Detection Logic:**
+  - Located in `src-tauri/src/lib.rs` (`animate_window_show`).
+  - Uses the Windows API `GetCursorPos` (via the `windows` crate) to determine the global mouse coordinates.
+  - Iterates through `window.available_monitors()` to find the monitor whose bounds contain the cursor point.
+  - Fallback: If the cursor position cannot be determined, it defaults to `window.current_monitor()`.
+
+- **Positioning:**
+  - The window is positioned at the bottom of the detected active monitor's work area (excluding taskbar).
+  - An animation slides the window up from the bottom edge.
+
 ### Adjusting the Layout
 
 The application uses a centralized layout system to ensure the native window and the virtualized list remain synchronized.

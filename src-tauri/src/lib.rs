@@ -173,7 +173,35 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
 
     let window = window.clone();
     std::thread::spawn(move || {
-        if let Some(monitor) = window.current_monitor().ok().flatten() {
+        let monitor = {
+            #[cfg(target_os = "windows")]
+            {
+                use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+                use windows::Win32::Foundation::POINT;
+                let mut point = POINT { x: 0, y: 0 };
+                let mut found = None;
+                if unsafe { GetCursorPos(&mut point).is_ok() } {
+                    if let Ok(monitors) = window.available_monitors() {
+                        for m in monitors {
+                            let pos = m.position();
+                            let size = m.size();
+                            if point.x >= pos.x && point.x < pos.x + size.width as i32 &&
+                               point.y >= pos.y && point.y < pos.y + size.height as i32 {
+                                found = Some(m);
+                                break;
+                            }
+                        }
+                    }
+                }
+                found.or_else(|| window.current_monitor().ok().flatten())
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                window.current_monitor().ok().flatten()
+            }
+        };
+
+        if let Some(monitor) = monitor {
             let scale_factor = monitor.scale_factor();
             let screen_size = monitor.size();
             let monitor_pos = monitor.position();
