@@ -250,11 +250,29 @@ function App() {
       dragStateRef.current.targetFolderId = 'NO_TARGET';
   };
 
+  // Total History Count
+  const [totalClipCount, setTotalClipCount] = useState(0);
+
+  const refreshTotalCount = useCallback(async () => {
+      try {
+          const count = await invoke<number>('get_clipboard_history_size');
+          setTotalClipCount(count);
+      } catch (e) {
+          console.error('Failed to get history size', e);
+      }
+  }, []);
+
+  useEffect(() => {
+      refreshTotalCount();
+  }, [refreshTotalCount]);
+
   useEffect(() => {
     console.log('Setting up clipboard listener');
     const unlistenClipboard = listen('clipboard-change', (event) => {
       console.log('Clipboard changed event received:', event);
       refreshCurrentFolder();
+      loadFolders(); // Refresh folders to get updated counts
+      refreshTotalCount(); // Refresh total count
     });
 
     return () => {
@@ -262,7 +280,7 @@ function App() {
         if (typeof unlisten === 'function') unlisten();
       });
     };
-  }, [refreshCurrentFolder]);
+  }, [refreshCurrentFolder, loadFolders, refreshTotalCount]);
 
   useKeyboard({
     onClose: () => appWindow.hide(),
@@ -295,6 +313,9 @@ function App() {
       await invoke('delete_clip', { id: clipId, hardDelete: false });
       setClips(clips.filter((c) => c.id !== clipId));
       setSelectedClipId(null);
+      // Refresh counts
+      loadFolders();
+      refreshTotalCount();
     } catch (error) {
       console.error('Failed to delete clip:', error);
     }
@@ -372,6 +393,9 @@ function App() {
           prev.map((c) => (c.id === clipId ? { ...c, folder_id: folderId } : c))
         );
       }
+      // Refresh counts after move
+      loadFolders();
+      refreshTotalCount();
     } catch (error) {
       console.error('Failed to move clip:', error);
     }
@@ -411,6 +435,7 @@ function App() {
         dragTargetFolderId={dragTargetFolderId}
         onDragHover={handleDragHover}
         onDragLeave={handleDragLeave}
+        totalClipCount={totalClipCount}
       />
 
       <main className="no-scrollbar relative flex-1">

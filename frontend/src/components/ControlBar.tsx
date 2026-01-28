@@ -17,6 +17,7 @@ interface ControlBarProps {
   dragTargetFolderId: string | null;
   onDragHover: (folderId: string | null) => void;
   onDragLeave: () => void;
+  totalClipCount: number;
 }
 
 export function ControlBar({
@@ -33,12 +34,13 @@ export function ControlBar({
   dragTargetFolderId,
   onDragHover,
   onDragLeave,
+  totalClipCount,
 }: ControlBarProps) {
   // Merge "All" (null), "Pinned" (special), and user folders
   const allCategories = [
-    { id: null, name: 'Clipboard History' },
+    { id: null, name: 'Clipboard History', count: totalClipCount },
     { id: 'pinned', name: 'Pinned' },
-    ...folders.filter((f) => !f.is_system),
+    ...folders.map((f) => ({ ...f, count: f.item_count })),
   ];
 
   const handleMouseEnter = (folderId: string | null) => {
@@ -131,8 +133,11 @@ export function ControlBar({
               )}
             >
               {cat.name}
-              {cat.name === 'JSON' && (
-                <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+              {/* Show count badge if defined and > 0 */}
+              {(cat.count !== undefined && cat.count > 0) && (
+                <span className="ml-2 text-[10px] opacity-70">
+                    {cat.count}
+                </span>
               )}
             </button>
           );

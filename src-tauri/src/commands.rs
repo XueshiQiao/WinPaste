@@ -360,6 +360,19 @@ pub async fn get_folders(db: tauri::State<'_, Arc<Database>>) -> Result<Vec<Fold
     let folders: Vec<Folder> = sqlx::query_as(r#"SELECT * FROM folders ORDER BY name"#)
         .fetch_all(pool).await.map_err(|e| e.to_string())?;
 
+    // Get counts for all folders in one query
+    let counts: Vec<(i64, i64)> = sqlx::query_as(r#"
+        SELECT folder_id, COUNT(*) as count
+        FROM clips
+        WHERE is_deleted = 0 AND folder_id IS NOT NULL
+        GROUP BY folder_id
+    "#)
+    .fetch_all(pool).await.map_err(|e| e.to_string())?;
+
+    // Create a map for easier lookup
+    use std::collections::HashMap;
+    let count_map: HashMap<i64, i64> = counts.into_iter().collect();
+
     let items: Vec<FolderItem> = folders.iter().map(|folder| {
         FolderItem {
             id: folder.id.to_string(),
@@ -367,7 +380,7 @@ pub async fn get_folders(db: tauri::State<'_, Arc<Database>>) -> Result<Vec<Fold
             icon: folder.icon.clone(),
             color: folder.color.clone(),
             is_system: folder.is_system,
-            item_count: 0,
+            item_count: *count_map.get(&folder.id).unwrap_or(&0),
         }
     }).collect();
 
