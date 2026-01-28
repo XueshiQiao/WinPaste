@@ -48,7 +48,7 @@ impl Database {
         "#).execute(&self.pool).await?;
 
         // Add source_icon column if it doesn't exist (migrations for existing dbs)
-        sqlx::query("ALTER TABLE clips ADD COLUMN source_icon TEXT").execute(&self.pool).await.ok();
+        // sqlx::query("ALTER TABLE clips ADD COLUMN source_icon TEXT").execute(&self.pool).await.ok();
 
         sqlx::query(r#"
             CREATE INDEX IF NOT EXISTS idx_clips_hash ON clips(content_hash);
@@ -68,19 +68,7 @@ impl Database {
                 value TEXT NOT NULL
             )
         "#).execute(&self.pool).await?;
-
-        sqlx::query(r#"
-            INSERT OR IGNORE INTO folders (id, name, is_system) VALUES (1, 'All', 1);
-        "#).execute(&self.pool).await?;
-
-        // Cleanup Pinned folder if exists
-        sqlx::query("DELETE FROM folders WHERE id = 2").execute(&self.pool).await.ok();
-
-        sqlx::query(r#"
-            INSERT OR IGNORE INTO folders (id, name, is_system) VALUES (3, 'Recent', 1);
-        "#).execute(&self.pool).await?;
-
-        Ok(())
+       Ok(())
     }
 
     pub async fn add_clip(&self, clip: &Clip) -> Result<i64, sqlx::Error> {

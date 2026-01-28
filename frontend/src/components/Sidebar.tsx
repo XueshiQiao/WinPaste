@@ -11,10 +11,6 @@ interface SidebarProps {
   onOpenSettings: () => void;
 }
 
-const SYSTEM_FOLDERS = [
-  { id: null, name: 'All', icon: Folder, is_system: true },
-];
-
 export function Sidebar({
   folders,
   selectedFolder,
@@ -42,17 +38,6 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
-        {SYSTEM_FOLDERS.map((folder) => (
-          <button
-            key={folder.id ?? 'all'}
-            onClick={() => onSelectFolder(folder.id)}
-            className={clsx('sidebar-item w-full', selectedFolder === folder.id && 'active')}
-          >
-            <folder.icon size={18} />
-            <span className="font-medium">{folder.name}</span>
-          </button>
-        ))}
-
         <div className="pb-2 pt-4">
           <div className="mb-2 flex items-center justify-between px-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

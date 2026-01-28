@@ -233,7 +233,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
         <div className="flex items-start gap-2 rounded-lg bg-accent/50 p-3">
           <Info size={16} className="mt-0.5 flex-shrink-0 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
-            Items that are pinned will never be auto-deleted. Use the pin feature to keep important
+            Items that in custom folders will never be auto-deleted. Use the pin feature to keep important
             clips permanently.
           </p>
         </div>
