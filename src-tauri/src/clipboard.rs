@@ -22,6 +22,18 @@ use windows::Win32::Graphics::Gdi::{
 };
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
+// GLOBAL STATE: Store the hash of the clip we just pasted ourselves.
+// If the next clipboard change matches this hash, we ignore it (don't update timestamp).
+static IGNORE_HASH: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+
+pub fn set_ignore_hash(hash: String) {
+    if let Ok(mut lock) = IGNORE_HASH.lock() {
+        *lock = Some(hash);
+    }
+}
 
 pub fn init(app: &AppHandle, db: Arc<Database>) {
     let app_clone = app.clone();
@@ -50,24 +62,8 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
 }
 
 async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
-    // Ignore updates from self
-    unsafe {
-        if let Ok(hwnd) = GetClipboardOwner() {
-            if !hwnd.0.is_null() {
-                let mut process_id = 0;
-                GetWindowThreadProcessId(hwnd, Some(&mut process_id));
-                if process_id == std::process::id() {
-                    return;
-                }
-            }
-        }
-    }
-
     // Initialize Clipboard struct
     let clipboard = app.state::<ClipboardPlugin>();
-
-    // capture source app info immediately
-    let (source_app, source_icon) = get_clipboard_owner_app_info();
 
     let mut clip_type = "text";
     let mut clip_content = Vec::new();
@@ -117,6 +113,19 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
     if !found_content {
         return;
     }
+
+    // Check if we should ignore this update (it's our own paste via double clickiing the card)
+    if let Ok(mut lock) = IGNORE_HASH.lock() {
+        if let Some(ignore_hash) = lock.take() {
+            if ignore_hash == clip_hash {
+                eprintln!("CLIPBOARD: Ignoring update for hash {} (detect self-paste)", ignore_hash);
+                return;
+            }
+        }
+    }
+
+    // capture source app info only if we are proceeding
+    let (source_app, source_icon) = get_clipboard_owner_app_info();
 
     // DB Logic
     let pool = &db.pool;
@@ -222,7 +231,7 @@ fn get_clipboard_owner_app_info() -> (Option<String>, Option<String>) {
         let path_size = GetModuleFileNameExW(Some(process_handle), None, &mut path_buffer);
         let (app_name, app_icon) = if path_size > 0 {
             let full_path = String::from_utf16_lossy(&path_buffer[..path_size as usize]);
-            
+
             let desc = get_app_description(&full_path);
             let final_name = if let Some(d) = desc {
                 eprintln!("CLIPBOARD: Found description '{}' for {}", d, full_path);
@@ -265,7 +274,7 @@ unsafe fn get_app_description(path: &str) -> Option<String> {
     }
 
     if lang_len < 4 { return None; }
-    
+
     let pairs = std::slice::from_raw_parts(lang_ptr as *const u16, (lang_len / 2) as usize);
     let num_pairs = (lang_len / 4) as usize;
 
@@ -277,25 +286,25 @@ unsafe fn get_app_description(path: &str) -> Option<String> {
         let code = pairs[i * 2];
         let charset = pairs[i * 2 + 1];
         eprintln!("CLIPBOARD: Found translation: lang={:04x}, charset={:04x}", code, charset);
-        
+
         // Prioritize Chinese Simplified (0x0804)
         if code == 0x0804 {
             lang_code = code;
             charset_code = charset;
         }
     }
-    
+
     eprintln!("CLIPBOARD: Using translation: lang={:04x}, charset={:04x}", lang_code, charset_code);
 
     let keys = ["FileDescription", "ProductName"];
-    
+
     for key in keys {
         let query_str = format!("\\StringFileInfo\\{:04x}{:04x}\\{}", lang_code, charset_code, key);
         let query = OsStr::new(&query_str).encode_wide().chain(std::iter::once(0)).collect::<Vec<u16>>();
-        
+
         let mut desc_ptr: *mut c_void = std::ptr::null_mut();
         let mut desc_len: u32 = 0;
-        
+
         if VerQueryValueW(data.as_ptr() as *const _, windows::core::PCWSTR(query.as_ptr()), &mut desc_ptr, &mut desc_len).as_bool() {
              let desc = std::slice::from_raw_parts(desc_ptr as *const u16, desc_len as usize);
              let len = if desc.last() == Some(&0) { desc.len() - 1 } else { desc.len() };

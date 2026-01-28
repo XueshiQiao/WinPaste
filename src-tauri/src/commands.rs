@@ -183,9 +183,13 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
 
             if clip.clip_type == "image" {
                 let base64_img = BASE64.encode(&clip.content);
+                // Set ignore hash before writing
+                crate::clipboard::set_ignore_hash(clip.content_hash.clone());
                 clipboard.write_image_base64(base64_img).map_err(|e| e.to_string())?;
             } else {
                 let content = String::from_utf8_lossy(&clip.content).to_string();
+                // Set ignore hash before writing
+                crate::clipboard::set_ignore_hash(clip.content_hash.clone());
                 clipboard.write_text(content).map_err(|e| e.to_string())?;
             }
 
