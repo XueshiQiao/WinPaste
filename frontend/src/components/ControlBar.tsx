@@ -38,10 +38,8 @@ export function ControlBar({
   totalClipCount,
   onFolderContextMenu,
 }: ControlBarProps) {
-  // Merge "All" (null), "Pinned" (special), and user folders
   const allCategories = [
     { id: null, name: 'Clipboard History', count: totalClipCount },
-    { id: 'pinned', name: 'Pinned' },
     ...folders.map((f) => ({ ...f, count: f.item_count })),
   ];
 
@@ -111,8 +109,6 @@ export function ControlBar({
           let activeClass = 'bg-primary/20 text-primary ring-1 ring-primary/50';
           if (cat.id === null)
             activeClass = 'bg-indigo-500/20 text-indigo-400 ring-1 ring-indigo-500/50';
-          else if (cat.id === 'pinned')
-            activeClass = 'bg-pink-500/20 text-pink-400 ring-1 ring-pink-500/50';
           else if (isActive) activeClass = 'bg-cyan-500/20 text-cyan-400 ring-1 ring-cyan-500/50';
 
           return (
@@ -125,7 +121,7 @@ export function ControlBar({
                  // MouseUp logic is handled globally in App.tsx, checking valid hover target
               }}
               onContextMenu={(e) => {
-                  if (onFolderContextMenu && cat.id && cat.id !== 'pinned') {
+                  if (onFolderContextMenu && cat.id) {
                       onFolderContextMenu(e, cat.id);
                   }
               }}

@@ -3,7 +3,6 @@ export interface ClipboardItem {
   clip_type: string;
   content: string;
   preview: string;
-  is_pinned: boolean;
   folder_id: string | null;
   created_at: string;
   source_app: string | null;

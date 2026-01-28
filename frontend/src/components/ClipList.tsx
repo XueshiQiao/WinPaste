@@ -12,7 +12,6 @@ interface ClipListProps {
   onPaste: (clipId: string) => void;
   onCopy: (clipId: string) => void;
   onDelete: (clipId: string) => void;
-  onPin: (clipId: string) => void;
   onLoadMore: () => void;
   onDragStart: (clipId: string, startX: number, startY: number) => void;
   onCardContextMenu?: (e: React.MouseEvent, clipId: string) => void;

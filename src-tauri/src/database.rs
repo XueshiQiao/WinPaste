@@ -38,7 +38,6 @@ impl Database {
                 text_preview TEXT,
                 content_hash TEXT NOT NULL,
                 folder_id INTEGER REFERENCES folders(id),
-                is_pinned INTEGER DEFAULT 0,
                 is_deleted INTEGER DEFAULT 0,
                 source_app TEXT,
                 source_icon TEXT,
@@ -74,9 +73,8 @@ impl Database {
             INSERT OR IGNORE INTO folders (id, name, is_system) VALUES (1, 'All', 1);
         "#).execute(&self.pool).await?;
 
-        sqlx::query(r#"
-            INSERT OR IGNORE INTO folders (id, name, is_system) VALUES (2, 'Pinned', 1);
-        "#).execute(&self.pool).await?;
+        // Cleanup Pinned folder if exists
+        sqlx::query("DELETE FROM folders WHERE id = 2").execute(&self.pool).await.ok();
 
         sqlx::query(r#"
             INSERT OR IGNORE INTO folders (id, name, is_system) VALUES (3, 'Recent', 1);
@@ -87,8 +85,8 @@ impl Database {
 
     pub async fn add_clip(&self, clip: &Clip) -> Result<i64, sqlx::Error> {
         let id = sqlx::query(r#"
-            INSERT INTO clips (uuid, clip_type, content, text_preview, content_hash, folder_id, is_pinned, source_app, source_icon, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO clips (uuid, clip_type, content, text_preview, content_hash, folder_id, source_app, source_icon, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#)
         .bind(&clip.uuid)
         .bind(&clip.clip_type)
@@ -96,7 +94,7 @@ impl Database {
         .bind(&clip.text_preview)
         .bind(&clip.content_hash)
         .bind(clip.folder_id)
-        .bind(clip.is_pinned as i32)
+        .bind(clip.folder_id)
         .bind(&clip.source_app)
         .bind(&clip.source_icon)
         .bind(&clip.metadata)
@@ -109,30 +107,10 @@ impl Database {
 
     pub async fn get_clips(&self, folder_id: Option<i64>, limit: i64, offset: i64) -> Result<Vec<Clip>, sqlx::Error> {
         let clips = match folder_id {
-            Some(2) => {
-                sqlx::query_as(r#"
-                    SELECT * FROM clips WHERE is_deleted = 0 AND is_pinned = 1
-                    ORDER BY created_at DESC LIMIT ? OFFSET ?
-                "#)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await?
-            }
-            Some(3) => {
-                sqlx::query_as(r#"
-                    SELECT * FROM clips WHERE is_deleted = 0
-                    ORDER BY created_at DESC LIMIT ? OFFSET ?
-                "#)
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await?
-            }
             Some(id) => {
                 sqlx::query_as(r#"
                     SELECT * FROM clips WHERE is_deleted = 0 AND folder_id = ?
-                    ORDER BY is_pinned DESC, created_at DESC LIMIT ? OFFSET ?
+                    ORDER BY created_at DESC LIMIT ? OFFSET ?
                 "#)
                 .bind(id)
                 .bind(limit)
@@ -143,7 +121,7 @@ impl Database {
             None => {
                 sqlx::query_as(r#"
                     SELECT * FROM clips WHERE is_deleted = 0
-                    ORDER BY is_pinned DESC, created_at DESC LIMIT ? OFFSET ?
+                    ORDER BY created_at DESC LIMIT ? OFFSET ?
                 "#)
                 .bind(limit)
                 .bind(offset)
@@ -201,27 +179,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn pin_clip(&self, clip_id: i64) -> Result<(), sqlx::Error> {
-        sqlx::query(r#"
-            UPDATE clips SET is_pinned = 1 WHERE id = ?
-        "#)
-        .bind(clip_id)
-        .execute(&self.pool)
-        .await?;
 
-        Ok(())
-    }
-
-    pub async fn unpin_clip(&self, clip_id: i64) -> Result<(), sqlx::Error> {
-        sqlx::query(r#"
-            UPDATE clips SET is_pinned = 0 WHERE id = ?
-        "#)
-        .bind(clip_id)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
-    }
 
     pub async fn delete_clip(&self, clip_id: i64) -> Result<(), sqlx::Error> {
         sqlx::query(r#"
@@ -293,7 +251,7 @@ impl Database {
         let clips = sqlx::query_as(r#"
             SELECT * FROM clips
             WHERE is_deleted = 0 AND text_preview LIKE ?
-            ORDER BY is_pinned DESC, created_at DESC
+            ORDER BY created_at DESC
             LIMIT ?
         "#)
         .bind(&search_pattern)
@@ -316,7 +274,7 @@ impl Database {
 
     pub async fn clear_history(&self) -> Result<(), sqlx::Error> {
         sqlx::query(r#"
-            UPDATE clips SET is_deleted = 1 WHERE is_pinned = 0
+            UPDATE clips SET is_deleted = 1
         "#)
         .execute(&self.pool)
         .await?;
@@ -327,7 +285,7 @@ impl Database {
     pub async fn delete_old_clips(&self, days: i64) -> Result<(), sqlx::Error> {
         sqlx::query(r#"
             UPDATE clips SET is_deleted = 1
-            WHERE is_deleted = 0 AND is_pinned = 0
+            WHERE is_deleted = 0
             AND created_at < datetime('now', ?)
         "#)
         .bind(format!("-{} days", days))

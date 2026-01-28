@@ -147,7 +147,6 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
             "id": existing_id,
             "content": clip_preview,
             "clip_type": clip_type,
-            "is_pinned": false,
             "source_app": source_app,
             "source_icon": source_icon,
             "created_at": chrono::Utc::now().to_rfc3339()
@@ -156,8 +155,8 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
         let clip_uuid = Uuid::new_v4().to_string();
 
         let _ = sqlx::query(r#"
-            INSERT INTO clips (uuid, clip_type, content, text_preview, content_hash, folder_id, is_pinned, is_deleted, source_app, source_icon, metadata, created_at, last_accessed)
-            VALUES (?, ?, ?, ?, ?, NULL, 0, 0, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO clips (uuid, clip_type, content, text_preview, content_hash, folder_id, is_deleted, source_app, source_icon, metadata, created_at, last_accessed)
+            VALUES (?, ?, ?, ?, ?, NULL, 0, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         "#)
         .bind(&clip_uuid)
         .bind(clip_type)
@@ -174,7 +173,6 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
             "id": clip_uuid,
             "content": clip_preview,
             "clip_type": clip_type,
-            "is_pinned": false,
             "source_app": source_app,
             "source_icon": source_icon,
             "created_at": chrono::Utc::now().to_rfc3339()

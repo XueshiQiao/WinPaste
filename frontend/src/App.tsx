@@ -282,7 +282,6 @@ function App() {
     onClose: () => appWindow.hide(),
     onSearch: () => setShowSearch(true),
     onDelete: () => handleDelete(selectedClipId),
-    onPin: () => handlePin(selectedClipId),
   });
 
   const handleSearch = async (query: string) => {
@@ -314,26 +313,6 @@ function App() {
       refreshTotalCount();
     } catch (error) {
       console.error('Failed to delete clip:', error);
-    }
-  };
-
-  const handlePin = async (clipId: string | null) => {
-    if (!clipId) return;
-    const clip = clips.find((c) => c.id === clipId);
-    if (!clip) return;
-
-    try {
-      if (clip.is_pinned) {
-        await invoke('unpin_clip', { id: clipId });
-      } else {
-        await invoke('pin_clip', { id: clipId });
-      }
-      setClips((prev) => {
-        const updated = prev.map((c) => (c.id === clipId ? { ...c, is_pinned: !c.is_pinned } : c));
-        return [...updated.filter((c) => c.is_pinned), ...updated.filter((c) => !c.is_pinned)];
-      });
-    } catch (error) {
-      console.error('Failed to pin/unpin clip:', error);
     }
   };
 
@@ -544,7 +523,6 @@ function App() {
           onPaste={handlePaste}
           onCopy={handleCopy}
           onDelete={handleDelete}
-          onPin={handlePin}
           onLoadMore={loadMore}
           // Simulated Drag Props
           onDragStart={startDrag}

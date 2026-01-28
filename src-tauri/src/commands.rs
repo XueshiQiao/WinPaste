@@ -15,8 +15,6 @@ struct Clip {
     text_preview: String,
     content_hash: String,
     folder_id: Option<i64>,
-    is_pinned: bool,
-    is_deleted: bool,
     source_app: Option<String>,
     source_icon: Option<String>,
     metadata: Option<String>,
@@ -40,7 +38,6 @@ pub(crate) struct ClipboardItem {
     pub clip_type: String,
     pub content: String,
     pub preview: String,
-    pub is_pinned: bool,
     pub folder_id: Option<String>,
     pub created_at: String,
     pub source_app: Option<String>,
@@ -65,16 +62,6 @@ pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, previ
     eprintln!("get_clips called with filter_id: {:?}, preview_only: {}", filter_id, preview_only);
 
     let clips: Vec<Clip> = match filter_id.as_deref() {
-        Some("pinned") => {
-            eprintln!("Querying for pinned items");
-            sqlx::query_as(r#"
-                SELECT * FROM clips WHERE is_deleted = 0 AND is_pinned = 1
-                ORDER BY created_at DESC LIMIT ? OFFSET ?
-            "#)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool).await.map_err(|e| e.to_string())?
-        }
         Some(id) => {
             let folder_id_num = id.parse::<i64>().ok();
             if let Some(numeric_id) = folder_id_num {
@@ -126,7 +113,6 @@ pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, previ
             clip_type: clip.clip_type.clone(),
             content: content_str,
             preview: clip.text_preview.clone(),
-            is_pinned: clip.is_pinned,
             folder_id: clip.folder_id.map(|id| id.to_string()),
             created_at: clip.created_at.to_rfc3339(),
             source_app: clip.source_app.clone(),
@@ -158,7 +144,6 @@ pub async fn get_clip(id: String, db: tauri::State<'_, Arc<Database>>) -> Result
                 clip_type: clip.clip_type,
                 content: content_str,
                 preview: clip.text_preview,
-                is_pinned: clip.is_pinned,
                 folder_id: clip.folder_id.map(|id| id.to_string()),
                 created_at: clip.created_at.to_rfc3339(),
                 source_app: clip.source_app,
@@ -217,25 +202,7 @@ pub async fn delete_clip(id: String, hard_delete: bool, db: tauri::State<'_, Arc
     Ok(())
 }
 
-#[tauri::command]
-pub async fn pin_clip(id: String, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
-    let pool = &db.pool;
 
-    sqlx::query(r#"UPDATE clips SET is_pinned = NOT is_pinned WHERE uuid = ?"#)
-        .bind(&id)
-        .execute(pool).await.map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn unpin_clip(id: String, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
-    let pool = &db.pool;
-
-    sqlx::query(r#"UPDATE clips SET is_pinned = 0 WHERE uuid = ?"#)
-        .bind(&id)
-        .execute(pool).await.map_err(|e| e.to_string())?;
-    Ok(())
-}
 
 #[tauri::command]
 pub async fn move_to_folder(clip_id: String, folder_id: Option<String>, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
@@ -324,16 +291,6 @@ pub async fn search_clips(query: String, filter_id: Option<String>, limit: i64, 
     let search_pattern = format!("%{}%", query);
 
     let clips: Vec<Clip> = match filter_id.as_deref() {
-        Some("pinned") => {
-            sqlx::query_as(r#"
-                SELECT * FROM clips WHERE is_deleted = 0 AND is_pinned = 1 AND (text_preview LIKE ? OR content LIKE ?)
-                ORDER BY created_at DESC LIMIT ?
-            "#)
-            .bind(&search_pattern)
-            .bind(&search_pattern)
-            .bind(limit)
-            .fetch_all(pool).await.map_err(|e| e.to_string())?
-        }
         Some(id) => {
             let folder_id_num = id.parse::<i64>().ok();
             if let Some(numeric_id) = folder_id_num {
@@ -374,7 +331,6 @@ pub async fn search_clips(query: String, filter_id: Option<String>, limit: i64, 
             clip_type: clip.clip_type.clone(),
             content: content_str,
             preview: clip.text_preview.clone(),
-            is_pinned: clip.is_pinned,
             folder_id: clip.folder_id.map(|id| id.to_string()),
             created_at: clip.created_at.to_rfc3339(),
             source_app: clip.source_app.clone(),
