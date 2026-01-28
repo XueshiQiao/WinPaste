@@ -9,7 +9,7 @@
   - Clipboard monitoring and history storage.
   - Search functionality.
   - Organization (Folders: All, Pinned, Recent).
-  - Keyboard shortcuts (`Ctrl+Alt+V` default).
+  - Keyboard shortcuts (`Ctrl+Shift+V` default).
   - Modern, dark-themed UI with virtualized list for performance.
 
 ## 2. Technical Architecture

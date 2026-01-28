@@ -4,6 +4,7 @@ use tauri::{
     tray::TrayIconBuilder,
     Manager,
 };
+use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use std::fs;
 use std::sync::Arc;
@@ -42,6 +43,7 @@ pub fn run_app() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard::init())
+        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--flag1", "--flag2"])))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(db_arc.clone())
         .on_window_event(|window, event| {

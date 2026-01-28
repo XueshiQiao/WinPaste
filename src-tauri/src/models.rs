@@ -55,7 +55,7 @@ impl Default for Settings {
             auto_delete_days: 30,
             startup_with_windows: true,
             show_in_taskbar: false,
-            hotkey: "Ctrl+Alt+V".to_string(),
+            hotkey: "Ctrl+Shift+V".to_string(),
             theme: "dark".to_string(),
         }
     }

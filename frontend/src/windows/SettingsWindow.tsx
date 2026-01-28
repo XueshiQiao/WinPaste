@@ -32,6 +32,7 @@ export function SettingsWindow() {
       handleClose();
     } catch (error) {
       console.error('Failed to save settings:', error);
+      alert(`Failed to save settings: ${error}`);
     }
   };
 

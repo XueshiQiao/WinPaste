@@ -380,15 +380,16 @@ pub async fn get_folders(db: tauri::State<'_, Arc<Database>>) -> Result<Vec<Fold
 }
 
 #[tauri::command]
-pub async fn get_settings(db: tauri::State<'_, Arc<Database>>) -> Result<serde_json::Value, String> {
+pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -> Result<serde_json::Value, String> {
+    use tauri_plugin_autostart::ManagerExt;
     let pool = &db.pool;
 
     let mut settings = serde_json::json!({
         "max_items": 1000,
         "auto_delete_days": 30,
-        "startup_with_windows": true,
+        "startup_with_windows": false, // Default, will override below
         "show_in_taskbar": false,
-        "hotkey": "Ctrl+Alt+V",
+        "hotkey": "Ctrl+Shift+V",
         "theme": "dark",
     });
 
@@ -414,11 +415,20 @@ pub async fn get_settings(db: tauri::State<'_, Arc<Database>>) -> Result<serde_j
         settings["theme"] = serde_json::json!(value);
     }
 
+    // Check actual autostart status
+    if let Ok(is_enabled) = app.autolaunch().is_enabled() {
+        settings["startup_with_windows"] = serde_json::json!(is_enabled);
+        eprintln!("autostart enabled: {}", is_enabled);
+    } else {
+        eprintln!("autostart not enabled");
+    }
+
     Ok(settings)
 }
 
 #[tauri::command]
-pub async fn save_settings(settings: serde_json::Value, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
+pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
     let pool = &db.pool;
 
     if let Some(max_items) = settings.get("max_items").and_then(|v| v.as_i64()) {
@@ -437,6 +447,14 @@ pub async fn save_settings(settings: serde_json::Value, db: tauri::State<'_, Arc
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('theme', ?)"#)
             .bind(theme)
             .execute(pool).await.ok();
+    }
+
+    if let Some(startup) = settings.get("startup_with_windows").and_then(|v| v.as_bool()) {
+        if startup {
+             app.autolaunch().enable().map_err(|e| e.to_string())?;
+        } else {
+             app.autolaunch().disable().map_err(|e| e.to_string())?;
+        }
     }
 
     Ok(())
