@@ -128,7 +128,7 @@ const ClipCard = memo(function ClipCard({
   const renderedContent = useMemo(() => {
     if (clip.clip_type === 'image') {
       return (
-        <div className="flex h-full w-full items-center justify-center">
+        <div className="flex h-full w-full select-none items-center justify-center">
           <img
             src={`data:image/png;base64,${clip.content}`}
             alt="Clipboard Image"
@@ -138,7 +138,7 @@ const ClipCard = memo(function ClipCard({
       );
     } else {
       return (
-        <pre className="whitespace-pre-wrap break-all font-mono text-[11px] leading-tight text-foreground">
+        <pre className="cursor-text select-text whitespace-pre-wrap break-all font-mono text-[11px] leading-tight text-foreground">
           <span>{clip.content.substring(0, PREVIEW_CHAR_LIMIT)}</span>
         </pre>
       );
@@ -192,7 +192,7 @@ const ClipCard = memo(function ClipCard({
         onClick={onSelect}
         onDoubleClick={onPaste}
         className={clsx(
-          'relative flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all',
+          'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all',
           isSelected
             ? 'z-10 scale-[1.02] transform ring-4 ring-blue-500'
             : 'hover:-translate-y-1 hover:ring-2 hover:ring-primary/30'
