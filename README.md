@@ -4,13 +4,13 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 
 ## Features
 
+- 🔒 **Private** - IMPORTANT! All data stored locally
 - 📋 **Clipboard History** - Automatically saves everything you copy
+- 🖥️ **Support multiple Displays** - Show on the active display
 - 🔍 **Search** - Quickly find previously copied content
-- 📌 **Pin Items** - Keep important clips permanently
 - 📁 **Folders** - Organize clips into custom folders
 - 🎨 **Beautiful UI** - Modern dark theme with smooth animations
 - ⚡ **Fast & Lightweight** - Built with Rust for performance
-- 🔒 **Private** - All data stored locally
 
 ## Tech Stack
 
