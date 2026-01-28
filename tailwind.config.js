@@ -44,15 +44,6 @@ export default {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
           border: "hsl(var(--sidebar-border))",
-        },
-        // Syntax highlighting
-        syntax: {
-          bg: "hsl(var(--syntax-bg))",
-          keyword: "hsl(var(--syntax-keyword))",
-          string: "hsl(var(--syntax-string))",
-          number: "hsl(var(--syntax-number))",
-          bracket: "hsl(var(--syntax-bracket))",
-          default: "hsl(var(--syntax-default))",
         }
       },
     },

@@ -28,13 +28,7 @@
     --sidebar-foreground: 222 47% 11%;
     --sidebar-border: 214.3 31.8% 91.4%;
 
-    /* Syntax Highlighting - Light (Modernized) */
-    --syntax-bg: 210 20% 98%;
-    --syntax-default: 222 47% 11%;
-    --syntax-keyword: 221.2 83.2% 53.3%;
-    --syntax-string: 142.1 76.2% 36.3%;
-    --syntax-number: 215.4 16.3% 46.9%;
-    --syntax-bracket: 221.2 83.2% 53.3%;
+    
   }
 
   .dark {
@@ -63,14 +57,7 @@
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
 
-    /* Syntax Highlighting - Dark */
-    --syntax-bg: 0 0% 12%; /* #1E1E1E */
-    --syntax-default: 0 0% 83%; /* #D4D4D4 */
-    --syntax-keyword: 207 61% 59%; /* #569CD6 */
-    --syntax-string: 95 38% 62%; /* #B5CEA8 - actually string was green #6A9955 which is 98 25 47 */
-    --syntax-string: 98 26% 47%;
-    --syntax-number: 95 38% 62%; /* #B5CEA8 */
-    --syntax-bracket: 48 96% 53%; /* #FFD700 */
+    
   }
 
   * {

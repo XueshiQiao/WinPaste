@@ -1,7 +1,8 @@
-import { ClipboardItem } from '../types';
-import { clsx } from 'clsx';
-import { useRef } from 'react';
-import { LAYOUT, TOTAL_COLUMN_WIDTH } from '../constants';
+import { ClipboardItem } from "../types";
+import { clsx } from "clsx";
+import { useRef, useMemo } from "react";
+import { memo } from "react";
+import { LAYOUT, TOTAL_COLUMN_WIDTH } from "../constants";
 
 interface ClipListProps {
   clips: ClipboardItem[];
@@ -36,7 +37,7 @@ export function ClipList({
 
     // If scrolled within 300px of the end
     if (scrollLeft + clientWidth >= scrollWidth - 300) {
-      console.log('Scroll to end detected (native), loading more...');
+      console.log("Scroll to end detected (native), loading more...");
       onLoadMore();
     }
   };
@@ -63,7 +64,9 @@ export function ClipList({
   if (clips.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full text-center p-8">
-        <h3 className="text-lg font-semibold mb-2 text-gray-400">No clips yet</h3>
+        <h3 className="text-lg font-semibold mb-2 text-gray-400">
+          No clips yet
+        </h3>
         <p className="text-sm text-gray-500 max-w-xs">
           Copy something to your clipboard and it will appear here.
         </p>
@@ -79,7 +82,7 @@ export function ClipList({
       onWheel={handleWheel}
       style={{
         // Smooth scrolling disabled per user request
-        scrollBehavior: 'auto'
+        scrollBehavior: "auto",
       }}
     >
       {clips.map((clip) => (
@@ -94,9 +97,9 @@ export function ClipList({
 
       {/* Loading indicator at the end */}
       {isLoading && clips.length > 0 && (
-         <div className="h-full flex items-center justify-center min-w-[100px]">
-            <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-         </div>
+        <div className="h-full flex items-center justify-center min-w-[100px]">
+          <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
       )}
 
       {/* Spacer end */}
@@ -105,18 +108,39 @@ export function ClipList({
   );
 }
 
-function ClipCard({
+const ClipCard = memo(function ClipCard({
   clip,
   isSelected,
   onSelect,
-  onPaste
+  onPaste,
 }: {
-  clip: ClipboardItem,
-  isSelected: boolean,
-  onSelect: () => void,
-  onPaste: () => void
+  clip: ClipboardItem;
+  isSelected: boolean;
+  onSelect: () => void;
+  onPaste: () => void;
 }) {
   const title = clip.source_app || clip.clip_type.toUpperCase();
+
+  // Memoize the content rendering
+  const renderedContent = useMemo(() => {
+    if (clip.clip_type === "image") {
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          <img
+            src={`data:image/png;base64,${clip.content}`}
+            alt="Clipboard Image"
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      );
+    } else {
+      return (
+        <pre className="font-mono text-[11px] leading-tight whitespace-pre-wrap break-all text-foreground">
+          <span>{clip.content}</span>
+        </pre>
+      );
+    }
+  }, [clip.clip_type, clip.content]);
 
   // Generate distinct color based on source app name
   const getAppColor = (name: string) => {
@@ -125,11 +149,21 @@ function ClipCard({
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const colors = [
-      'bg-red-400', 'bg-orange-400', 'bg-amber-400', 
-      'bg-green-400', 'bg-emerald-400', 'bg-teal-400', 
-      'bg-cyan-400', 'bg-sky-400', 'bg-blue-400', 
-      'bg-indigo-400', 'bg-violet-400', 'bg-purple-400', 
-      'bg-fuchsia-400', 'bg-pink-400', 'bg-rose-400'
+      "bg-red-400",
+      "bg-orange-400",
+      "bg-amber-400",
+      "bg-green-400",
+      "bg-emerald-400",
+      "bg-teal-400",
+      "bg-cyan-400",
+      "bg-sky-400",
+      "bg-blue-400",
+      "bg-indigo-400",
+      "bg-violet-400",
+      "bg-purple-400",
+      "bg-fuchsia-400",
+      "bg-pink-400",
+      "bg-rose-400",
     ];
     return colors[Math.abs(hash) % colors.length];
   };
@@ -140,7 +174,10 @@ function ClipCard({
     <div
       style={{
         width: TOTAL_COLUMN_WIDTH - LAYOUT.CARD_GAP,
-        height: LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT - (LAYOUT.CARD_VERTICAL_PADDING * 2)
+        height:
+          LAYOUT.WINDOW_HEIGHT -
+          LAYOUT.CONTROL_BAR_HEIGHT -
+          LAYOUT.CARD_VERTICAL_PADDING * 2,
       }}
       className="flex-shrink-0"
     >
@@ -148,13 +185,18 @@ function ClipCard({
         onClick={onSelect}
         onDoubleClick={onPaste}
         className={clsx(
-          'w-full h-full flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all shadow-lg bg-card border border-border relative',
+          "w-full h-full flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all shadow-lg bg-card border border-border relative",
           isSelected
-            ? 'ring-4 ring-blue-500 transform scale-[1.02] z-10'
-            : 'hover:ring-2 hover:ring-primary/30 hover:-translate-y-1'
+            ? "ring-4 ring-blue-500 transform scale-[1.02] z-10"
+            : "hover:ring-2 hover:ring-primary/30 hover:-translate-y-1",
         )}
       >
-        <div className={clsx(headerColor, "px-4 py-2 flex items-center gap-2 flex-shrink-0")}>
+        <div
+          className={clsx(
+            headerColor,
+            "px-4 py-2 flex items-center gap-2 flex-shrink-0",
+          )}
+        >
           {clip.source_icon && (
             <img
               src={`data:image/png;base64,${clip.source_icon}`}
@@ -168,35 +210,18 @@ function ClipCard({
         </div>
 
         <div className="flex-1 bg-card p-3 overflow-hidden relative">
-          {clip.clip_type === 'image' ? (
-             <div className="w-full h-full flex items-center justify-center">
-               <img
-                 src={`data:image/png;base64,${clip.content}`}
-                 alt="Clipboard Image"
-                 className="max-w-full max-h-full object-contain"
-               />
-             </div>
-          ) : (
-            <pre className="font-mono text-[11px] leading-tight whitespace-pre-wrap break-all text-syntax-default">
-              {clip.content.split(/(\s+)/).map((word, i) => {
-                let colorClass = "text-syntax-default";
-                if (/^(const|let|var|function|return|import|from|class|if|else|export|default|async|await)$/.test(word)) colorClass = "text-syntax-keyword";
-                else if (/^('.*'|".*"|`.*`)$/.test(word)) colorClass = "text-syntax-string";
-                else if (/^\d+$/.test(word)) colorClass = "text-syntax-number";
-                else if (/[{}()[\]]/.test(word)) colorClass = "text-syntax-bracket";
-                return <span key={i} className={colorClass}>{word}</span>
-              })}
-            </pre>
-          )}
+          {renderedContent}
           <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
         </div>
 
         <div className="bg-secondary px-3 py-1.5 border-t border-border flex-shrink-0">
           <span className="text-[10px] text-muted-foreground font-medium">
-             {clip.clip_type === 'image' ? `Image (${Math.round(clip.content.length * 0.75 / 1024)}KB)` : `${clip.content.length} characters`}
+            {clip.clip_type === "image"
+              ? `Image (${Math.round((clip.content.length * 0.75) / 1024)}KB)`
+              : `${clip.content.length} characters`}
           </span>
         </div>
       </div>
     </div>
   );
-}
+});

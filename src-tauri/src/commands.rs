@@ -93,7 +93,7 @@ pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, previ
             }
         }
         None => {
-            eprintln!("Querying for all items");
+            eprintln!("Querying for items, offset: {}, limit: {}", offset, limit);
             sqlx::query_as(r#"
                 SELECT * FROM clips WHERE is_deleted = 0
                 ORDER BY created_at DESC LIMIT ? OFFSET ?
