@@ -8,6 +8,7 @@ import { ClipList } from './components/ClipList';
 import { ControlBar } from './components/ControlBar';
 import { DragPreview } from './components/DragPreview';
 import { ContextMenu } from './components/ContextMenu';
+import { FolderModal } from './components/FolderModal';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTheme } from './hooks/useTheme';
 
@@ -78,7 +79,7 @@ function App() {
     });
 
     settingsWin.once('tauri://created', function () {
-      console.log('Settings window created');
+
     });
 
     settingsWin.once('tauri://error', function (e) {
@@ -89,18 +90,11 @@ function App() {
   const loadClips = useCallback(
     async (folderId: string | null, append: boolean = false) => {
       try {
-        console.log(
-          'loadClips START | folderId:',
-          folderId,
-          'append:',
-          append,
-          'currentClips:',
-          clips.length
-        );
+
         setIsLoading(true);
 
         const currentOffset = append ? clips.length : 0;
-        console.log('Fetching with offset:', currentOffset);
+
 
         const data = await invoke<ClipboardItem[]>('get_clips', {
           filterId: folderId,
@@ -109,15 +103,15 @@ function App() {
           previewOnly: false, // Load full image data directly
         });
 
-        console.log('Clips loaded:', data.length);
+
 
         if (append) {
           setClips((prev) => {
-            console.log('Appending clips. Prev:', prev.length, 'New:', data.length);
+
             return [...prev, ...data];
           });
         } else {
-          console.log('Setting new clips');
+
           setClips(data);
         }
 
@@ -134,9 +128,9 @@ function App() {
 
   const loadFolders = useCallback(async () => {
     try {
-      console.log('Loading folders...');
+
       const data = await invoke<FolderItem[]>('get_folders');
-      console.log('Folders loaded:', data);
+
       setFolders(data);
     } catch (error) {
       console.error('Failed to load folders:', error);
@@ -144,12 +138,12 @@ function App() {
   }, []);
 
   const refreshCurrentFolder = useCallback(() => {
-    console.log('Refreshing folder:', selectedFolderRef.current);
+
     loadClips(selectedFolderRef.current);
   }, [loadClips]);
 
   useEffect(() => {
-    console.log('Folder changed to:', selectedFolder);
+
     loadFolders();
     if (searchQuery.trim()) {
       handleSearch(searchQuery);
@@ -194,9 +188,6 @@ function App() {
       }
 
       if (dragStateRef.current.isDragging) {
-        const { clipId, targetFolderId } = dragStateRef.current;
-        console.log('[SimulatedDrag] MouseUp. Clip:', clipId, 'Target:', targetFolderId);
-
         finishDrag();
       }
     };
@@ -272,9 +263,9 @@ function App() {
   }, [refreshTotalCount]);
 
   useEffect(() => {
-    console.log('Setting up clipboard listener');
-    const unlistenClipboard = listen('clipboard-change', (event) => {
-      console.log('Clipboard changed event received:', event);
+
+    const unlistenClipboard = listen('clipboard-change', () => {
+
       refreshCurrentFolder();
       loadFolders(); // Refresh folders to get updated counts
       refreshTotalCount(); // Refresh total count
@@ -561,58 +552,16 @@ function App() {
         />
 
         {/* Add/Rename Folder Modal Overlay */}
-        {showAddFolderModal && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="w-80 rounded-xl border border-border bg-card p-6 shadow-2xl">
-              <h3 className="mb-4 text-lg font-semibold text-foreground">
-                  {folderModalMode === 'create' ? 'Create New Folder' : 'Rename Folder'}
-              </h3>
-              <input
-                autoFocus
-                type="text"
-                placeholder="Folder Name"
-                className="mb-4 w-full rounded-md border border-input bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (newFolderName.trim()) {
-                      handleCreateOrRenameFolder(newFolderName.trim());
-                      setNewFolderName('');
-                      setShowAddFolderModal(false);
-                    }
-                  } else if (e.key === 'Escape') {
-                    setShowAddFolderModal(false);
-                    setNewFolderName('');
-                  }
-                }}
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowAddFolderModal(false);
-                    setNewFolderName('');
-                  }}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (newFolderName.trim()) {
-                      handleCreateOrRenameFolder(newFolderName.trim());
-                      setNewFolderName('');
-                      setShowAddFolderModal(false);
-                    }
-                  }}
-                  className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  {folderModalMode === 'create' ? 'Create' : 'Save'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <FolderModal
+            isOpen={showAddFolderModal}
+            mode={folderModalMode}
+            initialName={newFolderName}
+            onClose={() => {
+                setShowAddFolderModal(false);
+                setNewFolderName('');
+            }}
+            onSubmit={handleCreateOrRenameFolder}
+        />
       </main>
     </div>
   );

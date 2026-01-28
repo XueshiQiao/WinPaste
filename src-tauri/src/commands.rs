@@ -257,6 +257,15 @@ pub async fn move_to_folder(clip_id: String, folder_id: Option<String>, db: taur
 pub async fn create_folder(name: String, icon: Option<String>, color: Option<String>, db: tauri::State<'_, Arc<Database>>) -> Result<FolderItem, String> {
     let pool = &db.pool;
 
+    // Check if folder with same name exists (excluding system folders if we wanted, but name uniqueness is good generally)
+    let exists: Option<i64> = sqlx::query_scalar("SELECT 1 FROM folders WHERE name = ?")
+        .bind(&name)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())?;
+
+    if exists.is_some() {
+        return Err("A folder with this name already exists".to_string());
+    }
+
     let id = sqlx::query(r#"INSERT INTO folders (name, icon, color) VALUES (?, ?, ?)"#)
         .bind(&name)
         .bind(icon.as_ref())
@@ -290,6 +299,17 @@ pub async fn rename_folder(id: String, name: String, db: tauri::State<'_, Arc<Da
     let pool = &db.pool;
 
     let folder_id: i64 = id.parse().map_err(|_| "Invalid folder ID")?;
+
+    // Check availability
+    let exists: Option<i64> = sqlx::query_scalar("SELECT 1 FROM folders WHERE name = ? AND id != ?")
+        .bind(&name)
+        .bind(folder_id)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())?;
+
+    if exists.is_some() {
+        return Err("A folder with this name already exists".to_string());
+    }
+
     sqlx::query(r#"UPDATE folders SET name = ? WHERE id = ?"#)
         .bind(name)
         .bind(folder_id)
