@@ -51,6 +51,7 @@ pub fn run_app() {
         .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--flag1", "--flag2"])))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_opener::init())
         .manage(db_arc.clone())
         .on_window_event(|window, event| {
             match event {
@@ -184,7 +185,8 @@ pub fn run_app() {
             commands::get_ignored_apps,
             commands::pick_file,
             commands::get_layout_config,
-            commands::test_log
+            commands::test_log,
+            commands::get_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

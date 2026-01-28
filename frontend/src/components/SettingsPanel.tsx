@@ -2,6 +2,7 @@ import { Settings } from '../types';
 import { X, Save, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { toast } from 'sonner';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useShortcutRecorder } from 'use-shortcut-recorder';
@@ -36,6 +37,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
 
   const [ignoredApps, setIgnoredApps] = useState<string[]>([]);
   const [newIgnoredApp, setNewIgnoredApp] = useState('');
+  const [appVersion, setAppVersion] = useState('');
 
   // Confirmation Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -53,39 +55,40 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
   useEffect(() => {
     invoke<number>('get_clipboard_history_size').then(setHistorySize).catch(console.error);
     invoke<string[]>('get_ignored_apps').then(setIgnoredApps).catch(console.error);
+    invoke<string>('get_version').then(setAppVersion).catch(console.error);
   }, []);
 
   const handleAddIgnoredApp = async () => {
     if (!newIgnoredApp.trim()) return;
     try {
-        await invoke('add_ignored_app', { appName: newIgnoredApp.trim() });
-        setIgnoredApps(prev => [...prev, newIgnoredApp.trim()].sort());
-        setNewIgnoredApp('');
-        toast.success(`Added ${newIgnoredApp.trim()} to ignored apps`);
+      await invoke('add_ignored_app', { appName: newIgnoredApp.trim() });
+      setIgnoredApps((prev) => [...prev, newIgnoredApp.trim()].sort());
+      setNewIgnoredApp('');
+      toast.success(`Added ${newIgnoredApp.trim()} to ignored apps`);
     } catch (e) {
-        toast.error(`Failed to add ignored app: ${e}`);
-        console.error(e);
+      toast.error(`Failed to add ignored app: ${e}`);
+      console.error(e);
     }
   };
 
   const handleBrowseFile = async () => {
     try {
-        const path = await invoke<string>('pick_file');
-        const filename = path.split('\\').pop() || path;
-        setNewIgnoredApp(filename);
+      const path = await invoke<string>('pick_file');
+      const filename = path.split('\\').pop() || path;
+      setNewIgnoredApp(filename);
     } catch (e) {
-         console.log('File picker cancelled or failed', e);
+      console.log('File picker cancelled or failed', e);
     }
   };
 
   const handleRemoveIgnoredApp = async (app: string) => {
     try {
-        await invoke('remove_ignored_app', { appName: app });
-        setIgnoredApps(prev => prev.filter(a => a !== app));
-        toast.success(`Removed ${app} from ignored apps`);
+      await invoke('remove_ignored_app', { appName: app });
+      setIgnoredApps((prev) => prev.filter((a) => a !== app));
+      toast.success(`Removed ${app} from ignored apps`);
     } catch (e) {
-        toast.error(`Failed to remove ignored app: ${e}`);
-        console.error(e);
+      toast.error(`Failed to remove ignored app: ${e}`);
+      console.error(e);
     }
   };
 
@@ -93,8 +96,8 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
     try {
       await invoke('register_global_shortcut', { hotkey: settings.hotkey });
     } catch (error) {
-       toast.warning(`Failed to register hotkey: ${error}`);
-       console.error('Failed to register hotkey:', error);
+      toast.warning(`Failed to register hotkey: ${error}`);
+      console.error('Failed to register hotkey:', error);
     }
     onSave(settings);
   };
@@ -103,33 +106,36 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
     setConfirmDialog({
       isOpen: true,
       title: 'Clear History',
-      message: 'Are you sure you want to clear your ENTIRE clipboard history? This cannot be undone.',
+      message:
+        'Are you sure you want to clear your ENTIRE clipboard history? This cannot be undone.',
       action: async () => {
-          try {
-              await invoke('clear_all_clips');
-              setHistorySize(0);
-              toast.success('Clipboard history cleared successfully.');
-          } catch (error) {
-              console.error('Failed to clear history:', error);
-              toast.error(`Failed to clear history: ${error}`);
-          }
+        try {
+          await invoke('clear_all_clips');
+          setHistorySize(0);
+          toast.success('Clipboard history cleared successfully.');
+        } catch (error) {
+          console.error('Failed to clear history:', error);
+          toast.error(`Failed to clear history: ${error}`);
+        }
       },
     });
   };
 
   // Format shortcut array into Tauri-compatible string (e.g., ["Control", "Shift", "KeyV"] -> "Ctrl+Shift+V")
   const formatHotkey = (keys: string[]): string => {
-    return keys.map(k => {
-      if (k === 'Control') return 'Ctrl';
-      if (k === 'Alt') return 'Alt';
-      if (k === 'Shift') return 'Shift';
-      if (k === 'Meta') return 'Cmd';
-      // Convert KeyX to X
-      if (k.startsWith('Key')) return k.slice(3);
-      // Convert Digit0-9 to 0-9
-      if (k.startsWith('Digit')) return k.slice(5);
-      return k;
-    }).join('+');
+    return keys
+      .map((k) => {
+        if (k === 'Control') return 'Ctrl';
+        if (k === 'Alt') return 'Alt';
+        if (k === 'Shift') return 'Shift';
+        if (k === 'Meta') return 'Cmd';
+        // Convert KeyX to X
+        if (k.startsWith('Key')) return k.slice(3);
+        // Convert Digit0-9 to 0-9
+        if (k.startsWith('Digit')) return k.slice(5);
+        return k;
+      })
+      .join('+');
   };
 
   // Handle saving the recorded hotkey
@@ -158,29 +164,30 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
 
   return (
     <>
-    <ConfirmDialog
+      <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
         message={confirmDialog.message}
         onConfirm={async () => {
-            await confirmDialog.action();
-            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          await confirmDialog.action();
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         }}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-    />
-    <div className="flex h-full flex-col bg-background text-foreground">
-      <div className="drag-area flex items-center justify-between border-b border-border p-4">
-        <h2 className="text-lg font-semibold">Settings</h2>
-        <button onClick={onClose} className="icon-button">
-          <X size={18} />
-        </button>
-      </div>
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
+      <div className="flex h-full flex-col bg-background text-foreground">
+        <div className="drag-area flex items-center justify-between border-b border-border p-4">
+          <h2 className="text-lg font-semibold">Settings</h2>
+          <button onClick={onClose} className="icon-button">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 space-y-8 overflow-y-auto p-4 px-6">
-
-        {/* General Section */}
-        <section className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">General</h3>
+        <div className="flex-1 space-y-8 overflow-y-auto p-4 px-6">
+          {/* General Section */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+              General
+            </h3>
 
             <div className="space-y-3">
               <label className="block">
@@ -200,7 +207,9 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
             <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
               <div>
                 <span className="text-sm font-medium">Startup with Windows</span>
-                <p className="text-xs text-muted-foreground">Automatically start when Windows boots</p>
+                <p className="text-xs text-muted-foreground">
+                  Automatically start when Windows boots
+                </p>
               </div>
               <button
                 onClick={() =>
@@ -217,10 +226,10 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
                 />
               </button>
             </div>
-        </section>
+          </section>
 
-        {/* History Storage Section - TEMP DISABLED: Backend support pending */}
-        {/*
+          {/* History Storage Section - TEMP DISABLED: Backend support pending */}
+          {/*
         <section className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Clipboard History</h3>
 
@@ -275,9 +284,11 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
         </section>
         */}
 
-        {/* Shortcuts Section */}
-        <section className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Shortcuts</h3>
+          {/* Shortcuts Section */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+              Shortcuts
+            </h3>
             <div className="space-y-3">
               <label className="block">
                 <span className="text-sm font-medium">Global Hotkey</span>
@@ -285,7 +296,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
               </label>
               {isRecordingMode ? (
                 <div className="space-y-2">
-                  <div className="flex w-full items-center gap-2 rounded-lg border border-primary ring-2 ring-primary bg-input px-3 py-2 text-sm">
+                  <div className="flex w-full items-center gap-2 rounded-lg border border-primary bg-input px-3 py-2 text-sm ring-2 ring-primary">
                     <span className="animate-pulse text-primary">
                       {shortcut.length > 0
                         ? formatHotkey(shortcut)
@@ -298,13 +309,13 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
                     <button
                       onClick={handleSaveHotkey}
                       disabled={savedShortcut.length === 0}
-                      className="px-3 py-1 text-xs rounded bg-primary text-primary-foreground disabled:opacity-50"
+                      className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground disabled:opacity-50"
                     >
                       Save
                     </button>
                     <button
                       onClick={handleCancelRecording}
-                      className="px-3 py-1 text-xs rounded bg-muted text-muted-foreground"
+                      className="rounded bg-muted px-3 py-1 text-xs text-muted-foreground"
                     >
                       Cancel
                     </button>
@@ -315,112 +326,134 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
                   onClick={handleStartRecording}
                   className="flex w-full items-center gap-2 rounded-lg border border-border bg-input px-3 py-2 text-sm transition-colors hover:border-primary"
                 >
-                  <span className="font-mono font-medium bg-accent px-2 py-0.5 rounded text-xs">{settings.hotkey}</span>
+                  <span className="rounded bg-accent px-2 py-0.5 font-mono text-xs font-medium">
+                    {settings.hotkey}
+                  </span>
                 </button>
               )}
             </div>
-        </section>
+          </section>
 
-        {/* Privacy Section */}
-        <section className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Privacy Exceptions</h3>
+          {/* Privacy Section */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+              Privacy Exceptions
+            </h3>
 
-             <div className="space-y-3">
-                <label className="block">
-                    <span className="text-sm font-medium">Ignored Applications</span>
-                    <p className="text-xs text-muted-foreground">Prevent recording from specific apps (filename or path).</p>
-                </label>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium">Ignored Applications</span>
+                <p className="text-xs text-muted-foreground">
+                  Prevent recording from specific apps (filename or path).
+                </p>
+              </label>
 
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={newIgnoredApp}
-                        onChange={(e) => setNewIgnoredApp(e.target.value)}
-                        placeholder="e.g. notepad.exe"
-                        className="flex-1 rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddIgnoredApp()}
-                    />
-                    <button
-                        onClick={handleBrowseFile}
-                        className="btn btn-secondary px-3"
-                        title="Browse executable"
-                    >
-                        <FolderOpen size={16} />
-                    </button>
-                    <button
-                        onClick={handleAddIgnoredApp}
-                        disabled={!newIgnoredApp.trim()}
-                        className="btn btn-secondary px-3"
-                        title="Add to list"
-                    >
-                        <Plus size={16} />
-                    </button>
-                </div>
-
-                <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-                    {ignoredApps.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-border p-4 text-center">
-                            <p className="text-xs text-muted-foreground">No ignored applications</p>
-                        </div>
-                    ) : (
-                        ignoredApps.map(app => (
-                            <div key={app} className="group flex items-center justify-between rounded-md border border-transparent bg-accent/30 px-3 py-2 text-sm hover:border-border hover:bg-accent/50">
-                                <span className="font-mono text-xs">{app}</span>
-                                <button
-                                    onClick={() => handleRemoveIgnoredApp(app)}
-                                    className="opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
-        </section>
-
-        {/* Danger Zone Section */}
-        <section className="space-y-4">
-             <h3 className="text-xs font-bold uppercase tracking-wider text-red-500/80">Data Management</h3>
-
-             <div className="grid grid-cols-2 gap-3">
-                 <button onClick={confirmClearHistory} className="btn border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20">
-                    <Trash2 size={16} className="mr-2" />
-                    Clear History
-                 </button>
-
-                 <button
-                  onClick={async () => {
-                    try {
-                      const count = await invoke<number>('remove_duplicate_clips');
-                      toast.success(`Removed ${count} duplicate clips`);
-                      const newSize = await invoke<number>('get_clipboard_history_size');
-                      setHistorySize(newSize);
-                    } catch (error) {
-                      console.error(error);
-                      toast.error(`Failed to remove duplicates: ${error}`);
-                    }
-                  }}
-                  className="btn btn-secondary text-xs"
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newIgnoredApp}
+                  onChange={(e) => setNewIgnoredApp(e.target.value)}
+                  placeholder="e.g. notepad.exe"
+                  className="flex-1 rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddIgnoredApp()}
+                />
+                <button
+                  onClick={handleBrowseFile}
+                  className="btn btn-secondary px-3"
+                  title="Browse executable"
                 >
-                  Remove Duplicates
+                  <FolderOpen size={16} />
                 </button>
-             </div>
+                <button
+                  onClick={handleAddIgnoredApp}
+                  disabled={!newIgnoredApp.trim()}
+                  className="btn btn-secondary px-3"
+                  title="Add to list"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
 
+              <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+                {ignoredApps.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                    <p className="text-xs text-muted-foreground">No ignored applications</p>
+                  </div>
+                ) : (
+                  ignoredApps.map((app) => (
+                    <div
+                      key={app}
+                      className="group flex items-center justify-between rounded-md border border-transparent bg-accent/30 px-3 py-2 text-sm hover:border-border hover:bg-accent/50"
+                    >
+                      <span className="font-mono text-xs">{app}</span>
+                      <button
+                        onClick={() => handleRemoveIgnoredApp(app)}
+                        className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
 
-        </section>
+          {/* Danger Zone Section */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-red-500/80">
+              Data Management
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={confirmClearHistory}
+                className="btn border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20"
+              >
+                <Trash2 size={16} className="mr-2" />
+                Clear History
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const count = await invoke<number>('remove_duplicate_clips');
+                    toast.success(`Removed ${count} duplicate clips`);
+                    const newSize = await invoke<number>('get_clipboard_history_size');
+                    setHistorySize(newSize);
+                  } catch (error) {
+                    console.error(error);
+                    toast.error(`Failed to remove duplicates: ${error}`);
+                  }
+                }}
+                className="btn btn-secondary text-xs"
+              >
+                Remove Duplicates
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-background p-4">
+          <button onClick={onClose} className="btn btn-secondary">
+            Cancel
+          </button>
+          <button onClick={handleSave} className="btn btn-primary">
+            <Save size={16} className="mr-2" />
+            Save
+          </button>
+        </div>
+
+        <div className="border-t border-border bg-background px-4 py-3 text-center">
+          <button
+            onClick={() => openUrl('https://github.com/XueshiQiao/WinPaste').catch(console.error)}
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            WinPaste {appVersion || '...'}
+          </button>
+          <span className="text-xs text-muted-foreground"> © 2025</span>
+        </div>
       </div>
-
-      <div className="flex items-center justify-end gap-2 border-t border-border bg-background p-4">
-        <button onClick={onClose} className="btn btn-secondary">
-          Cancel
-        </button>
-        <button onClick={handleSave} className="btn btn-primary">
-          <Save size={16} className="mr-2" />
-          Save
-        </button>
-      </div>
-    </div>
     </>
   );
 }
