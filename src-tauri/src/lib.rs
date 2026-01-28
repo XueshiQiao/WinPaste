@@ -185,8 +185,7 @@ pub fn run_app() {
             commands::get_ignored_apps,
             commands::pick_file,
             commands::get_layout_config,
-            commands::test_log,
-            commands::get_version
+            commands::test_log
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,6 +2,7 @@ import { Settings } from '../types';
 import { X, Save, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { toast } from 'sonner';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -55,7 +56,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
   useEffect(() => {
     invoke<number>('get_clipboard_history_size').then(setHistorySize).catch(console.error);
     invoke<string[]>('get_ignored_apps').then(setIgnoredApps).catch(console.error);
-    invoke<string>('get_version').then(setAppVersion).catch(console.error);
+    getVersion().then(setAppVersion).catch(console.error);
   }, []);
 
   const handleAddIgnoredApp = async () => {
