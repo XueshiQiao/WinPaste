@@ -79,9 +79,7 @@ function App() {
       center: true,
     });
 
-    settingsWin.once('tauri://created', function () {
-
-    });
+    settingsWin.once('tauri://created', function () {});
 
     settingsWin.once('tauri://error', function (e) {
       console.error('Error creating settings window', e);
@@ -91,11 +89,9 @@ function App() {
   const loadClips = useCallback(
     async (folderId: string | null, append: boolean = false, searchQuery: string = '') => {
       try {
-
         setIsLoading(true);
 
         const currentOffset = append ? clips.length : 0;
-
 
         let data: ClipboardItem[];
 
@@ -115,15 +111,11 @@ function App() {
           });
         }
 
-
-
         if (append) {
           setClips((prev) => {
-
             return [...prev, ...data];
           });
         } else {
-
           setClips(data);
         }
 
@@ -140,7 +132,6 @@ function App() {
 
   const loadFolders = useCallback(async () => {
     try {
-
       const data = await invoke<FolderItem[]>('get_folders');
 
       setFolders(data);
@@ -152,8 +143,6 @@ function App() {
   const refreshCurrentFolder = useCallback(() => {
     loadClips(selectedFolderRef.current, false, searchQuery);
   }, [loadClips, searchQuery]);
-
-
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -226,13 +215,13 @@ function App() {
 
   const finishDrag = () => {
     if (dragStateRef.current.targetFolderId !== undefined && dragStateRef.current.clipId) {
-        // We only move if targetFolderId was explicitly set by a hover event.
-        // Wait, how do we distinguish "Not Hovering" vs "Hovering 'All' (null)"?
-        // We will make ControlBar pass a specific sentinel for "No Target" when leaving?
-        // Or simply: ControlBar tracks hover. If hover, it calls setDragTargetFolderId.
-        // If we drop and dragTargetFolderId is valid, we move.
-        // BUT 'null' is a valid folder ID (All).
-        // Let's use a generic 'undefined' for "No Target".
+      // We only move if targetFolderId was explicitly set by a hover event.
+      // Wait, how do we distinguish "Not Hovering" vs "Hovering 'All' (null)"?
+      // We will make ControlBar pass a specific sentinel for "No Target" when leaving?
+      // Or simply: ControlBar tracks hover. If hover, it calls setDragTargetFolderId.
+      // If we drop and dragTargetFolderId is valid, we move.
+      // BUT 'null' is a valid folder ID (All).
+      // Let's use a generic 'undefined' for "No Target".
     }
 
     // Actually, simpler:
@@ -244,44 +233,47 @@ function App() {
 
     const { clipId, targetFolderId } = dragStateRef.current;
     if (clipId && targetFolderId !== undefined && targetFolderId !== 'NO_TARGET') {
-        handleMoveClip(clipId, targetFolderId);
+      handleMoveClip(clipId, targetFolderId);
     }
 
     setDraggingClipId(null);
     setDragTargetFolderId(null);
-    dragStateRef.current = { isDragging: false, clipId: null, targetFolderId: 'NO_TARGET', pendingDrag: null };
+    dragStateRef.current = {
+      isDragging: false,
+      clipId: null,
+      targetFolderId: 'NO_TARGET',
+      pendingDrag: null,
+    };
   };
 
   const handleDragHover = (folderId: string | null) => {
-      setDragTargetFolderId(folderId);
-      dragStateRef.current.targetFolderId = folderId;
+    setDragTargetFolderId(folderId);
+    dragStateRef.current.targetFolderId = folderId;
   };
 
   const handleDragLeave = () => {
-      setDragTargetFolderId(null);
-      dragStateRef.current.targetFolderId = 'NO_TARGET';
+    setDragTargetFolderId(null);
+    dragStateRef.current.targetFolderId = 'NO_TARGET';
   };
 
   // Total History Count
   const [totalClipCount, setTotalClipCount] = useState(0);
 
   const refreshTotalCount = useCallback(async () => {
-      try {
-          const count = await invoke<number>('get_clipboard_history_size');
-          setTotalClipCount(count);
-      } catch (e) {
-          console.error('Failed to get history size', e);
-      }
+    try {
+      const count = await invoke<number>('get_clipboard_history_size');
+      setTotalClipCount(count);
+    } catch (e) {
+      console.error('Failed to get history size', e);
+    }
   }, []);
 
   useEffect(() => {
-      refreshTotalCount();
+    refreshTotalCount();
   }, [refreshTotalCount]);
 
   useEffect(() => {
-
     const unlistenClipboard = listen('clipboard-change', () => {
-
       refreshCurrentFolder();
       loadFolders(); // Refresh folders to get updated counts
       refreshTotalCount(); // Refresh total count
@@ -299,8 +291,6 @@ function App() {
     onSearch: () => setShowSearch(true),
     onDelete: () => handleDelete(selectedClipId),
   });
-
-
 
   const handleDelete = async (clipId: string | null) => {
     if (!clipId) return;
@@ -368,9 +358,7 @@ function App() {
         }
       } else {
         // If we are in "All clips" view, just update the folder_id
-        setClips((prev) =>
-          prev.map((c) => (c.id === clipId ? { ...c, folder_id: folderId } : c))
-        );
+        setClips((prev) => prev.map((c) => (c.id === clipId ? { ...c, folder_id: folderId } : c)));
       }
       // Refresh counts after move
       loadFolders();
@@ -392,19 +380,18 @@ function App() {
   const [folderModalMode, setFolderModalMode] = useState<'create' | 'rename'>('create');
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
 
-  const handleContextMenu = useCallback((
-    e: React.MouseEvent,
-    type: 'card' | 'folder',
-    itemId: string
-  ) => {
-    e.preventDefault();
-    setContextMenu({
-      type,
-      x: e.clientX,
-      y: e.clientY,
-      itemId,
-    });
-  }, []);
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, type: 'card' | 'folder', itemId: string) => {
+      e.preventDefault();
+      setContextMenu({
+        type,
+        x: e.clientX,
+        y: e.clientY,
+        itemId,
+      });
+    },
+    []
+  );
 
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
@@ -434,60 +421,57 @@ function App() {
   const handleDeleteFolder = async (folderId: string) => {
     if (!folderId) return;
     try {
-        await invoke('delete_folder', { id: folderId });
-        if (selectedFolder === folderId) {
-            setSelectedFolder(null);
-        }
-        await loadFolders();
-        refreshTotalCount();
-        toast.success('Folder deleted');
+      await invoke('delete_folder', { id: folderId });
+      if (selectedFolder === folderId) {
+        setSelectedFolder(null);
+      }
+      await loadFolders();
+      refreshTotalCount();
+      toast.success('Folder deleted');
     } catch (error) {
-        console.error('Failed to delete folder:', error);
-        toast.error('Failed to delete folder');
+      console.error('Failed to delete folder:', error);
+      toast.error('Failed to delete folder');
     }
   };
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background font-sans text-foreground">
       {draggingClipId && (
-        <DragPreview
-          clip={clips.find(c => c.id === draggingClipId)!}
-          position={dragPosition}
-        />
+        <DragPreview clip={clips.find((c) => c.id === draggingClipId)!} position={dragPosition} />
       )}
 
       {contextMenu && (
         <ContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            onClose={handleCloseContextMenu}
-            options={
-                contextMenu.type === 'card'
-                ? [
-                    {
-                        label: 'Delete',
-                        danger: true,
-                        onClick: () => handleDelete(contextMenu.itemId),
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          options={
+            contextMenu.type === 'card'
+              ? [
+                  {
+                    label: 'Delete',
+                    danger: true,
+                    onClick: () => handleDelete(contextMenu.itemId),
+                  },
+                ]
+              : [
+                  {
+                    label: 'Rename',
+                    onClick: () => {
+                      setFolderModalMode('rename');
+                      setEditingFolderId(contextMenu.itemId);
+                      const folder = folders.find((f) => f.id === contextMenu.itemId);
+                      setNewFolderName(folder ? folder.name : '');
+                      setShowAddFolderModal(true);
                     },
-                  ]
-                : [
-                    {
-                        label: 'Rename',
-                        onClick: () => {
-                            setFolderModalMode('rename');
-                            setEditingFolderId(contextMenu.itemId);
-                            const folder = folders.find(f => f.id === contextMenu.itemId);
-                            setNewFolderName(folder ? folder.name : '');
-                            setShowAddFolderModal(true);
-                        },
-                    },
-                    {
-                        label: 'Delete',
-                        danger: true,
-                        onClick: () => handleDeleteFolder(contextMenu.itemId),
-                    },
-                  ]
-            }
+                  },
+                  {
+                    label: 'Delete',
+                    danger: true,
+                    onClick: () => handleDeleteFolder(contextMenu.itemId),
+                  },
+                ]
+          }
         />
       )}
 
@@ -518,7 +502,7 @@ function App() {
         onDragLeave={handleDragLeave}
         totalClipCount={totalClipCount}
         onFolderContextMenu={(e, folderId) => {
-            if (folderId) handleContextMenu(e, 'folder', folderId);
+          if (folderId) handleContextMenu(e, 'folder', folderId);
         }}
       />
 
@@ -540,14 +524,14 @@ function App() {
 
         {/* Add/Rename Folder Modal Overlay */}
         <FolderModal
-            isOpen={showAddFolderModal}
-            mode={folderModalMode}
-            initialName={newFolderName}
-            onClose={() => {
-                setShowAddFolderModal(false);
-                setNewFolderName('');
-            }}
-            onSubmit={handleCreateOrRenameFolder}
+          isOpen={showAddFolderModal}
+          mode={folderModalMode}
+          initialName={newFolderName}
+          onClose={() => {
+            setShowAddFolderModal(false);
+            setNewFolderName('');
+          }}
+          onSubmit={handleCreateOrRenameFolder}
         />
       </main>
       <Toaster richColors position="bottom-center" theme={theme === 'light' ? 'light' : 'dark'} />

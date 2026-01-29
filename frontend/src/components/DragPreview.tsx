@@ -30,10 +30,21 @@ export function DragPreview({ clip, position }: DragPreviewProps) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const colors = [
-      'bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-green-400',
-      'bg-emerald-400', 'bg-teal-400', 'bg-cyan-400', 'bg-sky-400',
-      'bg-blue-400', 'bg-indigo-400', 'bg-violet-400', 'bg-purple-400',
-      'bg-fuchsia-400', 'bg-pink-400', 'bg-rose-400',
+      'bg-red-400',
+      'bg-orange-400',
+      'bg-amber-400',
+      'bg-green-400',
+      'bg-emerald-400',
+      'bg-teal-400',
+      'bg-cyan-400',
+      'bg-sky-400',
+      'bg-blue-400',
+      'bg-indigo-400',
+      'bg-violet-400',
+      'bg-purple-400',
+      'bg-fuchsia-400',
+      'bg-pink-400',
+      'bg-rose-400',
     ];
     return colors[Math.abs(hash) % colors.length];
   };
@@ -43,7 +54,7 @@ export function DragPreview({ clip, position }: DragPreviewProps) {
 
   return (
     <div
-      className="fixed z-50 pointer-events-none w-64 overflow-hidden rounded-xl border border-border bg-card shadow-xl opacity-90 ring-2 ring-primary"
+      className="pointer-events-none fixed z-50 w-64 overflow-hidden rounded-xl border border-border bg-card opacity-90 shadow-xl ring-2 ring-primary"
       style={{
         left: position.x,
         top: position.y,
@@ -53,23 +64,23 @@ export function DragPreview({ clip, position }: DragPreviewProps) {
       <div className={clsx(headerColor, 'flex items-center gap-2 px-3 py-1.5')}>
         <Icon size={12} className="text-white/80" />
         {clip.source_icon && (
-            <img
-              src={`data:image/png;base64,${clip.source_icon}`}
-              alt=""
-              className="h-3 w-3 object-contain"
-            />
-          )}
+          <img
+            src={`data:image/png;base64,${clip.source_icon}`}
+            alt=""
+            className="h-3 w-3 object-contain"
+          />
+        )}
         <span className="flex-1 truncate text-[10px] font-bold uppercase tracking-wider text-white">
           {title}
         </span>
       </div>
-      <div className="p-2 bg-card">
+      <div className="bg-card p-2">
         {clip.clip_type === 'image' ? (
-           <div className="flex h-16 items-center justify-center bg-secondary/30 rounded">
-             <span className="text-xs text-muted-foreground">Image Preview</span>
-           </div>
+          <div className="flex h-16 items-center justify-center rounded bg-secondary/30">
+            <span className="text-xs text-muted-foreground">Image Preview</span>
+          </div>
         ) : (
-          <pre className="whitespace-pre-wrap break-all font-mono text-[10px] leading-tight text-foreground line-clamp-3">
+          <pre className="line-clamp-3 whitespace-pre-wrap break-all font-mono text-[10px] leading-tight text-foreground">
             {clip.content.substring(0, 100)}
           </pre>
         )}

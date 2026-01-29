@@ -78,8 +78,8 @@ export const ClipCard = memo(function ClipCard({
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
-      e.preventDefault();
-      onContextMenu?.(e);
+    e.preventDefault();
+    onContextMenu?.(e);
   };
 
   return (

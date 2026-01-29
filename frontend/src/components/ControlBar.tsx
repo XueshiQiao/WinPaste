@@ -53,28 +53,78 @@ export function ControlBar({
     onDragLeave();
   };
 
-
   const getFolderColor = (name: string) => {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const colors = [
-        { active: 'bg-red-400/30 text-red-400 ring-2 ring-red-500/50 font-bold', inactive: 'bg-red-400/10 text-red-400/80 hover:bg-red-400/20 hover:text-red-400' },
-        { active: 'bg-orange-400/30 text-orange-400 ring-2 ring-orange-500/50 font-bold', inactive: 'bg-orange-400/10 text-orange-400/80 hover:bg-orange-400/20 hover:text-orange-400' },
-        { active: 'bg-amber-400/30 text-amber-400 ring-2 ring-amber-500/50 font-bold', inactive: 'bg-amber-400/10 text-amber-400/80 hover:bg-amber-400/20 hover:text-amber-400' },
-        { active: 'bg-green-400/30 text-green-400 ring-2 ring-green-500/50 font-bold', inactive: 'bg-green-400/10 text-green-400/80 hover:bg-green-400/20 hover:text-green-400' },
-        { active: 'bg-emerald-400/30 text-emerald-400 ring-2 ring-emerald-500/50 font-bold', inactive: 'bg-emerald-400/10 text-emerald-400/80 hover:bg-emerald-400/20 hover:text-emerald-400' },
-        { active: 'bg-teal-400/30 text-teal-400 ring-2 ring-teal-500/50 font-bold', inactive: 'bg-teal-400/10 text-teal-400/80 hover:bg-teal-400/20 hover:text-teal-400' },
-        { active: 'bg-cyan-400/30 text-cyan-400 ring-2 ring-cyan-500/50 font-bold', inactive: 'bg-cyan-400/10 text-cyan-400/80 hover:bg-cyan-400/20 hover:text-cyan-400' },
-        { active: 'bg-sky-400/30 text-sky-400 ring-2 ring-sky-500/50 font-bold', inactive: 'bg-sky-400/10 text-sky-400/80 hover:bg-sky-400/20 hover:text-sky-400' },
-        { active: 'bg-blue-400/30 text-blue-400 ring-2 ring-blue-500/50 font-bold', inactive: 'bg-blue-400/10 text-blue-400/80 hover:bg-blue-400/20 hover:text-blue-400' },
-        { active: 'bg-indigo-400/30 text-indigo-400 ring-2 ring-indigo-500/50 font-bold', inactive: 'bg-indigo-400/10 text-indigo-400/80 hover:bg-indigo-400/20 hover:text-indigo-400' },
-        { active: 'bg-violet-400/30 text-violet-400 ring-2 ring-violet-500/50 font-bold', inactive: 'bg-violet-400/10 text-violet-400/80 hover:bg-violet-400/20 hover:text-violet-400' },
-        { active: 'bg-purple-400/30 text-purple-400 ring-2 ring-purple-500/50 font-bold', inactive: 'bg-purple-400/10 text-purple-400/80 hover:bg-purple-400/20 hover:text-purple-400' },
-        { active: 'bg-fuchsia-400/30 text-fuchsia-400 ring-2 ring-fuchsia-500/50 font-bold', inactive: 'bg-fuchsia-400/10 text-fuchsia-400/80 hover:bg-fuchsia-400/20 hover:text-fuchsia-400' },
-        { active: 'bg-pink-400/30 text-pink-400 ring-2 ring-pink-500/50 font-bold', inactive: 'bg-pink-400/10 text-pink-400/80 hover:bg-pink-400/20 hover:text-pink-400' },
-        { active: 'bg-rose-400/30 text-rose-400 ring-2 ring-rose-500/50 font-bold', inactive: 'bg-rose-400/10 text-rose-400/80 hover:bg-rose-400/20 hover:text-rose-400' },
+      {
+        active: 'bg-red-400/30 text-red-400 ring-2 ring-red-500/50 font-bold',
+        inactive: 'bg-red-400/10 text-red-400/80 hover:bg-red-400/20 hover:text-red-400',
+      },
+      {
+        active: 'bg-orange-400/30 text-orange-400 ring-2 ring-orange-500/50 font-bold',
+        inactive:
+          'bg-orange-400/10 text-orange-400/80 hover:bg-orange-400/20 hover:text-orange-400',
+      },
+      {
+        active: 'bg-amber-400/30 text-amber-400 ring-2 ring-amber-500/50 font-bold',
+        inactive: 'bg-amber-400/10 text-amber-400/80 hover:bg-amber-400/20 hover:text-amber-400',
+      },
+      {
+        active: 'bg-green-400/30 text-green-400 ring-2 ring-green-500/50 font-bold',
+        inactive: 'bg-green-400/10 text-green-400/80 hover:bg-green-400/20 hover:text-green-400',
+      },
+      {
+        active: 'bg-emerald-400/30 text-emerald-400 ring-2 ring-emerald-500/50 font-bold',
+        inactive:
+          'bg-emerald-400/10 text-emerald-400/80 hover:bg-emerald-400/20 hover:text-emerald-400',
+      },
+      {
+        active: 'bg-teal-400/30 text-teal-400 ring-2 ring-teal-500/50 font-bold',
+        inactive: 'bg-teal-400/10 text-teal-400/80 hover:bg-teal-400/20 hover:text-teal-400',
+      },
+      {
+        active: 'bg-cyan-400/30 text-cyan-400 ring-2 ring-cyan-500/50 font-bold',
+        inactive: 'bg-cyan-400/10 text-cyan-400/80 hover:bg-cyan-400/20 hover:text-cyan-400',
+      },
+      {
+        active: 'bg-sky-400/30 text-sky-400 ring-2 ring-sky-500/50 font-bold',
+        inactive: 'bg-sky-400/10 text-sky-400/80 hover:bg-sky-400/20 hover:text-sky-400',
+      },
+      {
+        active: 'bg-blue-400/30 text-blue-400 ring-2 ring-blue-500/50 font-bold',
+        inactive: 'bg-blue-400/10 text-blue-400/80 hover:bg-blue-400/20 hover:text-blue-400',
+      },
+      {
+        active: 'bg-indigo-400/30 text-indigo-400 ring-2 ring-indigo-500/50 font-bold',
+        inactive:
+          'bg-indigo-400/10 text-indigo-400/80 hover:bg-indigo-400/20 hover:text-indigo-400',
+      },
+      {
+        active: 'bg-violet-400/30 text-violet-400 ring-2 ring-violet-500/50 font-bold',
+        inactive:
+          'bg-violet-400/10 text-violet-400/80 hover:bg-violet-400/20 hover:text-violet-400',
+      },
+      {
+        active: 'bg-purple-400/30 text-purple-400 ring-2 ring-purple-500/50 font-bold',
+        inactive:
+          'bg-purple-400/10 text-purple-400/80 hover:bg-purple-400/20 hover:text-purple-400',
+      },
+      {
+        active: 'bg-fuchsia-400/30 text-fuchsia-400 ring-2 ring-fuchsia-500/50 font-bold',
+        inactive:
+          'bg-fuchsia-400/10 text-fuchsia-400/80 hover:bg-fuchsia-400/20 hover:text-fuchsia-400',
+      },
+      {
+        active: 'bg-pink-400/30 text-pink-400 ring-2 ring-pink-500/50 font-bold',
+        inactive: 'bg-pink-400/10 text-pink-400/80 hover:bg-pink-400/20 hover:text-pink-400',
+      },
+      {
+        active: 'bg-rose-400/30 text-rose-400 ring-2 ring-rose-500/50 font-bold',
+        inactive: 'bg-rose-400/10 text-rose-400/80 hover:bg-rose-400/20 hover:text-rose-400',
+      },
     ];
     return colors[Math.abs(hash) % colors.length];
   };
@@ -132,19 +182,21 @@ export function ControlBar({
           const isActive = selectedFolder === cat.id;
 
           // Define colors based on category
-          let colorClass = 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground';
+          let colorClass =
+            'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground';
 
           if (cat.id === null) {
-              // System "All" Folder
-              if (isActive) {
-                  colorClass = 'bg-indigo-500/20 text-indigo-400 ring-1 ring-indigo-500/50 font-bold';
-              } else {
-                  colorClass = 'bg-indigo-500/10 text-indigo-400/80 hover:bg-indigo-500/20 hover:text-indigo-400';
-              }
+            // System "All" Folder
+            if (isActive) {
+              colorClass = 'bg-indigo-500/20 text-indigo-400 ring-1 ring-indigo-500/50 font-bold';
+            } else {
+              colorClass =
+                'bg-indigo-500/10 text-indigo-400/80 hover:bg-indigo-500/20 hover:text-indigo-400';
+            }
           } else {
-              // Custom Folder - Use dynamic color
-              const style = getFolderColor(cat.name);
-              colorClass = isActive ? style.active : style.inactive;
+            // Custom Folder - Use dynamic color
+            const style = getFolderColor(cat.name);
+            colorClass = isActive ? style.active : style.inactive;
           }
 
           return (
@@ -154,26 +206,24 @@ export function ControlBar({
               onMouseEnter={() => handleMouseEnter(cat.id)}
               onMouseLeave={handleMouseLeave}
               onMouseUp={() => {
-                 // MouseUp logic is handled globally
+                // MouseUp logic is handled globally
               }}
               onContextMenu={(e) => {
-                  if (onFolderContextMenu && cat.id) {
-                      onFolderContextMenu(e, cat.id);
-                  }
+                if (onFolderContextMenu && cat.id) {
+                  onFolderContextMenu(e, cat.id);
+                }
               }}
               style={{ WebkitAppRegion: 'no-drag' } as any}
               className={clsx(
                 'whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
                 colorClass,
-                isDragging && cat.id === dragTargetFolderId && 'ring-2 ring-primary bg-accent'
+                isDragging && cat.id === dragTargetFolderId && 'bg-accent ring-2 ring-primary'
               )}
             >
               {cat.name}
               {/* Show count badge if defined and > 0 */}
-              {(cat.count !== undefined && cat.count > 0) && (
-                <span className="ml-2 text-[10px] opacity-70">
-                    {cat.count}
-                </span>
+              {cat.count !== undefined && cat.count > 0 && (
+                <span className="ml-2 text-[10px] opacity-70">{cat.count}</span>
               )}
             </button>
           );

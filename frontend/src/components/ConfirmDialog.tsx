@@ -20,7 +20,7 @@ export function ConfirmDialog({
   cancelText = 'Cancel',
   onConfirm,
   onCancel,
-  variant = 'danger'
+  variant = 'danger',
 }: ConfirmDialogProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -35,13 +35,17 @@ export function ConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md scale-100 rounded-lg border border-border bg-background p-6 shadow-lg animate-in zoom-in-95 duration-200">
+    <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm duration-200">
+      <div className="animate-in zoom-in-95 w-full max-w-md scale-100 rounded-lg border border-border bg-background p-6 shadow-lg duration-200">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                variant === 'danger' ? 'bg-destructive/10 text-destructive' : 'bg-yellow-500/10 text-yellow-500'
-            }`}>
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                variant === 'danger'
+                  ? 'bg-destructive/10 text-destructive'
+                  : 'bg-yellow-500/10 text-yellow-500'
+              }`}
+            >
               <AlertTriangle size={18} />
             </div>
             <h3 className="text-lg font-semibold">{title}</h3>
@@ -51,9 +55,7 @@ export function ConfirmDialog({
           </button>
         </div>
 
-        <p className="mb-6 text-sm text-muted-foreground">
-          {message}
-        </p>
+        <p className="mb-6 text-sm text-muted-foreground">{message}</p>
 
         <div className="flex justify-end gap-3">
           <button

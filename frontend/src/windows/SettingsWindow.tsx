@@ -55,7 +55,11 @@ export function SettingsWindow() {
   return (
     <div className="h-screen bg-background text-foreground">
       <SettingsPanel settings={settings} onClose={handleClose} onSave={handleSave} />
-      <Toaster richColors position="bottom-center" theme={settings.theme === 'light' ? 'light' : 'dark'} />
+      <Toaster
+        richColors
+        position="bottom-center"
+        theme={settings.theme === 'light' ? 'light' : 'dark'}
+      />
     </div>
   );
 }

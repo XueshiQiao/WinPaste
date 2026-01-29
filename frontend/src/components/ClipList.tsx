@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import { ClipboardItem } from '../types';
 import { ClipCard } from './ClipCard';
 
-
 interface ClipListProps {
   clips: ClipboardItem[];
   isLoading: boolean;

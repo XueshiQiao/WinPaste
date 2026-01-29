@@ -14,35 +14,35 @@ export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: Fo
 
   useEffect(() => {
     if (isOpen) {
-        setIsSubmitting(false); // Reset on open
-        if (inputRef.current) {
-            // slight delay to ensure render
-            setTimeout(() => inputRef.current?.focus(), 50);
-            // If rename, select all text
-            if (mode === 'rename') {
-                setTimeout(() => inputRef.current?.select(), 50);
-            }
+      setIsSubmitting(false); // Reset on open
+      if (inputRef.current) {
+        // slight delay to ensure render
+        setTimeout(() => inputRef.current?.focus(), 50);
+        // If rename, select all text
+        if (mode === 'rename') {
+          setTimeout(() => inputRef.current?.select(), 50);
         }
+      }
     }
   }, [isOpen, mode]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
-      if (isSubmitting) return;
-      const val = inputRef.current?.value.trim();
-      if (val) {
-          setIsSubmitting(true);
-          await onSubmit(val);
-          setIsSubmitting(false);
-      }
+    if (isSubmitting) return;
+    const val = inputRef.current?.value.trim();
+    if (val) {
+      setIsSubmitting(true);
+      await onSubmit(val);
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-80 rounded-xl border border-border bg-card p-6 shadow-2xl">
         <h3 className="mb-4 text-lg font-semibold text-foreground">
-            {mode === 'create' ? 'Create New Folder' : 'Rename Folder'}
+          {mode === 'create' ? 'Create New Folder' : 'Rename Folder'}
         </h3>
         <input
           ref={inputRef}
@@ -71,7 +71,7 @@ export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: Fo
             disabled={isSubmitting}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : (mode === 'create' ? 'Create' : 'Save')}
+            {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create' : 'Save'}
           </button>
         </div>
       </div>
