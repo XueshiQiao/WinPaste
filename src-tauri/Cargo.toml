@@ -1,6 +1,6 @@
 [package]
 name = "pastepaw"
-version = "1.0.2"
+version = "1.0.3"
 description = "A beautiful clipboard history manager for Windows"
 authors = ["you"]
 edition = "2021"
