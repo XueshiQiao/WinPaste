@@ -277,19 +277,19 @@ export function ControlBar({
           // Define colors based on category
           let colorClass =
             theme === 'light'
-              ? 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white drop-shadow-sm'
-              : 'bg-secondary text-white hover:bg-secondary/80 hover:text-white drop-shadow-sm';
+              ? 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white'
+              : 'bg-secondary text-white hover:bg-secondary/80 hover:text-white';
 
           if (cat.id === null) {
             // System "All" Folder
             if (theme === 'light') {
               colorClass = isActive
-                ? 'bg-slate-600 text-white ring-1 ring-slate-500/50 font-bold drop-shadow-sm'
-                : 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white drop-shadow-sm';
+                ? 'bg-slate-600 text-white ring-1 ring-slate-500/50 font-bold'
+                : 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white';
             } else {
               colorClass = isActive
-                ? 'bg-indigo-500/20 text-white ring-1 ring-indigo-500/50 font-bold drop-shadow-sm'
-                : 'bg-indigo-500/10 text-white/80 hover:bg-indigo-500/20 hover:text-white drop-shadow-sm';
+                ? 'bg-indigo-500/20 text-white ring-1 ring-indigo-500/50 font-bold'
+                : 'bg-indigo-500/10 text-white/80 hover:bg-indigo-500/20 hover:text-white';
             }
           } else {
             // Custom Folder - Use dynamic color
@@ -311,7 +311,13 @@ export function ControlBar({
                   onFolderContextMenu(e, cat.id);
                 }
               }}
-              style={{ WebkitAppRegion: 'no-drag' } as any}
+              style={
+                {
+                  WebkitAppRegion: 'no-drag',
+                  textShadow:
+                    theme === 'light' ? '0 1px 3px rgba(0,0,0,0.8)' : '0 1px 2px rgba(0,0,0,0.7)',
+                } as any
+              }
               className={clsx(
                 'whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all',
                 colorClass,

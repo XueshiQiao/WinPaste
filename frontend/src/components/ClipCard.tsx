@@ -110,7 +110,7 @@ export const ClipCard = memo(function ClipCard({
               className="h-4 w-4 object-contain"
             />
           )}
-          <span className="flex-1 truncate text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm">
+          <span className="flex-1 truncate text-[10px] font-bold uppercase tracking-wider text-foreground">
             {title}
           </span>
         </div>
