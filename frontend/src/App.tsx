@@ -56,6 +56,7 @@ function App() {
     const unlisten = listen<Settings>('settings-changed', (event) => {
       setTheme(event.payload.theme);
     });
+
     return () => {
       unlisten.then((f) => f());
     };

@@ -4,7 +4,7 @@ version = "1.0.7"
 description = "A beautiful clipboard history manager for Windows"
 authors = ["XueshiQiao"]
 license = "GPL-3.0"
-edition = "2026"
+edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

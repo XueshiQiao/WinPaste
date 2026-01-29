@@ -1,7 +1,9 @@
 import { Settings } from '../types';
 import { X, Save, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import { invoke } from '@tauri-apps/api/core';
+import { emit } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { toast } from 'sonner';
@@ -18,6 +20,27 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [_historySize, setHistorySize] = useState<number>(0);
   const [isRecordingMode, setIsRecordingMode] = useState(false);
+
+  // Apply theme immediately when settings.theme changes
+  useTheme(settings.theme);
+
+  const handleThemeChange = async (newTheme: string) => {
+    const newSettings = { ...settings, theme: newTheme };
+    setSettings(newSettings);
+
+    // Auto-save theme immediately
+    try {
+      // We pass the full settings object to ensure consistency,
+      // though backend supports partials if we struct it right.
+      // Simpler to just save 'settings' with updated theme.
+      await invoke('save_settings', { settings: newSettings });
+      // Emit change so main window updates
+      await emit('settings-changed', newSettings);
+    } catch (error) {
+      console.error('Failed to auto-save theme:', error);
+      toast.error('Failed to save theme preference');
+    }
+  };
 
   // Use use-shortcut-recorder for recording (shows current keys held in real-time)
   const {
@@ -196,7 +219,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
               </label>
               <select
                 value={settings.theme}
-                onChange={(e) => setSettings({ ...settings, theme: e.target.value })}
+                onChange={(e) => handleThemeChange(e.target.value)}
                 className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="dark">Dark</option>

@@ -360,14 +360,14 @@ unsafe fn extract_icon(path: &str) -> Option<String> {
 
     let icon = shfi.hIcon;
     struct IconGuard(windows::Win32::UI::WindowsAndMessaging::HICON);
-    impl Drop for IconGuard { fn drop(&mut self) { unsafe { DestroyIcon(self.0); } } }
+    impl Drop for IconGuard { fn drop(&mut self) { unsafe { let _ = DestroyIcon(self.0); } } }
     let _guard = IconGuard(icon);
 
     let mut icon_info = ICONINFO::default();
     if GetIconInfo(icon, &mut icon_info).is_err() { return None; }
 
     struct BitmapGuard(HBITMAP);
-    impl Drop for BitmapGuard { fn drop(&mut self) { unsafe { if !self.0.is_invalid() { DeleteObject(self.0.into()); } } } }
+    impl Drop for BitmapGuard { fn drop(&mut self) { unsafe { if !self.0.is_invalid() { let _ = DeleteObject(self.0.into()); } } } }
     let _bm_mask = BitmapGuard(icon_info.hbmMask);
     let _bm_color = BitmapGuard(icon_info.hbmColor);
 
@@ -383,7 +383,7 @@ unsafe fn extract_icon(path: &str) -> Option<String> {
 
     let old_obj = SelectObject(mem_dc, mem_bm.into());
 
-    DrawIconEx(mem_dc, 0, 0, icon, width, height, 0, None, DI_NORMAL);
+    let _ = DrawIconEx(mem_dc, 0, 0, icon, width, height, 0, None, DI_NORMAL);
 
     let bi = BITMAPINFOHEADER {
         biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
@@ -400,9 +400,9 @@ unsafe fn extract_icon(path: &str) -> Option<String> {
     GetDIBits(mem_dc, mem_bm, 0, height as u32, Some(pixels.as_mut_ptr() as *mut _), &mut BITMAPINFO { bmiHeader: bi, ..Default::default() }, DIB_RGB_COLORS);
 
     SelectObject(mem_dc, old_obj);
-    DeleteDC(mem_dc);
-    DeleteObject(mem_bm.into());
-    ReleaseDC(None, screen_dc);
+    let _ = DeleteDC(mem_dc);
+    let _ = DeleteObject(mem_bm.into());
+    let _ = ReleaseDC(None, screen_dc);
 
     // Convert BGRA to RGBA
     for chunk in pixels.chunks_exact_mut(4) {
