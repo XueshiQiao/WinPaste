@@ -1,6 +1,6 @@
 {
   "name": "pastepaw",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A beautiful clipboard history manager for Windows",
   "private": true,
   "scripts": {
