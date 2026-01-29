@@ -22,12 +22,18 @@ use models::get_runtime;
 use database::Database;
 
 pub fn run_app() {
-// ... (rest of imports)
+    let mut builder = tauri::Builder::default();
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.plugin(tauri_plugin_log::Builder::default().build());
+    }
 
     let data_dir = get_data_dir();
     fs::create_dir_all(&data_dir).ok();
-    let db_path = data_dir.join("winpaste.db");
+    let db_path = data_dir.join("paste_paw.db");
     let db_path_str = db_path.to_str().unwrap().to_string();
+    eprintln!("Database path: {}", db_path_str);
 
     let rt = get_runtime().expect("Failed to get global tokio runtime");
 
@@ -160,12 +166,6 @@ pub fn run_app() {
             let db_for_clip = db_for_clipboard.clone();
             clipboard::init(&handle_for_clip, db_for_clip);
 
-            // Start listening for clipboard updates via the plugin's default monitor
-            // The plugin needs to be initialized first (which it is in builder)
-            // But we might need to verify if "start_monitor" is needed?
-            // tauri-plugin-clipboard-manager auto-starts monitor on some platforms or requires explicit start.
-            // Documentation says "Monitor is started automatically". Good.
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -262,6 +262,17 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
                 y: start_y,
             }));
 
+            // Ensure Opacity is reset to 255 (Opaque) before showing
+            #[cfg(target_os = "windows")]
+            {
+               use windows::Win32::UI::WindowsAndMessaging::{SetLayeredWindowAttributes, LWA_ALPHA};
+               use windows::Win32::Foundation::{HWND, COLORREF};
+               if let Ok(handle) = window.hwnd() {
+                   let hwnd = HWND(handle.0 as _);
+                   unsafe { let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), 255, LWA_ALPHA); }
+               }
+            }
+
             let _ = window.show();
             let _ = window.set_focus();
 
@@ -307,36 +318,96 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
             let start_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32) - window_margin_px;
             let target_y = work_area.position.y + (work_area.size.height as i32); // Off screen (starts at bottom of work area)
 
-            // Fix Z-Order: Ensure window is topmost, so it slides over the taskbar
+            // Fix Z-Order: Dynamic Switch & Fade Out
             #[cfg(target_os = "windows")]
             {
-                use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE};
-                use windows::Win32::Foundation::HWND;
+                use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, FindWindowW, GetWindowRect, SetLayeredWindowAttributes, GetWindowLongW, SetWindowLongW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, LWA_ALPHA, GWL_EXSTYLE, WS_EX_LAYERED};
+                use windows::Win32::Foundation::{HWND, RECT, COLORREF};
+                use windows::core::PCWSTR;
 
-                // window.hwnd() returns Result<HWND>. On Windows, Tauri's HWND is a struct wrapping isize/pointer.
-                // We cast it to ensure compatibility with windows crate HWND.
+                // 1. Find the Taskbar
+                let class_name: Vec<u16> = "Shell_TrayWnd".encode_utf16().chain(std::iter::once(0)).collect();
+                let taskbar_hwnd = unsafe { FindWindowW(PCWSTR(class_name.as_ptr()), PCWSTR::null()) }.unwrap_or(HWND(std::ptr::null_mut()));
+
+                // 2. Get Taskbar Position (Top Y)
+                let mut taskbar_top_y = 0;
+                if !taskbar_hwnd.0.is_null() {
+                    let mut rect = RECT::default();
+                    if unsafe { GetWindowRect(taskbar_hwnd, &mut rect).is_ok() } {
+                        taskbar_top_y = rect.top;
+                    }
+                }
+
+                // 3. Initially Ensure Topmost & Setup Layered Window for Opacity
                 if let Ok(handle) = window.hwnd() {
-                     // Using .0 to get the inner isize/pointer value
                      let hwnd = HWND(handle.0 as _);
                      let hwnd_topmost = HWND(-1 as _); // HWND_TOPMOST
                      unsafe {
-                        // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowpos
                         let _ = SetWindowPos(hwnd, Some(hwnd_topmost), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+                        // Ensure WS_EX_LAYERED is set for transparency calls
+                        let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+                        if (ex_style & WS_EX_LAYERED.0 as i32) == 0 {
+                            SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED.0 as i32);
+                        }
                      }
+                }
+
+                let steps = 15;
+                let duration = std::time::Duration::from_millis(10);
+                let dy = (target_y - start_y) as f64 / steps as f64;
+
+                let mut z_order_switched = false;
+
+                for i in 1..=steps {
+                    let current_y = start_y as f64 + dy * i as f64;
+                    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: work_area.position.x + window_margin_px,
+                        y: current_y as i32,
+                    }));
+
+                    // Calculate Opacity: 255 -> 0
+                    // Fade out
+                    let alpha = ((1.0 - (i as f64 / steps as f64)) * 255.0) as u8;
+
+                    if let Ok(handle) = window.hwnd() {
+                         let hwnd = HWND(handle.0 as _);
+                         unsafe {
+                            // Apply Opacity
+                            let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), alpha, LWA_ALPHA);
+                         }
+                    }
+
+                    // Dynamic Z-Order Switch: When we hit the taskbar, drop BEHIND it
+                    if !z_order_switched && taskbar_top_y > 0 && current_y as i32 >= taskbar_top_y {
+                         if let Ok(handle) = window.hwnd() {
+                             let hwnd = HWND(handle.0 as _);
+                             if !taskbar_hwnd.0.is_null() {
+                                 unsafe {
+                                    let _ = SetWindowPos(hwnd, Some(taskbar_hwnd), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                                 }
+                                 z_order_switched = true;
+                             }
+                        }
+                    }
+                    std::thread::sleep(duration);
                 }
             }
 
-            let steps = 15;
-            let duration = std::time::Duration::from_millis(10);
-            let dy = (target_y - start_y) as f64 / steps as f64;
+            #[cfg(not(target_os = "windows"))]
+            {
+                let steps = 15;
+                let duration = std::time::Duration::from_millis(10);
+                let dy = (target_y - start_y) as f64 / steps as f64;
 
-            for i in 1..=steps {
-                let current_y = start_y as f64 + dy * i as f64;
-                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                    x: work_area.position.x + window_margin_px,
-                    y: current_y as i32,
-                }));
-                std::thread::sleep(duration);
+                for i in 1..=steps {
+                    let current_y = start_y as f64 + dy * i as f64;
+                    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: work_area.position.x + window_margin_px,
+                        y: current_y as i32,
+                    }));
+                    std::thread::sleep(duration);
+                }
             }
 
             let _ = window.hide();
