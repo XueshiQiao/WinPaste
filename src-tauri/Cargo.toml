@@ -1,5 +1,5 @@
 [package]
-name = "pastepaw"
+name = "PastePaw"
 version = "1.0.4"
 description = "A beautiful clipboard history manager for Windows"
 authors = ["you"]
