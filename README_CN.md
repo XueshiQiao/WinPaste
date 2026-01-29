@@ -1,0 +1,154 @@
+# PastePaw - 剪贴板历史管理工具
+
+一款专为 Windows 打造的精美剪贴板历史管理工具，基于 Rust + Tauri + React + TypeScript 构建。
+
+## 功能特性
+
+- 🔒 **隐私安全** - 这一点至关重要！所有数据仅存储在本地，绝不上传。
+- 📋 **历史记录** - 自动保存您复制的所有内容。
+- 🖥️ **多显示器支持** - 智能跟随，始终在鼠标所在的活动显示器上显示。
+- 🔍 **快速搜索** - 即使历史记录再多，也能秒级找到复制过的内容。
+- 📁 **文件夹管理** - 将常用的剪贴内容分类整理到自定义文件夹。
+- 🚫 **应用屏蔽 (排除列表)** - 自动忽略来自特定敏感应用（如密码管理器）的内容，保护隐私。
+- 🎨 **精美界面** - 现代化的深色/浅色主题，支持即时切换，配合流畅的动画效果。
+- ⚡ **轻量极速** - 基于 Rust 构建，性能强劲，资源占用极低。
+- ⌨️ **自定义快捷键** - 设置您习惯的快捷键来随时呼出历史记录。
+- 🔄 **无限滚动** - 无缝浏览无限的历史记录，无需翻页。
+- 🛡️ **智能过滤** - 采用智能防抖逻辑，自动忽略来自其他剪贴板工具（如翻译软件、输入法）的“幽灵复制”。
+
+## 应用屏蔽 (排除列表)
+
+PastePaw 允许您将特定应用程序排除在记录范围之外。这对于保护密码管理器或银行应用等涉及敏感信息的场景非常有用。
+
+**逻辑与行为机制：**
+
+- **如何管理：** 进入“设置” -> “应用屏蔽”。您可以浏览选择 `.exe` 文件，或直接输入进程名称。
+- **隐私保护：** 当发生复制操作时，PastePaw 会第一时间检查源应用程序是否在您的忽略列表中。
+- **双重匹配机制：** 系统会同时检查以下两项，满足任一条件即忽略：
+    1.  **进程名称** (例如 `notepad.exe`) - 匹配任何位置运行的该名称程序。
+    2.  **完整路径** (例如 `C:\Windows\System32\notepad.exe`) - 仅匹配特定安装路径下的该程序。
+- **不区分大小写：** 匹配过程不区分大小写，确保在 Windows 环境下检测的可靠性。
+
+## 技术栈
+
+- **后端**: Rust + Tauri 2.x
+- **前端**: React 18 + TypeScript
+- **数据库**: SQLite
+- **样式**: Tailwind CSS
+- **包管理器**: pnpm
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- Rust 1.70+
+- pnpm
+
+### 安装步骤
+
+```bash
+# 安装依赖
+pnpm install
+
+# 安装 Tauri CLI
+cargo install tauri-cli
+
+# 运行开发环境
+pnpm tauri dev
+```
+
+### 构建打包
+
+```bash
+# 构建生产版本
+pnpm tauri build
+```
+
+## 项目结构
+
+```
+PastePaw/
+├── src-tauri/           # Rust 后端代码
+│   ├── src/
+│   │   ├── main.rs      # 应用入口
+│   │   ├── lib.rs       # 核心逻辑
+│   │   ├── clipboard.rs # 剪贴板监听与管理
+│   │   ├── database.rs  # SQLite 数据库操作
+│   │   ├── commands.rs  # Tauri IPC 通信指令
+│   │   └── models.rs    # 数据模型
+│   └── Cargo.toml
+├── frontend/            # React 前端代码
+│   ├── src/
+│   │   ├── components/  # UI 组件
+│   │   ├── hooks/       # React Hooks
+│   │   ├── types/       # TypeScript 类型定义
+│   │   └── App.tsx
+│   └── package.json
+└── README.md
+```
+
+## 开发说明
+
+### Tauri 命令参数映射
+
+Tauri v2 在 JavaScript/TypeScript 和 Rust 之间强制执行严格的大小写映射规则：
+
+- **JavaScript/前端:** 在 `invoke` 调用中使用 **小驼峰命名法 (camelCase)** (例如 `filterId`)。
+- **Rust/后端:** 在 `#[tauri::command]` 函数参数中使用 **蛇形命名法 (snake_case)** (例如 `filter_id`)。
+
+**示例：**
+
+*   **前端:** `invoke('get_clips', { filterId: 'pinned' })`
+*   **后端:** `pub fn get_clips(filter_id: Option<String>)`
+
+如果不遵循此约定（例如从前端传递 `snake_case` 参数），会导致后端接收到的参数为 `null` 或 `None`。
+
+### 窗口行为与多显示器支持
+
+应用程序设计为在按下全局快捷键时，始终出现在 **活动显示器**（鼠标光标所在的显示器）上。
+
+- **检测逻辑:**
+    - 位于 `src-tauri/src/lib.rs` 中的 `animate_window_show` 函数。
+    - 使用 Windows API `GetCursorPos`（通过 `windows` crate）获取全局鼠标坐标。
+    - 遍历 `window.available_monitors()`，查找包含当前光标坐标的显示器。
+    - 兜底策略：如果无法确定光标位置，默认显示在 `window.current_monitor()`。
+
+- **定位逻辑:**
+    - 窗口定位于检测到的活动显示器的工作区底部（排除任务栏区域）。
+    - 呼出时会有从底部向上滑出的动画效果。
+
+### 调整布局
+
+本项目使用中心化的布局系统，确保原生窗口大小与前端虚拟列表保持同步。
+
+-   **后端常量:** `src-tauri/src/constants.rs` (控制操作系统窗口的物理尺寸)。
+*   **前端常量:** `frontend/src/constants.ts` (控制 UI 渲染和计算)。
+
+#### 如何修改卡片高度
+卡片高度是动态的，会填满可用的窗口空间。如需修改：
+1.  同时更新 `constants.rs` 和 `constants.ts` 中的 `WINDOW_HEIGHT` 值，确保两者一致。
+2.  重启应用程序（修改 Rust 代码后必须重启）。
+
+#### 如何修改垂直间距 (安全区)
+如果需要调整卡片顶部/底部的留白（例如防止鼠标悬停时被遮挡）：
+1.  修改 `frontend/src/constants.ts` 中的 `CARD_VERTICAL_PADDING`。
+2.  **增加**此值会使卡片变**矮**；**减小**此值会使卡片变**高**。
+
+## 键盘快捷键
+
+### 全局
+- **显示/隐藏窗口**: `Ctrl+Shift+V` (默认，可在设置中自定义)
+
+### 应用内
+
+- `Ctrl + F` - 聚焦搜索框
+- `Escape` - 关闭窗口 / 清除搜索
+- `Enter` - 粘贴选中的项目
+- `Delete` - 删除选中的项目
+- `P` - 钉住/取消钉住选中的项目
+- `Arrow Up/Down` - 上下导航列表
+
+## 开源协议
+
+GPL-3.0

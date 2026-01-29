@@ -10,8 +10,11 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 - 🔍 **Search** - Quickly find previously copied content
 - 📁 **Folders** - Organize clips into custom folders
 - 🚫 **Application Exceptions** - Ignore content from specific sensitive apps (e.g., Password Managers)
-- 🎨 **Beautiful UI** - Modern dark theme with smooth animations
+- 🎨 **Beautiful UI** - Modern dark/light theme with immediate switching
 - ⚡ **Fast & Lightweight** - Built with Rust for performance
+- ⌨️ **Customizable Hotkey** - Set your preferred shortcut to open the history
+- 🔄 **Infinite Scroll** - Seamlessly browse through unlimited history
+- 🛡️ **Smart Filtering** - Intelligent debounce logic to ignore "Ghost Copies" from other clipboard tools
 
 ## Application Exceptions (Ignored Apps)
 
@@ -131,6 +134,11 @@ To add more or less space at the top/bottom of the cards (e.g., to prevent clipp
 2.  Increasing this value makes cards **shorter**; decreasing it makes them **taller**.
 
 ## Keyboard Shortcuts
+
+### Global
+- **Toggle Window**: `Ctrl+Shift+V` (Default, Customizable in Settings)
+
+### In-App
 
 - `Ctrl + F` - Focus search
 - `Escape` - Close window / Clear search
