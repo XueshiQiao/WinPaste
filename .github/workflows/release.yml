@@ -12,7 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest]
+        include:
+          - platform: 'windows-latest'
+            target: 'x86_64-pc-windows-msvc'
+          # - platform: 'windows-latest'
+          #   target: 'aarch64-pc-windows-msvc'
+
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -33,13 +38,13 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
 
       - name: Install frontend dependencies
         run: pnpm install
@@ -48,6 +53,7 @@ jobs:
       - name: Get version info
         id: version
         run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
@@ -57,6 +63,8 @@ jobs:
           projectPath: src-tauri
           tagName: ${{ github.ref_name }}
           releaseName: 'PastePaw v${{ github.ref_name }}'
+          args: --target ${{ matrix.target }}
+
           releaseBody: |
             ## What's Changed
 
@@ -65,7 +73,7 @@ jobs:
             ## Installation
 
             Download the `.msi` or `.exe` installer from the assets below.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           includeDebug: false
           includeRelease: true
