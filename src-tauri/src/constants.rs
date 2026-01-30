@@ -1,2 +1,2 @@
-pub const WINDOW_HEIGHT: f64 = 298.0;  // keep sync with frontend (constants.ts)
-pub const WINDOW_MARGIN: f64 = 12.0;
+pub const WINDOW_HEIGHT: f64 = 330.0;  // keep sync with frontend (constants.ts)
+pub const WINDOW_MARGIN: f64 = 0.0;

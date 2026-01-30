@@ -436,7 +436,8 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-xl">
+    <div className="h-screen w-full bg-transparent p-4">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-[0_0_16px_rgba(0,0,0,0.1)] dark:shadow-[0_0_16px_rgba(0,0,0,0.3)]">
       {draggingClipId && (
         <DragPreview clip={clips.find((c) => c.id === draggingClipId)!} position={dragPosition} />
       )}
@@ -537,6 +538,7 @@ function App() {
         />
       </main>
       <Toaster richColors position="bottom-center" theme={theme === 'light' ? 'light' : 'dark'} />
+      </div>
     </div>
   );
 }
