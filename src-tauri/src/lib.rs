@@ -8,9 +8,10 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use std::fs;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
 static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
+static LAST_SHOW_TIME: AtomicI64 = AtomicI64::new(0);
 
 mod clipboard;
 mod database;
@@ -80,11 +81,21 @@ pub fn run_app() {
                                 return;
                             }
 
+                            // Debounce: Ignore blur events immediately after showing (500ms grace period)
+                            let last_show = LAST_SHOW_TIME.load(Ordering::SeqCst);
+                            let now = chrono::Local::now().timestamp_millis();
+                            if now - last_show < 500 {
+                                return;
+                            }
+
                             if let Some(win) = window.app_handle().get_webview_window(label) {
-                                 let win_clone = win.clone();
-                                 std::thread::spawn(move || {
-                                     crate::animate_window_hide(&win_clone);
-                                 });
+                                 // Only hide if currently visible
+                                 if win.is_visible().unwrap_or(false) {
+                                     let win_clone = win.clone();
+                                     std::thread::spawn(move || {
+                                         crate::animate_window_hide(&win_clone);
+                                     });
+                                 }
                             }
                         }
                     }
@@ -213,6 +224,8 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
     if IS_ANIMATING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
         return;
     }
+
+    LAST_SHOW_TIME.store(chrono::Local::now().timestamp_millis(), Ordering::SeqCst);
 
     let window = window.clone();
     std::thread::spawn(move || {
