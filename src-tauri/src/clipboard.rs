@@ -6,37 +6,42 @@ use crate::database::Database;
 use uuid::Uuid;
 use sha2::{Digest, Sha256};
 use std::io::Cursor;
-use image::{ImageOutputFormat, GenericImageView, DynamicImage};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use windows::Win32::Foundation::{HWND, MAX_PATH};
+use windows::Win32::Foundation::{MAX_PATH, HANDLE};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
 use windows::Win32::System::ProcessStatus::{GetModuleBaseNameW, GetModuleFileNameExW};
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
-use windows::Win32::System::DataExchange::GetClipboardOwner;
+use windows::Win32::System::DataExchange::{GetClipboardOwner, OpenClipboard, EmptyClipboard, SetClipboardData, CloseClipboard};
+use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId, DestroyIcon, DrawIconEx, DI_NORMAL, GetIconInfo, ICONINFO};
 use windows::Win32::UI::Shell::{SHGetFileInfoW, SHGFI_ICON, SHGFI_LARGEICON, SHFILEINFOW, SHGFI_USEFILEATTRIBUTES};
 use windows::Win32::Graphics::Gdi::{
     GetObjectW, DeleteObject, GetDC, ReleaseDC, CreateCompatibleDC, SelectObject, DeleteDC,
     GetDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
-    BITMAP, HBITMAP, HDC, CreateCompatibleBitmap
+    BITMAP, HBITMAP, CreateCompatibleBitmap
 };
+use std::ptr;
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
-use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
 // GLOBAL STATE: Store the hash of the clip we just pasted ourselves.
 // If the next clipboard change matches this hash, we ignore it (don't update timestamp).
-static IGNORE_HASH: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
-static LAST_STABLE_HASH: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+static IGNORE_HASH: Lazy<parking_lot::Mutex<Option<String>>> = Lazy::new(|| parking_lot::Mutex::new(None));
+static LAST_STABLE_HASH: Lazy<parking_lot::Mutex<Option<String>>> = Lazy::new(|| parking_lot::Mutex::new(None));
+pub static CLIPBOARD_SYNC: Lazy<Arc<tokio::sync::Mutex<()>>> = Lazy::new(|| Arc::new(tokio::sync::Mutex::new(())));
 
 use std::sync::atomic::{AtomicU64, Ordering};
 static DEBOUNCE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub fn set_ignore_hash(hash: String) {
-    if let Ok(mut lock) = IGNORE_HASH.lock() {
-        *lock = Some(hash);
-    }
+    let mut lock = IGNORE_HASH.lock();
+    *lock = Some(hash);
+}
+
+pub fn set_last_stable_hash(hash: String) {
+    let mut lock = LAST_STABLE_HASH.lock();
+    *lock = Some(hash);
 }
 
 pub fn init(app: &AppHandle, db: Arc<Database>) {
@@ -81,6 +86,9 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
 }
 
 async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
+    // Synchronize clipboard access
+    let _guard = CLIPBOARD_SYNC.lock().await;
+
     // Initialize Clipboard struct
     let clipboard = app.state::<ClipboardPlugin>();
 
@@ -135,7 +143,8 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
     }
 
     // Stable Hash Check: Avoid bumping timestamp if the content is exactly the same as what we last processed.
-    if let Ok(mut lock) = LAST_STABLE_HASH.lock() {
+    {
+        let mut lock = LAST_STABLE_HASH.lock();
         if let Some(ref last_hash) = *lock {
             if last_hash == &clip_hash {
                 // Content matches last known stable state, ignore update (no bump to top)
@@ -147,11 +156,12 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
     }
 
     // Check if we should ignore this update (it's our own paste via double clickiing the card)
-    if let Ok(mut lock) = IGNORE_HASH.lock() {
+    {
+        let mut lock = IGNORE_HASH.lock();
         if let Some(ignore_hash) = lock.take() {
             if ignore_hash == clip_hash {
-                log::info!("CLIPBOARD: Ignoring update for hash {} (detect self-paste)", ignore_hash);
-                return;
+                log::info!("CLIPBOARD: Detected self-paste for hash {}, proceeding to update timestamp", ignore_hash);
+                // We don't return here anymore, because we WANT to bump the item to the top (LRU)
             }
         }
     }
@@ -448,4 +458,73 @@ unsafe fn extract_icon(path: &str) -> Option<String> {
     encoder.write_image(&pixels, width as u32, height as u32, image::ColorType::Rgba8).ok()?;
 
     Some(BASE64.encode(&png_data))
+}
+
+#[cfg(target_os = "windows")]
+pub fn write_image_to_clipboard(image_bytes: Vec<u8>) -> Result<(), String> {
+
+    // Load image and convert to BMP to get DIB data
+    let img = image::load_from_memory(&image_bytes)
+        .map_err(|e| format!("Failed to load image from memory: {}", e))?;
+
+    let mut bmp_buf = Vec::new();
+    let mut cursor = Cursor::new(&mut bmp_buf);
+    img.write_to(&mut cursor, image::ImageOutputFormat::Bmp)
+        .map_err(|e| format!("Failed to encode image to BMP: {}", e))?;
+
+    // A BMP file has a BITMAPFILEHEADER (14 bytes) followed by BITMAPINFOHEADER and pixel data (which is the DIB)
+    if bmp_buf.len() <= 14 {
+        return Err("Invalid BMP data generated".to_string());
+    }
+    let dib_data = &bmp_buf[14..];
+
+    // Retry OpenClipboard if it fails (another app might have it open)
+    let mut opened = false;
+    for _ in 0..10 {
+        unsafe {
+            if OpenClipboard(None).is_ok() {
+                opened = true;
+                break;
+            }
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+
+    if !opened {
+        return Err("Failed to open clipboard after retries".to_string());
+    }
+
+    unsafe {
+        let _ = EmptyClipboard();
+
+        let h_mem = GlobalAlloc(GMEM_MOVEABLE, dib_data.len());
+        if h_mem.is_err() {
+            let _ = CloseClipboard();
+            return Err("Failed to allocate global memory".to_string());
+        }
+        let h_mem = h_mem.unwrap();
+
+        let p_mem = GlobalLock(h_mem);
+        if p_mem.is_null() {
+            let _ = GlobalFree(h_mem);
+            let _ = CloseClipboard();
+            return Err("Failed to lock global memory".to_string());
+        }
+
+        ptr::copy_nonoverlapping(dib_data.as_ptr(), p_mem as *mut u8, dib_data.len());
+        let _ = GlobalUnlock(h_mem);
+
+        if let Err(e) = SetClipboardData(8, Some(HANDLE(h_mem.0))) {
+            let _ = GlobalFree(h_mem);
+            let _ = CloseClipboard();
+            return Err(format!("SetClipboardData failed: {}", e));
+        }
+
+        let _ = CloseClipboard();
+    }
+
+    Ok(())
+}#[cfg(target_os = "windows")]
+extern "system" {
+    fn GlobalFree(hmem: windows::Win32::Foundation::HGLOBAL) -> windows::Win32::Foundation::HGLOBAL;
 }

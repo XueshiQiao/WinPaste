@@ -5,54 +5,7 @@ use std::str::FromStr;
 use crate::database::Database;
 use std::sync::Arc;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-
-#[derive(Debug, Clone, sqlx::FromRow)]
-struct Clip {
-    id: i64,
-    uuid: String,
-    clip_type: String,
-    content: Vec<u8>,
-    text_preview: String,
-    content_hash: String,
-    folder_id: Option<i64>,
-    source_app: Option<String>,
-    source_icon: Option<String>,
-    metadata: Option<String>,
-    created_at: chrono::DateTime<chrono::Utc>,
-    last_accessed: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow)]
-struct Folder {
-    id: i64,
-    name: String,
-    icon: Option<String>,
-    color: Option<String>,
-    is_system: bool,
-    created_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-pub(crate) struct ClipboardItem {
-    pub id: String,
-    pub clip_type: String,
-    pub content: String,
-    pub preview: String,
-    pub folder_id: Option<String>,
-    pub created_at: String,
-    pub source_app: Option<String>,
-    pub source_icon: Option<String>,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-pub(crate) struct FolderItem {
-    id: String,
-    name: String,
-    icon: Option<String>,
-    color: Option<String>,
-    is_system: bool,
-    item_count: i64,
-}
+use crate::models::{Clip, Folder, ClipboardItem, FolderItem};
 
 #[tauri::command]
 pub async fn get_clips(filter_id: Option<String>, limit: i64, offset: i64, preview_only: Option<bool>, db: tauri::State<'_, Arc<Database>>) -> Result<Vec<ClipboardItem>, String> {
@@ -164,23 +117,73 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
 
     match clip {
         Some(clip) => {
-            let clipboard = app.state::<Clipboard>();
+            // Synchronize clipboard access across the app
+            let _guard = crate::clipboard::CLIPBOARD_SYNC.lock().await;
+
+            let clipboard_plugin = app.state::<Clipboard>();
+            let content_hash = clip.content_hash.clone();
+            let uuid = clip.uuid.clone();
+
+            // Stop monitor during write to avoid race condition/panic within the plugin
+            let _ = clipboard_plugin.stop_monitor(app.clone());
+
+            let mut final_res = Ok(());
 
             if clip.clip_type == "image" {
-                let base64_img = BASE64.encode(&clip.content);
-                // Set ignore hash before writing
-                crate::clipboard::set_ignore_hash(clip.content_hash.clone());
-                clipboard.write_image_base64(base64_img).map_err(|e| e.to_string())?;
+                crate::clipboard::set_ignore_hash(content_hash.clone());
+                crate::clipboard::set_last_stable_hash(content_hash.clone());
+
+                // For images, we use a robust manual Windows implementation to avoid plugin panics
+                #[cfg(target_os = "windows")]
+                {
+                    match crate::clipboard::write_image_to_clipboard(clip.content.clone()) {
+                        Ok(_) => {},
+                        Err(e) => {
+                            log::error!("Failed to write image to clipboard (WinAPI): {}", e);
+                            final_res = Err(format!("Failed to write image to clipboard: {}", e));
+                        }
+                    }
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    let base64_img = BASE64.encode(&clip.content);
+                    final_res = clipboard_plugin.write_image_base64(base64_img).map_err(|e| e.to_string());
+                }
             } else {
-                let content = String::from_utf8_lossy(&clip.content).to_string();
-                // Set ignore hash before writing
-                crate::clipboard::set_ignore_hash(clip.content_hash.clone());
-                clipboard.write_text(content).map_err(|e| e.to_string())?;
+                let content_str = String::from_utf8_lossy(&clip.content).to_string();
+                crate::clipboard::set_ignore_hash(content_hash.clone());
+                crate::clipboard::set_last_stable_hash(content_hash.clone());
+
+                let mut last_err = String::new();
+                for i in 0..5 {
+                    match clipboard_plugin.write_text(content_str.clone()) {
+                        Ok(_) => { last_err.clear(); break; },
+                        Err(e) => {
+                            last_err = e.to_string();
+                            log::warn!("Clipboard write (text) attempt {} failed: {}. Retrying...", i+1, last_err);
+                            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                        }
+                    }
+                }
+                if !last_err.is_empty() {
+                    final_res = Err(format!("Failed to set clipboard text: {}", last_err));
+                }
             }
 
-            let content = String::from_utf8_lossy(&clip.content).to_string();
-            let _ = window.emit("clipboard-write", &content);
-            Ok(())
+            // Manually perform the LRU bump (update created_at)
+            let _ = sqlx::query(r#"UPDATE clips SET created_at = CURRENT_TIMESTAMP WHERE uuid = ?"#)
+                .bind(&uuid)
+                .execute(pool)
+                .await;
+
+            // Restart monitor
+            let _ = clipboard_plugin.start_monitor(app.clone());
+
+            if final_res.is_ok() {
+                let content = if clip.clip_type == "image" { "[Image]".to_string() } else { String::from_utf8_lossy(&clip.content).to_string() };
+                let _ = window.emit("clipboard-write", &content);
+            }
+            final_res
         }
         None => Err("Clip not found".to_string()),
     }

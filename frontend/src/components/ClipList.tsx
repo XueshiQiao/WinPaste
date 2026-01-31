@@ -23,6 +23,7 @@ export function ClipList({
   selectedClipId,
   onSelectClip,
   onPaste,
+  onCopy,
   onLoadMore,
   onDragStart,
   onCardContextMenu,
@@ -91,6 +92,7 @@ export function ClipList({
           isSelected={selectedClipId === clip.id}
           onSelect={() => onSelectClip(clip.id)}
           onPaste={() => onPaste(clip.id)}
+          onCopy={() => onCopy(clip.id)}
           onDragStart={onDragStart}
           onContextMenu={(e: React.MouseEvent) => onCardContextMenu?.(e, clip.id)}
         />

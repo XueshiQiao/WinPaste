@@ -319,15 +319,12 @@ function App() {
   };
 
   const handleCopy = async (clipId: string) => {
-    const clip = clips.find((c) => c.id === clipId);
-    if (clip) {
-      try {
-        await navigator.clipboard.writeText(clip.content);
-        toast.success('Copied to clipboard');
-      } catch (error) {
-        console.error('Failed to copy to clipboard:', error);
-        toast.error('Failed to copy');
-      }
+    try {
+      await invoke('paste_clip', { id: clipId });
+      toast.success('Copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy clip:', error);
+      toast.error('Failed to copy');
     }
   };
 

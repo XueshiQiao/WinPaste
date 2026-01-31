@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
@@ -23,17 +24,10 @@ use models::get_runtime;
 use database::Database;
 
 pub fn run_app() {
-    let mut builder = tauri::Builder::default();
-
-    #[cfg(target_os = "macos")]
-    {
-        builder = builder.plugin(tauri_plugin_log::Builder::default().build());
-    }
-
     let data_dir = get_data_dir();
     fs::create_dir_all(&data_dir).ok();
     let db_path = data_dir.join("paste_paw.db");
-    let db_path_str = db_path.to_str().unwrap().to_string();
+    let db_path_str = db_path.to_str().unwrap_or("paste_paw.db").to_string();
     eprintln!("Database path: {}", db_path_str);
 
     let rt = get_runtime().expect("Failed to get global tokio runtime");
@@ -259,8 +253,8 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
 
         if let Some(monitor) = monitor {
             let scale_factor = monitor.scale_factor();
-            let screen_size = monitor.size();
-            let monitor_pos = monitor.position();
+            let _screen_size = monitor.size();
+            let _monitor_pos = monitor.position();
             let work_area = monitor.work_area();
             let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
             let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;

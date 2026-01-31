@@ -1,13 +1,15 @@
 import { ClipboardItem } from '../types';
 import { clsx } from 'clsx';
-import { useMemo, memo } from 'react';
+import { useMemo, memo, useState } from 'react';
 import { LAYOUT, TOTAL_COLUMN_WIDTH, PREVIEW_CHAR_LIMIT } from '../constants';
+import { Copy, Check } from 'lucide-react';
 
 interface ClipCardProps {
   clip: ClipboardItem;
   isSelected: boolean;
   onSelect: () => void;
   onPaste: () => void;
+  onCopy: () => void;
   onDragStart: (clipId: string, startX: number, startY: number) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }
@@ -17,9 +19,11 @@ export const ClipCard = memo(function ClipCard({
   isSelected,
   onSelect,
   onPaste,
+  onCopy,
   onDragStart,
   onContextMenu,
 }: ClipCardProps) {
+  const [copied, setCopied] = useState(false);
   const title = clip.source_app || clip.clip_type.toUpperCase();
 
   // Memoize the content rendering
@@ -99,7 +103,8 @@ export const ClipCard = memo(function ClipCard({
           'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all',
           isSelected
             ? 'z-10 scale-[1.02] transform ring-4 ring-blue-500'
-            : 'hover:-translate-y-1 hover:ring-2 hover:ring-primary/30'
+            : 'hover:-translate-y-1 hover:ring-2 hover:ring-primary/30',
+          'group'
         )}
       >
         <div className={clsx(headerColor, 'flex flex-shrink-0 items-center gap-2 px-4 py-2')}>
@@ -113,6 +118,22 @@ export const ClipCard = memo(function ClipCard({
           <span className="flex-1 truncate text-[10px] font-bold uppercase tracking-wider text-foreground">
             {title}
           </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCopy();
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="rounded-md p-1 opacity-0 transition-all hover:bg-black/10 group-hover:opacity-100"
+            title="Copy to clipboard"
+          >
+            {copied ? (
+              <Check size={14} className="text-emerald-500" />
+            ) : (
+              <Copy size={14} className="text-foreground/70 hover:text-foreground" />
+            )}
+          </button>
         </div>
 
         <div className="relative flex-1 overflow-hidden bg-card p-3">
