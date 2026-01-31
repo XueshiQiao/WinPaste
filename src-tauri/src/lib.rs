@@ -90,13 +90,43 @@ pub fn run_app() {
                                 return;
                             }
 
-                            if let Some(win) = window.app_handle().get_webview_window(label) {
-                                 // Only hide if currently visible
-                                 if win.is_visible().unwrap_or(false) {
-                                     let win_clone = win.clone();
-                                     std::thread::spawn(move || {
-                                         crate::animate_window_hide(&win_clone);
-                                     });
+                        if let Some(win) = window.app_handle().get_webview_window(label) {
+                                 // Safety checks:
+                                 // 1. If we are already animating (e.g. hiding via hotkey), don't interfere.
+                                 if IS_ANIMATING.load(Ordering::SeqCst) {
+                                     return;
+                                 }
+                                 // 2. If the window is not visible (e.g. just hidden programmatically), don't try to move/show it.
+                                 if !win.is_visible().unwrap_or(false) {
+                                     return;
+                                 }
+
+                                 // Check if cursor is on a different monitor
+                                 let current_monitor = win.current_monitor().ok().flatten();
+                                 let cursor_monitor = get_monitor_at_cursor(&win);
+
+                                 let mut moved_screens = false;
+                                 if let (Some(cm), Some(crm)) = (&current_monitor, &cursor_monitor) {
+                                     // Compare monitor names or positions to see if they are different
+                                     // Position is usually unique enough
+                                     if cm.position().x != crm.position().x || cm.position().y != crm.position().y {
+                                         moved_screens = true;
+                                     }
+                                 }
+
+                                 if moved_screens {
+                                     // User clicked on another screen, move window there immediately
+                                     position_window_at_bottom(&win);
+                                     let _ = win.show();
+                                     let _ = win.set_focus();
+                                 } else {
+                                     // Normal blur handling (hide)
+                                     if win.is_visible().unwrap_or(false) {
+                                         let win_clone = win.clone();
+                                         std::thread::spawn(move || {
+                                             crate::animate_window_hide(&win_clone);
+                                         });
+                                     }
                                  }
                             }
                         }
@@ -248,33 +278,7 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
 
     let window = window.clone();
     std::thread::spawn(move || {
-        let monitor = {
-            #[cfg(target_os = "windows")]
-            {
-                use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
-                use windows::Win32::Foundation::POINT;
-                let mut point = POINT { x: 0, y: 0 };
-                let mut found = None;
-                if unsafe { GetCursorPos(&mut point).is_ok() } {
-                    if let Ok(monitors) = window.available_monitors() {
-                        for m in monitors {
-                            let pos = m.position();
-                            let size = m.size();
-                            if point.x >= pos.x && point.x < pos.x + size.width as i32 &&
-                               point.y >= pos.y && point.y < pos.y + size.height as i32 {
-                                found = Some(m);
-                                break;
-                            }
-                        }
-                    }
-                }
-                found.or_else(|| window.current_monitor().ok().flatten())
-            }
-            #[cfg(not(target_os = "windows"))]
-            {
-                window.current_monitor().ok().flatten()
-            }
-        };
+        let monitor = get_monitor_at_cursor(&window);
 
         if let Some(monitor) = monitor {
             let scale_factor = monitor.scale_factor();
@@ -432,10 +436,39 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
     });
 }
 
+
 fn get_data_dir() -> std::path::PathBuf {
     let current_dir = std::env::current_dir().unwrap_or(std::path::PathBuf::from("."));
     match dirs::data_dir() {
         Some(path) => path.join("PastePaw"),
         None => current_dir.join("PastePaw"),
+    }
+}
+
+pub fn get_monitor_at_cursor(window: &tauri::WebviewWindow) -> Option<tauri::Monitor> {
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+        use windows::Win32::Foundation::POINT;
+        let mut point = POINT { x: 0, y: 0 };
+        let mut found = None;
+        if unsafe { GetCursorPos(&mut point).is_ok() } {
+            if let Ok(monitors) = window.available_monitors() {
+                for m in monitors {
+                    let pos = m.position();
+                    let size = m.size();
+                    if point.x >= pos.x && point.x < pos.x + size.width as i32 &&
+                       point.y >= pos.y && point.y < pos.y + size.height as i32 {
+                        found = Some(m);
+                        break;
+                    }
+                }
+            }
+        }
+        found.or_else(|| window.current_monitor().ok().flatten())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        window.current_monitor().ok().flatten()
     }
 }
