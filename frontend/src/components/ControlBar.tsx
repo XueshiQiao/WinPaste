@@ -277,19 +277,19 @@ export function ControlBar({
           // Define colors based on category
           let colorClass =
             theme === 'light'
-              ? 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white'
-              : 'bg-secondary text-white hover:bg-secondary/80 hover:text-white';
+              ? 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white shadow-sm'
+              : 'bg-secondary text-white hover:bg-secondary/80 hover:text-white shadow-sm';
 
           if (cat.id === null) {
             // System "All" Folder
             if (theme === 'light') {
               colorClass = isActive
-                ? 'bg-slate-600 text-white ring-1 ring-slate-500/50 font-bold'
-                : 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white';
+                ? 'bg-slate-600 text-white ring-1 ring-slate-500/50 font-bold shadow-sm'
+                : 'bg-slate-400 text-white hover:bg-slate-500 hover:text-white shadow-sm';
             } else {
               colorClass = isActive
-                ? 'bg-indigo-500/20 text-white ring-1 ring-indigo-500/50 font-bold'
-                : 'bg-indigo-500/10 text-white/80 hover:bg-indigo-500/20 hover:text-white';
+                ? 'bg-indigo-500/20 text-white ring-1 ring-indigo-500/50 font-bold shadow-sm'
+                : 'bg-indigo-500/10 text-white/80 hover:bg-indigo-500/20 hover:text-white shadow-sm';
             }
           } else {
             // Custom Folder - Use dynamic color

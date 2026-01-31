@@ -434,114 +434,133 @@ function App() {
   };
 
   return (
-    <div
-      className="h-screen w-full overflow-hidden backdrop-blur-xl"
-      style={{
-        backgroundColor: `hsl(var(--background) / ${LAYOUT.PADDING_OPACITY})`,
-        padding: `${LAYOUT.WINDOW_PADDING}px`
-      }}
-    >
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
-      {draggingClipId && (
-        <DragPreview clip={clips.find((c) => c.id === draggingClipId)!} position={dragPosition} />
-      )}
-
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={handleCloseContextMenu}
-          options={
-            contextMenu.type === 'card'
-              ? [
-                  {
-                    label: 'Delete',
-                    danger: true,
-                    onClick: () => handleDelete(contextMenu.itemId),
-                  },
-                ]
-              : [
-                  {
-                    label: 'Rename',
-                    onClick: () => {
-                      setFolderModalMode('rename');
-                      setEditingFolderId(contextMenu.itemId);
-                      const folder = folders.find((f) => f.id === contextMenu.itemId);
-                      setNewFolderName(folder ? folder.name : '');
-                      setShowAddFolderModal(true);
-                    },
-                  },
-                  {
-                    label: 'Delete',
-                    danger: true,
-                    onClick: () => handleDeleteFolder(contextMenu.itemId),
-                  },
-                ]
-          }
-        />
-      )}
-
-      <ControlBar
-        folders={folders}
-        selectedFolder={selectedFolder}
-        onSelectFolder={setSelectedFolder}
-        showSearch={showSearch}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearch}
-        onSearchClick={() => {
-          if (showSearch) {
-            handleSearch(''); // Clear search when closing
-          }
-          setShowSearch(!showSearch);
+    <div className="relative h-screen w-full overflow-hidden">
+      {/*
+      Background Layer with Blur:
+      The Limitation: Standard CSS backdrop-filter:
+      blur() works by blurring elements behind the div. However, on a transparent app window,
+      the "element behind" is the OS desktop, which the browser engine cannot see or blur for security and
+      performance reasons. This is why you see "no blur" right now—it's trying to blur transparent pixels.
+      */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: `hsl(var(--background) / ${LAYOUT.PADDING_OPACITY})`,
+          backdropFilter: 'blur(10px)',
         }}
-        onAddClick={() => {
-          setFolderModalMode('create');
-          setNewFolderName('');
-          setShowAddFolderModal(true);
-        }}
-        onMoreClick={openSettings}
-        onMoveClip={handleMoveClip} // Legacy, but kept for interface
-        // Simulated Drag Props
-        isDragging={!!draggingClipId}
-        dragTargetFolderId={dragTargetFolderId}
-        onDragHover={handleDragHover}
-        onDragLeave={handleDragLeave}
-        totalClipCount={totalClipCount}
-        onFolderContextMenu={(e, folderId) => {
-          if (folderId) handleContextMenu(e, 'folder', folderId);
-        }}
-        theme={theme === 'light' ? 'light' : 'dark'}
       />
 
-      <main className="no-scrollbar relative flex-1">
-        <ClipList
-          clips={clips}
-          isLoading={isLoading}
-          hasMore={hasMore}
-          selectedClipId={selectedClipId}
-          onSelectClip={setSelectedClipId}
-          onPaste={handlePaste}
-          onCopy={handleCopy}
-          onDelete={handleDelete}
-          onLoadMore={loadMore}
-          // Simulated Drag Props
-          onDragStart={startDrag}
-          onCardContextMenu={(e, clipId) => handleContextMenu(e, 'card', clipId)}
-        />
+      {/* Content Container */}
+      <div className="relative h-full w-full" style={{ padding: `${LAYOUT.WINDOW_PADDING}px` }}>
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
+          {draggingClipId && (
+            <DragPreview
+              clip={clips.find((c) => c.id === draggingClipId)!}
+              position={dragPosition}
+            />
+          )}
 
-        {/* Add/Rename Folder Modal Overlay */}
-        <FolderModal
-          isOpen={showAddFolderModal}
-          mode={folderModalMode}
-          initialName={newFolderName}
-          onClose={() => {
-            setShowAddFolderModal(false);
-            setNewFolderName('');
-          }}
-          onSubmit={handleCreateOrRenameFolder}
-        />
-      </main>
-      <Toaster richColors position="bottom-center" theme={theme === 'light' ? 'light' : 'dark'} />
+          {contextMenu && (
+            <ContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              onClose={handleCloseContextMenu}
+              options={
+                contextMenu.type === 'card'
+                  ? [
+                      {
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => handleDelete(contextMenu.itemId),
+                      },
+                    ]
+                  : [
+                      {
+                        label: 'Rename',
+                        onClick: () => {
+                          setFolderModalMode('rename');
+                          setEditingFolderId(contextMenu.itemId);
+                          const folder = folders.find((f) => f.id === contextMenu.itemId);
+                          setNewFolderName(folder ? folder.name : '');
+                          setShowAddFolderModal(true);
+                        },
+                      },
+                      {
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => handleDeleteFolder(contextMenu.itemId),
+                      },
+                    ]
+              }
+            />
+          )}
+
+          <ControlBar
+            folders={folders}
+            selectedFolder={selectedFolder}
+            onSelectFolder={setSelectedFolder}
+            showSearch={showSearch}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearch}
+            onSearchClick={() => {
+              if (showSearch) {
+                handleSearch(''); // Clear search when closing
+              }
+              setShowSearch(!showSearch);
+            }}
+            onAddClick={() => {
+              setFolderModalMode('create');
+              setNewFolderName('');
+              setShowAddFolderModal(true);
+            }}
+            onMoreClick={openSettings}
+            onMoveClip={handleMoveClip} // Legacy, but kept for interface
+            // Simulated Drag Props
+            isDragging={!!draggingClipId}
+            dragTargetFolderId={dragTargetFolderId}
+            onDragHover={handleDragHover}
+            onDragLeave={handleDragLeave}
+            totalClipCount={totalClipCount}
+            onFolderContextMenu={(e, folderId) => {
+              if (folderId) handleContextMenu(e, 'folder', folderId);
+            }}
+            theme={theme === 'light' ? 'light' : 'dark'}
+          />
+
+          <main className="no-scrollbar relative flex-1">
+            <ClipList
+              clips={clips}
+              isLoading={isLoading}
+              hasMore={hasMore}
+              selectedClipId={selectedClipId}
+              onSelectClip={setSelectedClipId}
+              onPaste={handlePaste}
+              onCopy={handleCopy}
+              onDelete={handleDelete}
+              onLoadMore={loadMore}
+              // Simulated Drag Props
+              onDragStart={startDrag}
+              onCardContextMenu={(e, clipId) => handleContextMenu(e, 'card', clipId)}
+            />
+
+            {/* Add/Rename Folder Modal Overlay */}
+            <FolderModal
+              isOpen={showAddFolderModal}
+              mode={folderModalMode}
+              initialName={newFolderName}
+              onClose={() => {
+                setShowAddFolderModal(false);
+                setNewFolderName('');
+              }}
+              onSubmit={handleCreateOrRenameFolder}
+            />
+          </main>
+          <Toaster
+            richColors
+            position="bottom-center"
+            theme={theme === 'light' ? 'light' : 'dark'}
+          />
+        </div>
       </div>
     </div>
   );
