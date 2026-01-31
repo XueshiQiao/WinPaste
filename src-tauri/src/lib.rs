@@ -10,6 +10,7 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use std::fs;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use window_vibrancy::*;
 
 static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
 static LAST_SHOW_TIME: AtomicI64 = AtomicI64::new(0);
@@ -24,6 +25,13 @@ use models::get_runtime;
 use database::Database;
 
 pub fn run_app() {
+    let builder = tauri::Builder::default();
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.plugin(tauri_plugin_log::Builder::default().build());
+    }
+
     let data_dir = get_data_dir();
     fs::create_dir_all(&data_dir).ok();
     let db_path = data_dir.join("paste_paw.db");
@@ -42,7 +50,7 @@ pub fn run_app() {
 
     let db_arc = Arc::new(db);
 
-    tauri::Builder::default()
+    builder
         .plugin(tauri_plugin_log::Builder::default()
             .format(|out, message, record| {
                 out.finish(format_args!(
@@ -140,6 +148,23 @@ pub fn run_app() {
 
             let app_handle = handle.clone();
             let win = app_handle.get_webview_window("main").unwrap();
+
+            #[cfg(target_os = "windows")]
+            {
+                // if apply_blur(&win, Some((16, 16, 16, 125))).is_err() {
+                //     if apply_mica(&win, None).is_err() {
+                //         let _ = apply_acrylic(&win, None);
+                //     }
+                // }
+                //let _ = apply_blur(&win, Some((16, 16, 16, 125)));
+                // let _ = apply_mica(&win, Some(true));
+
+                //let _ = apply_acrylic(&win, Some((16, 16, 16, 125)));
+            }
+
+            #[cfg(target_os = "macos")]
+            let _ = apply_vibrancy(&win, NSVisualEffectMaterial::WindowBackground, None, None);
+
             let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().build())?;
 
             // Load saved hotkey from database or use default
@@ -253,8 +278,12 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
 
         if let Some(monitor) = monitor {
             let scale_factor = monitor.scale_factor();
+
             let _screen_size = monitor.size();
             let _monitor_pos = monitor.position();
+
+            log::debug!("Monitor size: {:?}, Monitor position: {:?}, Scale factor: {:?}", _screen_size, _monitor_pos, scale_factor);
+
             let work_area = monitor.work_area();
             let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
             let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
@@ -273,16 +302,8 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
                 y: start_y,
             }));
 
-            // Ensure Opacity is reset to 255 (Opaque) before showing
-            #[cfg(target_os = "windows")]
-            {
-               use windows::Win32::UI::WindowsAndMessaging::{SetLayeredWindowAttributes, LWA_ALPHA};
-               use windows::Win32::Foundation::{HWND, COLORREF};
-               if let Ok(handle) = window.hwnd() {
-                   let hwnd = HWND(handle.0 as _);
-                   unsafe { let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), 255, LWA_ALPHA); }
-               }
-            }
+            // Ensure window is fully opaque (if any previous transparency was applied)
+            // No set_opacity here to avoid feature dependency for now.
 
             let _ = window.show();
             let _ = window.set_focus();
@@ -332,8 +353,8 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
             // Fix Z-Order: Dynamic Switch & Fade Out
             #[cfg(target_os = "windows")]
             {
-                use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, FindWindowW, GetWindowRect, SetLayeredWindowAttributes, GetWindowLongW, SetWindowLongW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, LWA_ALPHA, GWL_EXSTYLE, WS_EX_LAYERED};
-                use windows::Win32::Foundation::{HWND, RECT, COLORREF};
+                use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, FindWindowW, GetWindowRect, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE};
+                use windows::Win32::Foundation::{HWND, RECT};
                 use windows::core::PCWSTR;
 
                 // 1. Find the Taskbar
@@ -349,18 +370,12 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
                     }
                 }
 
-                // 3. Initially Ensure Topmost & Setup Layered Window for Opacity
+                // 3. Initially Ensure Topmost
                 if let Ok(handle) = window.hwnd() {
                      let hwnd = HWND(handle.0 as _);
                      let hwnd_topmost = HWND(-1 as _); // HWND_TOPMOST
                      unsafe {
                         let _ = SetWindowPos(hwnd, Some(hwnd_topmost), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-                        // Ensure WS_EX_LAYERED is set for transparency calls
-                        let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
-                        if (ex_style & WS_EX_LAYERED.0 as i32) == 0 {
-                            SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED.0 as i32);
-                        }
                      }
                 }
 
@@ -377,17 +392,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
                         y: current_y as i32,
                     }));
 
-                    // Calculate Opacity: 255 -> 0
-                    // Fade out
-                    let alpha = ((1.0 - (i as f64 / steps as f64)) * 255.0) as u8;
-
-                    if let Ok(handle) = window.hwnd() {
-                         let hwnd = HWND(handle.0 as _);
-                         unsafe {
-                            // Apply Opacity
-                            let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), alpha, LWA_ALPHA);
-                         }
-                    }
+                    // Animation Loop for Hide (Slide only for now)
 
                     // Dynamic Z-Order Switch: When we hit the taskbar, drop BEHIND it
                     if !z_order_switched && taskbar_top_y > 0 && current_y as i32 >= taskbar_top_y {

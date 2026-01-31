@@ -5,6 +5,9 @@ export const LAYOUT = {
   CARD_GAP: 24,
   SIDE_PADDING: 20,
   CARD_VERTICAL_PADDING: 12,
+  PADDING_OPACITY: 0.2,
+  WINDOW_PADDING: 16, // In pixels
+  BLUR_AMOUNT: '8px', // Intensity of the blur
 };
 
 export const CLIP_LIST_HEIGHT = LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT;

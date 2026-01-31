@@ -108,6 +108,7 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
 
                  let size_bytes = bytes.len();
                  clip_hash = calculate_hash(&bytes);
+                 //clip_content = bytes.to_vec();
                  clip_content = bytes;
                  clip_type = "image";
                  clip_preview = "[Image]".to_string();

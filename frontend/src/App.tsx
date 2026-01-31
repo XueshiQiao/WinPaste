@@ -12,6 +12,7 @@ import { FolderModal } from './components/FolderModal';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTheme } from './hooks/useTheme';
 import { Toaster, toast } from 'sonner';
+import { LAYOUT } from './constants';
 
 function App() {
   const [clips, setClips] = useState<ClipboardItem[]>([]);
@@ -433,8 +434,14 @@ function App() {
   };
 
   return (
-    <div className="h-screen w-full bg-transparent p-4">
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-[0_0_16px_rgba(0,0,0,0.1)] dark:shadow-[0_0_16px_rgba(0,0,0,0.3)]">
+    <div
+      className="h-screen w-full overflow-hidden backdrop-blur-xl"
+      style={{
+        backgroundColor: `hsl(var(--background) / ${LAYOUT.PADDING_OPACITY})`,
+        padding: `${LAYOUT.WINDOW_PADDING}px`
+      }}
+    >
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
       {draggingClipId && (
         <DragPreview clip={clips.find((c) => c.id === draggingClipId)!} position={dragPosition} />
       )}
