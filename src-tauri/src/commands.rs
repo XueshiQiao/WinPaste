@@ -325,7 +325,7 @@ pub async fn move_to_folder(clip_id: String, folder_id: Option<String>, db: taur
 }
 
 #[tauri::command]
-pub async fn create_folder(name: String, icon: Option<String>, color: Option<String>, db: tauri::State<'_, Arc<Database>>) -> Result<FolderItem, String> {
+pub async fn create_folder(name: String, icon: Option<String>, color: Option<String>, db: tauri::State<'_, Arc<Database>>, window: tauri::WebviewWindow) -> Result<FolderItem, String> {
     let pool = &db.pool;
 
     // Check if folder with same name exists (excluding system folders if we wanted, but name uniqueness is good generally)
@@ -344,6 +344,8 @@ pub async fn create_folder(name: String, icon: Option<String>, color: Option<Str
         .execute(pool).await.map_err(|e| e.to_string())?
         .last_insert_rowid();
 
+    let _ = window.emit("clipboard-change", ());
+
     Ok(FolderItem {
         id: id.to_string(),
         name,
@@ -355,18 +357,20 @@ pub async fn create_folder(name: String, icon: Option<String>, color: Option<Str
 }
 
 #[tauri::command]
-pub async fn delete_folder(id: String, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
+pub async fn delete_folder(id: String, db: tauri::State<'_, Arc<Database>>, window: tauri::WebviewWindow) -> Result<(), String> {
     let pool = &db.pool;
 
     let folder_id: i64 = id.parse().map_err(|_| "Invalid folder ID")?;
     sqlx::query(r#"DELETE FROM folders WHERE id = ?"#)
         .bind(folder_id)
         .execute(pool).await.map_err(|e| e.to_string())?;
+
+    let _ = window.emit("clipboard-change", ());
     Ok(())
 }
 
 #[tauri::command]
-pub async fn rename_folder(id: String, name: String, db: tauri::State<'_, Arc<Database>>) -> Result<(), String> {
+pub async fn rename_folder(id: String, name: String, db: tauri::State<'_, Arc<Database>>, window: tauri::WebviewWindow) -> Result<(), String> {
     let pool = &db.pool;
 
     let folder_id: i64 = id.parse().map_err(|_| "Invalid folder ID")?;
@@ -385,6 +389,9 @@ pub async fn rename_folder(id: String, name: String, db: tauri::State<'_, Arc<Da
         .bind(name)
         .bind(folder_id)
         .execute(pool).await.map_err(|e| e.to_string())?;
+
+    // Emit event so main window knows to refresh
+    let _ = window.emit("clipboard-change", ());
     Ok(())
 }
 

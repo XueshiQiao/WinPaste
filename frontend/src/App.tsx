@@ -75,9 +75,9 @@ function App() {
     const settingsWin = new WebviewWindow('settings', {
       url: 'index.html?window=settings',
       title: 'Settings',
-      width: 500,
+      width: 800,
       height: 700,
-      resizable: false,
+      resizable: true,
       decorations: false, // We have our own title bar in SettingsPanel
       center: true,
     });
