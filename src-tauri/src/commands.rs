@@ -195,13 +195,14 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                     // Auto-Paste Logic
                     // 1. Hide window immediately to trigger focus switch to previous app
                     crate::animate_window_hide(&window, Some(Box::new(move || {
-                         // 2. Callback executed AFTER window is hidden
-                                              #[cfg(target_os = "windows")]
-                                              {
-                                                 // Small buffer to ensure OS focus switch is complete
-                                                 std::thread::sleep(std::time::Duration::from_millis(200));
-                                                 crate::clipboard::send_paste_input();
-                                              }                    })));
+                        // 2. Callback executed AFTER window is hidden
+                        #[cfg(target_os = "windows")]
+                        {
+                            // Small buffer to ensure OS focus switch is complete
+                            std::thread::sleep(std::time::Duration::from_millis(200));
+                            crate::clipboard::send_paste_input();
+                        }
+                    })));
                 } else {
                      // If auto_paste is disabled, we still hide the window (as requested by original "copy to text field" intent, 
                      // but maybe user just wants to copy?)
@@ -494,10 +495,17 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
     }
 
     if let Some(startup) = settings.get("startup_with_windows").and_then(|v| v.as_bool()) {
-        if startup {
-             app.autolaunch().enable().map_err(|e| e.to_string())?;
-        } else {
-             app.autolaunch().disable().map_err(|e| e.to_string())?;
+        let current_state = app.autolaunch().is_enabled().unwrap_or(false);
+        if startup != current_state {
+             if startup {
+                 if let Err(e) = app.autolaunch().enable() {
+                     log::warn!("Failed to enable autostart: {}", e);
+                 }
+             } else {
+                 if let Err(e) = app.autolaunch().disable() {
+                     log::warn!("Failed to disable autostart: {}", e);
+                 }
+             }
         }
     }
 

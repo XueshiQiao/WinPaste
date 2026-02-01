@@ -25,35 +25,13 @@ export function SettingsWindow() {
     }
   };
 
-  const handleSave = async (newSettings: Settings) => {
-    try {
-      await invoke('save_settings', { settings: newSettings });
-      await emit('settings-changed', newSettings);
-      setSettings(newSettings);
-      handleClose();
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      // Alert will be handled inside SettingsPanel or we can toast here if we pass toast down?
-      // Actually SettingsPanel calls onSave.
-      // If we want toast here, we need separate toast call.
-      // But SettingsPanel handles most logic.
-      // Let's modify SettingsPanel to handle the "Close" triggers?
-      // Or just keep this as is, but add Toaster.
-      // Wait, SettingsPanel calls onSave, and handleSave calls handleClose.
-      // So Success toast might not be seen if window closes immediately.
-      // Unless we wait?
-      // "Saved" toast usually implies staying open.
-      // But "Save" button usually closes settings in this app?
-    }
-  };
-
   if (!settings) {
     return <div className="flex h-screen items-center justify-center text-white">Loading...</div>;
   }
 
   return (
     <div className="h-screen bg-background text-foreground">
-      <SettingsPanel settings={settings} onClose={handleClose} onSave={handleSave} />
+      <SettingsPanel settings={settings} onClose={handleClose} />
       <Toaster
         richColors
         position="bottom-center"

@@ -13,10 +13,9 @@ import { useShortcutRecorder } from 'use-shortcut-recorder';
 interface SettingsPanelProps {
   settings: Settings;
   onClose: () => void;
-  onSave: (settings: Settings) => void;
 }
 
-export function SettingsPanel({ settings: initialSettings, onClose, onSave }: SettingsPanelProps) {
+export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPanelProps) {
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [_historySize, setHistorySize] = useState<number>(0);
   const [isRecordingMode, setIsRecordingMode] = useState(false);
@@ -24,22 +23,38 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
   // Apply theme immediately when settings.theme changes
   useTheme(settings.theme);
 
-  const handleThemeChange = async (newTheme: string) => {
-    const newSettings = { ...settings, theme: newTheme };
+  // Generic handler for immediate settings updates
+  const updateSetting = async (key: keyof Settings, value: any) => {
+    const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
 
-    // Auto-save theme immediately
     try {
-      // We pass the full settings object to ensure consistency,
-      // though backend supports partials if we struct it right.
-      // Simpler to just save 'settings' with updated theme.
       await invoke('save_settings', { settings: newSettings });
-      // Emit change so main window updates
       await emit('settings-changed', newSettings);
+      
+      // Handle side effects like hotkey registration immediately
+      if (key === 'hotkey') {
+         await invoke('register_global_shortcut', { hotkey: value });
+      }
+
+      // Feedback for changes
+      if (key !== 'theme') {
+         const label = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+         if (typeof value === 'boolean') {
+            toast.success(`${label} was ${value ? 'enabled' : 'disabled'}`);
+         } else {
+            toast.success(`${label} updated`);
+         }
+      }
     } catch (error) {
-      console.error('Failed to auto-save theme:', error);
-      toast.error('Failed to save theme preference');
+      console.error(`Failed to save setting ${key}:`, error);
+      toast.error(`Failed to save ${key}`);
+      // Revert on error? For now, we assume success or user sees error.
     }
+  };
+
+  const handleThemeChange = (newTheme: string) => {
+    updateSetting('theme', newTheme);
   };
 
   // Use use-shortcut-recorder for recording (shows current keys held in real-time)
@@ -116,16 +131,6 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
     }
   };
 
-  const handleSave = async () => {
-    try {
-      await invoke('register_global_shortcut', { hotkey: settings.hotkey });
-    } catch (error) {
-      toast.warning(`Failed to register hotkey: ${error}`);
-      console.error('Failed to register hotkey:', error);
-    }
-    onSave(settings);
-  };
-
   const confirmClearHistory = () => {
     setConfirmDialog({
       isOpen: true,
@@ -166,14 +171,8 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
   const handleSaveHotkey = async () => {
     if (savedShortcut.length > 0) {
       const newHotkey = formatHotkey(savedShortcut);
-      setSettings((prev) => ({ ...prev, hotkey: newHotkey }));
-
-      try {
-        await invoke('register_global_shortcut', { hotkey: newHotkey });
-        toast.success(`Hotkey updated to ${newHotkey}`);
-      } catch (error) {
-        toast.error(`Failed to register hotkey: ${error}`);
-      }
+      // updateSetting handles the saving and registering
+      await updateSetting('hotkey', newHotkey);
     }
     stopRecordingLib();
     setIsRecordingMode(false);
@@ -236,9 +235,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
                 </p>
               </div>
               <button
-                onClick={() =>
-                  setSettings({ ...settings, startup_with_windows: !settings.startup_with_windows })
-                }
+                onClick={() => updateSetting('startup_with_windows', !settings.startup_with_windows)}
                 className={`h-6 w-11 rounded-full transition-colors ${
                   settings.startup_with_windows ? 'bg-primary' : 'bg-accent'
                 }`}
@@ -259,7 +256,7 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
                 </p>
               </div>
               <button
-                onClick={() => setSettings({ ...settings, auto_paste: !settings.auto_paste })}
+                onClick={() => updateSetting('auto_paste', !settings.auto_paste)}
                 className={`h-6 w-11 rounded-full transition-colors ${
                   settings.auto_paste ? 'bg-primary' : 'bg-accent'
                 }`}
@@ -477,16 +474,6 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
               </button>
             </div>
           </section>
-        </div>
-
-        <div className="flex items-center justify-end gap-2 border-t border-border bg-background p-4">
-          <button onClick={onClose} className="btn btn-secondary">
-            Cancel
-          </button>
-          <button onClick={handleSave} className="btn btn-primary">
-            <Save size={16} className="mr-2" />
-            Save
-          </button>
         </div>
 
         <div className="border-t border-border bg-background px-4 py-3 text-center">
