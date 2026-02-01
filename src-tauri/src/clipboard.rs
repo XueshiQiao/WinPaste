@@ -12,7 +12,7 @@ use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, 
 use windows::Win32::System::ProcessStatus::{GetModuleBaseNameW, GetModuleFileNameExW};
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
 use windows::Win32::System::DataExchange::{GetClipboardOwner, OpenClipboard, EmptyClipboard, SetClipboardData, CloseClipboard};
-use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE, GlobalFree};
+use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId, DestroyIcon, DrawIconEx, DI_NORMAL, GetIconInfo, ICONINFO};
 use windows::Win32::UI::Input::KeyboardAndMouse::{SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_CONTROL, VK_V};
 use windows::Win32::UI::Shell::{SHGetFileInfoW, SHGFI_ICON, SHGFI_LARGEICON, SHFILEINFOW, SHGFI_USEFILEATTRIBUTES};
@@ -529,9 +529,14 @@ pub fn write_image_to_clipboard(image_bytes: Vec<u8>) -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
+extern "system" {
+    fn GlobalFree(hmem: windows::Win32::Foundation::HGLOBAL) -> windows::Win32::Foundation::HGLOBAL;
+}
+
+#[cfg(target_os = "windows")]
 pub fn send_paste_input() {
     unsafe {
-        let mut inputs = vec![
+        let inputs = vec![
             // Ctrl Down
             INPUT {
                 r#type: INPUT_KEYBOARD,

@@ -25,6 +25,7 @@ export interface Settings {
   show_in_taskbar: boolean;
   hotkey: string;
   theme: string;
+  auto_paste: boolean;
 }
 
 export type ClipType = 'text' | 'image' | 'html' | 'rtf' | 'file' | 'url';

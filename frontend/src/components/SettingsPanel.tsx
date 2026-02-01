@@ -250,6 +250,27 @@ export function SettingsPanel({ settings: initialSettings, onClose, onSave }: Se
                 />
               </button>
             </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
+              <div>
+                <span className="text-sm font-medium">Auto Paste</span>
+                <p className="text-xs text-muted-foreground">
+                  Automatically paste when selecting a clip
+                </p>
+              </div>
+              <button
+                onClick={() => setSettings({ ...settings, auto_paste: !settings.auto_paste })}
+                className={`h-6 w-11 rounded-full transition-colors ${
+                  settings.auto_paste ? 'bg-primary' : 'bg-accent'
+                }`}
+              >
+                <div
+                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    settings.auto_paste ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
           </section>
 
           {/* History Storage Section - TEMP DISABLED: Backend support pending */}

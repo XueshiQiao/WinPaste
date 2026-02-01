@@ -183,17 +183,31 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                 let content = if clip.clip_type == "image" { "[Image]".to_string() } else { String::from_utf8_lossy(&clip.content).to_string() };
                 let _ = window.emit("clipboard-write", &content);
 
-                // Auto-Paste Logic
-                // 1. Hide window immediately to trigger focus switch to previous app
-                crate::animate_window_hide(&window, Some(Box::new(move || {
-                     // 2. Callback executed AFTER window is hidden
-                     #[cfg(target_os = "windows")]
-                     {
-                        // Small buffer to ensure OS focus switch is complete
-                        std::thread::sleep(std::time::Duration::from_millis(50));
-                        crate::clipboard::send_paste_input();
-                     }
-                })));
+                // Check auto_paste setting
+                let auto_paste = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'auto_paste'"#)
+                    .fetch_optional(pool)
+                    .await
+                    .unwrap_or(None)
+                    .and_then(|v| v.parse::<bool>().ok())
+                    .unwrap_or(true); // Default true
+
+                if auto_paste {
+                    // Auto-Paste Logic
+                    // 1. Hide window immediately to trigger focus switch to previous app
+                    crate::animate_window_hide(&window, Some(Box::new(move || {
+                         // 2. Callback executed AFTER window is hidden
+                                              #[cfg(target_os = "windows")]
+                                              {
+                                                 // Small buffer to ensure OS focus switch is complete
+                                                 std::thread::sleep(std::time::Duration::from_millis(200));
+                                                 crate::clipboard::send_paste_input();
+                                              }                    })));
+                } else {
+                     // If auto_paste is disabled, we still hide the window (as requested by original "copy to text field" intent, 
+                     // but maybe user just wants to copy?)
+                     // Actually, if auto_paste is OFF, standard behavior for "Enter/Double Click" in clipboard managers is usually "Copy & Close".
+                     crate::animate_window_hide(&window, None);
+                }
             }
             final_res
         }
@@ -406,7 +420,16 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
         "show_in_taskbar": false,
         "hotkey": "Ctrl+Shift+V",
         "theme": "dark",
+        "auto_paste": true
     });
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'auto_paste'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())
+    {
+        if let Ok(b) = value.parse::<bool>() {
+            settings["auto_paste"] = serde_json::json!(b);
+        }
+    }
 
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'max_items'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string())
@@ -461,6 +484,12 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
     if let Some(theme) = settings.get("theme").and_then(|v| v.as_str()) {
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('theme', ?)"#)
             .bind(theme)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(auto_paste) = settings.get("auto_paste").and_then(|v| v.as_bool()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('auto_paste', ?)"#)
+            .bind(auto_paste.to_string())
             .execute(pool).await.ok();
     }
 
