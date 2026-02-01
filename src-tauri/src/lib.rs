@@ -49,22 +49,36 @@ pub fn run_app() {
 
     let db_arc = Arc::new(db);
 
+    let mut log_builder = tauri_plugin_log::Builder::default()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "[{}][{}][{}] {}",
+                chrono::Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Debug);
+
+    #[cfg(debug_assertions)]
+    {
+        log_builder = log_builder.targets([
+            tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+            tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
+        ]);
+    }
+
+    #[cfg(not(debug_assertions))]
+    {
+        log_builder = log_builder.targets([
+            tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir { file_name: None }),
+            tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
+        ]);
+    }
+
     builder
-        .plugin(tauri_plugin_log::Builder::default()
-            .format(|out, message, record| {
-                out.finish(format_args!(
-                    "[{}][{}][{}] {}",
-                    chrono::Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.target(),
-                    record.level(),
-                    message
-                ))
-            })
-            .level(log::LevelFilter::Debug)
-            .targets([
-                tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
-                tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
-            ]).build())
+        .plugin(log_builder.build())
         .plugin(tauri_plugin_clipboard::init())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--flag1", "--flag2"])))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())

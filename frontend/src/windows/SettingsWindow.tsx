@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { emit } from '@tauri-apps/api/event';
 import { Settings } from '../types';
 import { SettingsPanel } from '../components/SettingsPanel';
 

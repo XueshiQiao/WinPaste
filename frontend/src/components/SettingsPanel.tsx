@@ -1,5 +1,5 @@
 import { Settings } from '../types';
-import { X, Save, Trash2, Plus, FolderOpen } from 'lucide-react';
+import { X, Trash2, Plus, FolderOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { invoke } from '@tauri-apps/api/core';
