@@ -26,6 +26,7 @@ export interface Settings {
   hotkey: string;
   theme: string;
   auto_paste: boolean;
+  ignore_ghost_clips: boolean;
 }
 
 export type ClipType = 'text' | 'image' | 'html' | 'rtf' | 'file' | 'url';

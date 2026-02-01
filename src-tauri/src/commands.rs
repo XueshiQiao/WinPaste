@@ -421,8 +421,17 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
         "show_in_taskbar": false,
         "hotkey": "Ctrl+Shift+V",
         "theme": "dark",
-        "auto_paste": true
+        "auto_paste": true,
+        "ignore_ghost_clips": false
     });
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ignore_ghost_clips'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())
+    {
+        if let Ok(b) = value.parse::<bool>() {
+            settings["ignore_ghost_clips"] = serde_json::json!(b);
+        }
+    }
 
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'auto_paste'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string())
@@ -491,6 +500,12 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
     if let Some(auto_paste) = settings.get("auto_paste").and_then(|v| v.as_bool()) {
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('auto_paste', ?)"#)
             .bind(auto_paste.to_string())
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ignore_ghost) = settings.get("ignore_ghost_clips").and_then(|v| v.as_bool()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ignore_ghost_clips', ?)"#)
+            .bind(ignore_ghost.to_string())
             .execute(pool).await.ok();
     }
 

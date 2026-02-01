@@ -268,6 +268,27 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                 />
               </button>
             </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
+              <div>
+                <span className="text-sm font-medium">Ignore Ghost Clips</span>
+                <p className="text-xs text-muted-foreground">
+                  Ignore content from unknown background apps
+                </p>
+              </div>
+              <button
+                onClick={() => updateSetting('ignore_ghost_clips', !settings.ignore_ghost_clips)}
+                className={`h-6 w-11 rounded-full transition-colors ${
+                  settings.ignore_ghost_clips ? 'bg-primary' : 'bg-accent'
+                }`}
+              >
+                <div
+                  className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    settings.ignore_ghost_clips ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
           </section>
 
           {/* History Storage Section - TEMP DISABLED: Backend support pending */}
