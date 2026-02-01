@@ -313,7 +313,7 @@ function App() {
   const handlePaste = async (clipId: string) => {
     try {
       await invoke('paste_clip', { id: clipId });
-      appWindow.hide();
+      // Backend now handles hiding and auto-pasting
     } catch (error) {
       console.error('Failed to paste clip:', error);
     }

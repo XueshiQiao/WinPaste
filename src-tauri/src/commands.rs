@@ -182,6 +182,18 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
             if final_res.is_ok() {
                 let content = if clip.clip_type == "image" { "[Image]".to_string() } else { String::from_utf8_lossy(&clip.content).to_string() };
                 let _ = window.emit("clipboard-write", &content);
+
+                // Auto-Paste Logic
+                // 1. Hide window immediately to trigger focus switch to previous app
+                crate::animate_window_hide(&window, Some(Box::new(move || {
+                     // 2. Callback executed AFTER window is hidden
+                     #[cfg(target_os = "windows")]
+                     {
+                        // Small buffer to ensure OS focus switch is complete
+                        std::thread::sleep(std::time::Duration::from_millis(50));
+                        crate::clipboard::send_paste_input();
+                     }
+                })));
             }
             final_res
         }

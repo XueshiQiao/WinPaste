@@ -124,7 +124,7 @@ pub fn run_app() {
                                      if win.is_visible().unwrap_or(false) {
                                          let win_clone = win.clone();
                                          std::thread::spawn(move || {
-                                             crate::animate_window_hide(&win_clone);
+                                             crate::animate_window_hide(&win_clone, None);
                                          });
                                      }
                                  }
@@ -214,7 +214,7 @@ pub fn run_app() {
                 let _ = app_handle.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
                         if win_clone.is_visible().unwrap_or(false) && win_clone.is_focused().unwrap_or(false) {
-                            crate::animate_window_hide(&win_clone);
+                            crate::animate_window_hide(&win_clone, None);
                         } else {
                             position_window_at_bottom(&win_clone);
                             let _ = win_clone.show();
@@ -336,7 +336,7 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
     });
 }
 
-pub fn animate_window_hide(window: &tauri::WebviewWindow) {
+pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dyn FnOnce() + Send>>) {
     // Atomically check if false and set to true. If already true, return.
     if IS_ANIMATING.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
         return;
@@ -431,6 +431,10 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow) {
             }
 
             let _ = window.hide();
+            
+            if let Some(callback) = on_done {
+                callback();
+            }
         }
         IS_ANIMATING.store(false, Ordering::SeqCst);
     });
