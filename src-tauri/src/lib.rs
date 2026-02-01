@@ -35,7 +35,6 @@ pub fn run_app() {
     fs::create_dir_all(&data_dir).ok();
     let db_path = data_dir.join("paste_paw.db");
     let db_path_str = db_path.to_str().unwrap_or("paste_paw.db").to_string();
-    log::info!("Database path: {}", db_path_str);
 
     let rt = get_runtime().expect("Failed to get global tokio runtime");
 
@@ -150,6 +149,10 @@ pub fn run_app() {
         })
         .setup(move |app| {
             log::info!("PastePaw starting...");
+            log::info!("Database path: {}", db_path_str);
+            if let Ok(log_dir) = app.path().app_log_dir() {
+                log::info!("Log directory: {:?}", log_dir);
+            }
             let handle = app.handle().clone();
             let db_for_clipboard = db_arc.clone();
 
