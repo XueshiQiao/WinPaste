@@ -9,6 +9,7 @@ import { ControlBar } from './components/ControlBar';
 import { DragPreview } from './components/DragPreview';
 import { ContextMenu } from './components/ContextMenu';
 import { FolderModal } from './components/FolderModal';
+import { AiResultDialog } from './components/AiResultDialog';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTheme } from './hooks/useTheme';
 import { Toaster, toast } from 'sonner';
@@ -379,6 +380,30 @@ function App() {
   const [folderModalMode, setFolderModalMode] = useState<'create' | 'rename'>('create');
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
 
+  // AI Result State
+  const [aiResult, setAiResult] = useState({
+    isOpen: false,
+    title: '',
+    content: '',
+  });
+
+  const handleAiAction = async (clipId: string, action: string, title: string) => {
+    try {
+      const toastId = toast.loading('Processing with AI...');
+      const result = await invoke<string>('ai_process_clip', { clipId, action });
+      toast.dismiss(toastId);
+      setAiResult({
+        isOpen: true,
+        title,
+        content: result,
+      });
+    } catch (error) {
+      toast.dismiss();
+      console.error('AI Processing Failed:', error);
+      toast.error(`AI Error: ${error}`);
+    }
+  };
+
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, type: 'card' | 'folder', itemId: string) => {
       e.preventDefault();
@@ -469,6 +494,22 @@ function App() {
                 contextMenu.type === 'card'
                   ? [
                       {
+                        label: 'Summarize (AI)',
+                        onClick: () => handleAiAction(contextMenu.itemId, 'summarize', 'AI Summary'),
+                      },
+                      {
+                        label: 'Translate to English (AI)',
+                        onClick: () => handleAiAction(contextMenu.itemId, 'translate', 'AI Translation'),
+                      },
+                      {
+                        label: 'Explain Code (AI)',
+                        onClick: () => handleAiAction(contextMenu.itemId, 'explain_code', 'Code Explanation'),
+                      },
+                      {
+                        label: 'Fix Grammar (AI)',
+                        onClick: () => handleAiAction(contextMenu.itemId, 'fix_grammar', 'Grammar Check'),
+                      },
+                      {
                         label: 'Delete',
                         danger: true,
                         onClick: () => handleDelete(contextMenu.itemId),
@@ -553,6 +594,13 @@ function App() {
                 setNewFolderName('');
               }}
               onSubmit={handleCreateOrRenameFolder}
+            />
+
+            <AiResultDialog
+              isOpen={aiResult.isOpen}
+              title={aiResult.title}
+              content={aiResult.content}
+              onClose={() => setAiResult((prev) => ({ ...prev, isOpen: false }))}
             />
           </main>
           <Toaster

@@ -98,6 +98,7 @@ pub struct ClipboardItem {
     pub created_at: String,
     pub source_app: Option<String>,
     pub source_icon: Option<String>,
+    pub metadata: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

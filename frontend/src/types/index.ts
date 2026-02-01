@@ -7,6 +7,7 @@ export interface ClipboardItem {
   created_at: string;
   source_app: string | null;
   source_icon: string | null;
+  metadata: string | null;
 }
 
 export interface FolderItem {
@@ -27,6 +28,10 @@ export interface Settings {
   theme: string;
   auto_paste: boolean;
   ignore_ghost_clips: boolean;
+  ai_provider?: string;
+  ai_api_key?: string;
+  ai_model?: string;
+  ai_base_url?: string;
 }
 
 export type ClipType = 'text' | 'image' | 'html' | 'rtf' | 'file' | 'url';

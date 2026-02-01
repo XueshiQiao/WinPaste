@@ -397,6 +397,68 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
             </div>
           </section>
 
+          {/* AI Integration Section */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+              AI Integration
+            </h3>
+            
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium">Provider</span>
+              </label>
+              <select
+                value={settings.ai_provider || 'openai'}
+                onChange={(e) => updateSetting('ai_provider', e.target.value)}
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="openai">OpenAI</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="custom">Custom (OpenAI Compatible)</option>
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium">API Key</span>
+              </label>
+              <input
+                type="password"
+                value={settings.ai_api_key || ''}
+                onChange={(e) => updateSetting('ai_api_key', e.target.value)}
+                placeholder="sk-..."
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium">Model</span>
+              </label>
+              <input
+                type="text"
+                value={settings.ai_model || 'gpt-3.5-turbo'}
+                onChange={(e) => updateSetting('ai_model', e.target.value)}
+                placeholder="gpt-4o, deepseek-chat, etc."
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium">Base URL (Optional)</span>
+                <p className="text-xs text-muted-foreground">For local models or custom endpoints</p>
+              </label>
+              <input
+                type="text"
+                value={settings.ai_base_url || ''}
+                onChange={(e) => updateSetting('ai_base_url', e.target.value)}
+                placeholder="https://api.openai.com/v1"
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </section>
+
           {/* Privacy Section */}
           <section className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">

@@ -19,6 +19,7 @@ mod database;
 mod models;
 mod commands;
 mod constants;
+mod ai;
 
 use models::get_runtime;
 use database::Database;
@@ -274,7 +275,8 @@ pub fn run_app() {
             commands::get_ignored_apps,
             commands::pick_file,
             commands::get_layout_config,
-            commands::test_log
+            commands::test_log,
+            commands::ai_process_clip
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

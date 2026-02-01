@@ -33,6 +33,7 @@ tauri-plugin-log = "2.8.0"
 tauri-plugin-opener = "2"
 log = "0.4.29"
 window-vibrancy = "0.7.1"
+reqwest = { version = "0.13.1", features = ["json"] }
 
 [features]
 default = ["custom-protocol"]
