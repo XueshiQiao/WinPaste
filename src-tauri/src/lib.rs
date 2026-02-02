@@ -7,6 +7,7 @@ use tauri::{
 };
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+use tauri_plugin_aptabase::EventTracker;
 use std::fs;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
@@ -38,6 +39,7 @@ pub fn run_app() {
     let db_path_str = db_path.to_str().unwrap_or("paste_paw.db").to_string();
 
     let rt = get_runtime().expect("Failed to get global tokio runtime");
+    let _guard = rt.enter();
 
     let db = rt.block_on(async {
         Database::new(&db_path_str).await
@@ -153,6 +155,7 @@ pub fn run_app() {
         })
         .setup(move |app| {
             log::info!("PastePaw starting...");
+            let _ = app.track_event("startup", None);
             log::info!("Database path: {}", db_path_str);
             if let Ok(log_dir) = app.path().app_log_dir() {
                 log::info!("Log directory: {:?}", log_dir);
@@ -452,7 +455,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
             }
 
             let _ = window.hide();
-            
+
             if let Some(callback) = on_done {
                 callback();
             }
