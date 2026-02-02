@@ -6,6 +6,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { emit } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { toast } from 'sonner';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useShortcutRecorder } from 'use-shortcut-recorder';
@@ -233,6 +235,38 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
     stopRecordingLib();
     clearLastRecording();
     setIsRecordingMode(false);
+  };
+
+  const handleCheckUpdate = async () => {
+    try {
+      const loadingToast = toast.loading('Checking for updates...');
+      const update = await check();
+      toast.dismiss(loadingToast);
+
+      if (update && update.available) {
+        toast.info(`Update v${update.version} available!`, {
+          duration: 10000,
+          action: {
+            label: 'Download & Restart',
+            onClick: async () => {
+               try {
+                 const dlToast = toast.loading(`Downloading v${update.version}...`);
+                 await update.downloadAndInstall();
+                 toast.dismiss(dlToast);
+                 toast.success('Update installed. Restarting...');
+                 await relaunch();
+               } catch (e) {
+                 toast.error(`Update failed: ${e}`);
+               }
+            }
+          }
+        });
+      } else {
+        toast.success('You are on the latest version.');
+      }
+    } catch (e) {
+      toast.error(`Check failed: ${e}`);
+    }
   };
 
   return (
@@ -655,14 +689,20 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border bg-background px-4 py-3 text-center">
+        <div className="border-t border-border bg-background px-4 py-3 text-center flex flex-col gap-1 items-center">
           <button
             onClick={() => openUrl('https://github.com/XueshiQiao/PastePaw').catch(console.error)}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             PastePaw {appVersion || '...'}
           </button>
-          <span className="text-xs text-muted-foreground"> © 2025</span>
+          <div className="flex gap-2 text-xs text-muted-foreground">
+             <span>© 2025</span>
+             <span>•</span>
+             <button onClick={handleCheckUpdate} className="hover:text-foreground underline">
+               Check for Updates
+             </button>
+          </div>
         </div>
       </div>
     </>
