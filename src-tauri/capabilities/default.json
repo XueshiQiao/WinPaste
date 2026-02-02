@@ -19,6 +19,7 @@
     "opener:default",
     "updater:default",
     "process:default",
+    "aptabase:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [

@@ -85,6 +85,7 @@ pub fn run_app() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_aptabase::Builder::new("A-US-2920723583").build())
         .manage(db_arc.clone())
         .on_window_event(|window, event| {
             match event {
