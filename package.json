@@ -1,6 +1,6 @@
 {
   "name": "pastepaw",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A beautiful clipboard history manager for Windows",
   "license": "GPL-3.0",
   "scripts": {
@@ -16,6 +16,8 @@
     "@tauri-apps/plugin-clipboard-manager": "^2.0.0",
     "@tauri-apps/plugin-log": "^2.8.0",
     "@tauri-apps/plugin-opener": "^2.0.0",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.9.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
     "lucide-react": "^0.294.0",
