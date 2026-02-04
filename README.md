@@ -35,6 +35,13 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 - 🤖 **AI Powered** - Built-in AI to summarize, translate, explain code, and fix grammar
 - ⚙️ **Customizable AI** - Fully customize AI action names and system prompts to suit your workflow
 
+## Screenshots
+
+### Light theme
+![docs/paste_paw_dark.png](docs/paste_paw_light.png)
+### Dark theme
+![docs/paste_paw_dark.png](docs/paste_paw_dark.png)
+
 ## Keyboard Shortcuts
 
 ### Global
