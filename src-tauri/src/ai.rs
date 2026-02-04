@@ -38,14 +38,19 @@ pub async fn process_text(
     text: &str,
     action: AiAction,
     config: &AiConfig,
+    custom_prompt: Option<String>,
 ) -> Result<String, Box<dyn Error>> {
     let client = Client::new();
 
-    let system_prompt = match action {
-        AiAction::Summarize => "You are a helpful assistant. Summarize the following text concisely.",
-        AiAction::Translate => "You are a helpful assistant. Translate the following text to English (or the user's likely preferred language based on context).",
-        AiAction::ExplainCode => "You are a helpful assistant. Explain what the following code does.",
-        AiAction::FixGrammar => "You are a helpful assistant. Fix the grammar and improve the style of the following text.",
+    let system_prompt = if let Some(prompt) = custom_prompt {
+        prompt
+    } else {
+        match action {
+            AiAction::Summarize => "You are a helpful assistant. Summarize the following text concisely.".to_string(),
+            AiAction::Translate => "You are a helpful assistant. Translate the following text to English (or the user's likely preferred language based on context).".to_string(),
+            AiAction::ExplainCode => "You are a helpful assistant. Explain what the following code does.".to_string(),
+            AiAction::FixGrammar => "You are a helpful assistant. Fix the grammar and improve the style of the following text.".to_string(),
+        }
     };
 
     let base_url = config.base_url.as_deref().unwrap_or("https://api.openai.com/v1");
