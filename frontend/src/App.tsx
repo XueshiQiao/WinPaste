@@ -24,7 +24,7 @@ function App() {
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('system');
 
   // Simulated Drag State
   const [draggingClipId, setDraggingClipId] = useState<string | null>(null);
@@ -43,7 +43,7 @@ function App() {
     pendingDrag: null as { clipId: string; startX: number; startY: number } | null,
   });
 
-  useTheme(theme);
+  const effectiveTheme = useTheme(theme);
 
   const appWindow = getCurrentWindow();
   const selectedFolderRef = useRef(selectedFolder);
@@ -565,7 +565,7 @@ function App() {
             onFolderContextMenu={(e, folderId) => {
               if (folderId) handleContextMenu(e, 'folder', folderId);
             }}
-            theme={theme === 'light' ? 'light' : 'dark'}
+            theme={effectiveTheme}
           />
 
           <main className="no-scrollbar relative flex-1">
@@ -606,7 +606,7 @@ function App() {
           <Toaster
             richColors
             position="bottom-center"
-            theme={theme === 'light' ? 'light' : 'dark'}
+            theme={effectiveTheme}
           />
         </div>
       </div>

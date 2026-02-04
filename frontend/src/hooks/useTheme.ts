@@ -1,19 +1,29 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function useTheme(theme: string) {
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(
+    theme === 'system'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      : (theme as 'light' | 'dark')
+  );
+
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
 
-    const applyTheme = (t: string) => {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
+    const getSystemTheme = () =>
+      window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
+    const applyTheme = (t: string) => {
+      const currentSystemTheme = getSystemTheme();
       if (t === 'system') {
-        root.classList.add(systemTheme);
+        root.classList.add(currentSystemTheme);
+        setEffectiveTheme(currentSystemTheme);
       } else {
         root.classList.add(t);
+        setEffectiveTheme(t as 'light' | 'dark');
       }
     };
 
@@ -30,4 +40,6 @@ export function useTheme(theme: string) {
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
   }, [theme]);
+
+  return effectiveTheme;
 }

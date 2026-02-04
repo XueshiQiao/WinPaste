@@ -3,13 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Settings } from '../types';
 import { SettingsPanel } from '../components/SettingsPanel';
+import { useTheme } from '../hooks/useTheme';
 
 import { Toaster } from 'sonner';
 
 export function SettingsWindow() {
   const [settings, setSettings] = useState<Settings | null>(null);
 
-  // useTheme(settings?.theme || 'dark'); // Moved to SettingsPanel for immediate feedback
+  const effectiveTheme = useTheme(settings?.theme || 'system');
 
   useEffect(() => {
     invoke<Settings>('get_settings').then(setSettings).catch(console.error);
@@ -34,7 +35,7 @@ export function SettingsWindow() {
       <Toaster
         richColors
         position="bottom-center"
-        theme={settings.theme === 'light' ? 'light' : 'dark'}
+        theme={effectiveTheme}
       />
     </div>
   );
