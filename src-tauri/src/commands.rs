@@ -287,7 +287,7 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                         }
                     })));
                 } else {
-                     // If auto_paste is disabled, we still hide the window (as requested by original "copy to text field" intent, 
+                     // If auto_paste is disabled, we still hide the window (as requested by original "copy to text field" intent,
                      // but maybe user just wants to copy?)
                      // Actually, if auto_paste is OFF, standard behavior for "Enter/Double Click" in clipboard managers is usually "Copy & Close".
                      crate::animate_window_hide(&window, None);
@@ -564,7 +564,7 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
     // AI Settings
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_provider'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_provider"] = serde_json::json!(value); }
-    
+
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_api_key'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_api_key"] = serde_json::json!(value); }
 
@@ -636,7 +636,7 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('mica_effect', ?)"#)
             .bind(mica_effect)
             .execute(pool).await.ok();
-        
+
         if let Some(win) = app.get_webview_window("main") {
             crate::apply_window_effect(&win, mica_effect);
         }
@@ -835,6 +835,25 @@ pub async fn register_global_shortcut(hotkey: String, window: tauri::WebviewWind
 
     log::info!("Registered global shortcut: {}", hotkey);
     Ok(())
+}
+
+#[tauri::command]
+pub async fn focus_window(app: AppHandle, label: String) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(&label) {
+        if let Err(e) = window.unminimize() {
+            log::warn!("Failed to unminimize window {}: {:?}", label, e);
+        }
+        if let Err(e) = window.show() {
+            log::warn!("Failed to show window {}: {:?}", label, e);
+        }
+        if let Err(e) = window.set_focus() {
+            log::warn!("Failed to focus window {}: {:?}", label, e);
+        }
+
+        Ok(())
+    } else {
+        Err(format!("Window {} not found", label))
+    }
 }
 
 #[tauri::command]

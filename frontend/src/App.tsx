@@ -73,7 +73,15 @@ function App() {
     // Check if settings window already exists
     const existingWin = await WebviewWindow.getByLabel('settings');
     if (existingWin) {
-      await existingWin.setFocus();
+      try {
+        await invoke('focus_window', { label: 'settings' });
+      } catch (e) {
+        console.error('Failed to focus settings window:', e);
+        // Fallback to JS API if command fails (though command is preferred)
+        await existingWin.unminimize();
+        await existingWin.show();
+        await existingWin.setFocus();
+      }
       return;
     }
 

@@ -2,15 +2,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::sync::OnceLock;
 
-pub enum ClipType {
-    Text,
-    Image,
-    Html,
-    Rtf,
-    File,
-    Url,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Clip {
     pub id: i64,
@@ -36,39 +27,6 @@ pub struct Folder {
     pub color: Option<String>,
     pub is_system: bool,
     pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Settings {
-    pub max_items: i64,
-    pub auto_delete_days: i64,
-    pub startup_with_windows: bool,
-    pub show_in_taskbar: bool,
-    pub hotkey: String,
-    pub theme: String,
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            max_items: 1000,
-            auto_delete_days: 30,
-            startup_with_windows: true,
-            show_in_taskbar: false,
-            hotkey: "Ctrl+Shift+V".to_string(),
-            theme: "dark".to_string(),
-        }
-    }
-}
-
-static DB_PATH: OnceLock<String> = OnceLock::new();
-
-pub fn set_db_path(path: String) {
-    DB_PATH.set(path).ok();
-}
-
-pub fn get_db_path() -> &'static str {
-    DB_PATH.get().map(|s| s.as_str()).unwrap_or("")
 }
 
 static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
@@ -109,10 +67,4 @@ pub struct FolderItem {
     pub color: Option<String>,
     pub is_system: bool,
     pub item_count: i64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SearchResult {
-    pub clips: Vec<ClipboardItem>,
-    pub total_count: i64,
 }

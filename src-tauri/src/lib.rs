@@ -284,7 +284,8 @@ pub fn run_app() {
             commands::pick_file,
             commands::get_layout_config,
             commands::test_log,
-            commands::ai_process_clip
+            commands::ai_process_clip,
+            commands::focus_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

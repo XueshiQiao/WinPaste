@@ -335,7 +335,11 @@ export function ControlBar({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-shrink-0 items-center gap-2">
+      <div 
+        className="flex flex-shrink-0 items-center gap-2"
+        style={{ WebkitAppRegion: 'no-drag' } as any}
+        onDoubleClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onAddClick}
           className="rounded-lg p-2 text-emerald-400 transition-colors hover:bg-emerald-500/10"
