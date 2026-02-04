@@ -1,6 +1,16 @@
-# PastePaw - 剪贴板历史管理工具
+<h1 align="center">
+    <picture>
+      <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png" alt="Claude-Mem" width="32">
+    </picture>
+    PastePaw - Clipboard History Manager
+</h1>
 
-[English](./README.md)
+
+<p align="center">
+  <a href="README_CN.md">中文</a> •
+  <a href="README.md">English</a>
+</p>
+
 
 一款专为 Windows 打造的精美剪贴板历史管理工具，基于 Rust + Tauri + React + TypeScript 构建。
 
