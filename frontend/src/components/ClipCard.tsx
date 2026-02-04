@@ -40,7 +40,7 @@ export const ClipCard = memo(function ClipCard({
       );
     } else {
       return (
-        <pre className="whitespace-pre-wrap break-all font-mono text-[11px] leading-tight text-foreground">
+        <pre className="whitespace-pre-wrap break-all font-mono text-[13px] leading-tight text-foreground">
           <span>{clip.content.substring(0, PREVIEW_CHAR_LIMIT)}</span>
         </pre>
       );
@@ -107,7 +107,7 @@ export const ClipCard = memo(function ClipCard({
           'group'
         )}
       >
-        <div className={clsx(headerColor, 'flex flex-shrink-0 items-center gap-2 px-4 py-2')}>
+        <div className={clsx(headerColor, 'flex flex-shrink-0 items-center gap-2 px-2 py-1.5')}>
           {clip.source_icon && (
             <img
               src={`data:image/png;base64,${clip.source_icon}`}
@@ -115,7 +115,7 @@ export const ClipCard = memo(function ClipCard({
               className="h-4 w-4 object-contain"
             />
           )}
-          <span className="flex-1 truncate text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm">
+          <span className="flex-1 truncate text-[11px] font-bold uppercase tracking-wider text-foreground shadow-sm">
             {title}
           </span>
           <button
@@ -136,13 +136,13 @@ export const ClipCard = memo(function ClipCard({
           </button>
         </div>
 
-        <div className="relative flex-1 overflow-hidden bg-card p-3">
+        <div className="relative flex-1 overflow-hidden bg-card p-2">
           {renderedContent}
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card/100 to-card/30" />
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card via-card/100 to-transparent/0 px-3 py-1.5">
-          <span className="text-[10px] font-medium text-muted-foreground/50">
+          <span className="text-[11px] font-medium text-muted-foreground/50">
             {clip.clip_type === 'image'
               ? `Image (${Math.round((clip.content.length * 0.75) / 1024)}KB)`
               : `${clip.content.length} characters`}
