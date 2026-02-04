@@ -1,5 +1,16 @@
 import { Settings, FolderItem } from '../types';
-import { X, Trash2, Plus, FolderOpen, Settings as SettingsIcon, BrainCircuit, Folder as FolderIcon, MoreHorizontal, Eye, EyeOff } from 'lucide-react';
+import {
+  X,
+  Trash2,
+  Plus,
+  FolderOpen,
+  Settings as SettingsIcon,
+  BrainCircuit,
+  Folder as FolderIcon,
+  MoreHorizontal,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { invoke } from '@tauri-apps/api/core';
@@ -20,18 +31,18 @@ interface SettingsPanelProps {
 
 type Tab = 'general' | 'ai' | 'folders';
 
-function PromptEditor({ 
-  label, 
-  value, 
+function PromptEditor({
+  label,
+  value,
   titleValue,
-  placeholder, 
+  placeholder,
   onSave,
-  onSaveTitle
-}: { 
-  label: string; 
-  value: string; 
+  onSaveTitle,
+}: {
+  label: string;
+  value: string;
   titleValue?: string;
-  placeholder: string; 
+  placeholder: string;
   onSave: (val: string) => void;
   onSaveTitle?: (val: string) => void;
 }) {
@@ -50,7 +61,7 @@ function PromptEditor({
   return (
     <div className="space-y-2 rounded-lg border border-border/40 bg-accent/5 p-3">
       <div className="flex items-center justify-between gap-4">
-        <input 
+        <input
           type="text"
           value={localTitle}
           onChange={(e) => setLocalTitle(e.target.value)}
@@ -59,10 +70,12 @@ function PromptEditor({
               onSaveTitle(localTitle);
             }
           }}
-          className="bg-transparent text-xs font-semibold text-foreground/70 outline-none focus:text-primary transition-colors"
+          className="bg-transparent text-xs font-semibold text-foreground/70 outline-none transition-colors focus:text-primary"
           title="Click to rename action"
         />
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">Action Name</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          Action Name
+        </span>
       </div>
       <textarea
         value={localValue}
@@ -73,7 +86,7 @@ function PromptEditor({
           }
         }}
         placeholder={placeholder}
-        className="w-full min-h-[60px] rounded-md border border-border bg-input px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none transition-all"
+        className="min-h-[60px] w-full resize-none rounded-md border border-border bg-input px-3 py-2 text-xs text-foreground transition-all focus:outline-none focus:ring-1 focus:ring-primary/30"
       />
     </div>
   );
@@ -98,18 +111,18 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
   // Generic handler for immediate settings updates
   const updateSettings = async (updates: Partial<Settings>) => {
     // Determine the next state before updating React state
-    setSettings(prev => {
+    setSettings((prev) => {
       const newSettings = { ...prev, ...updates };
-      
+
       // Schedule async actions - we use newSettings which is local to this scope
       // This avoids race conditions with 'settings' variable
       (async () => {
         try {
           await invoke('save_settings', { settings: newSettings });
           await emit('settings-changed', newSettings);
-          
+
           if (updates.hotkey) {
-             await invoke('register_global_shortcut', { hotkey: updates.hotkey });
+            await invoke('register_global_shortcut', { hotkey: updates.hotkey });
           }
         } catch (error) {
           console.error(`Failed to save settings:`, error);
@@ -123,15 +136,18 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
         const key = keys[0] as keyof Settings;
         const value = updates[key];
         if (key !== 'theme') {
-           const label = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-           if (typeof value === 'boolean') {
-              toast.success(`${label} was ${value ? 'enabled' : 'disabled'}`);
-           } else {
-              toast.success(`${label} updated`);
-           }
+          const label = key
+            .split('_')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          if (typeof value === 'boolean') {
+            toast.success(`${label} was ${value ? 'enabled' : 'disabled'}`);
+          } else {
+            toast.success(`${label} updated`);
+          }
         }
       } else if (keys.length > 1) {
-        toast.success("Settings updated");
+        toast.success('Settings updated');
       }
 
       return newSettings;
@@ -327,17 +343,17 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
           action: {
             label: 'Download & Restart',
             onClick: async () => {
-               try {
-                 const dlToast = toast.loading(`Downloading v${update.version}...`);
-                 await update.downloadAndInstall();
-                 toast.dismiss(dlToast);
-                 toast.success('Update installed. Restarting...');
-                 await relaunch();
-               } catch (e) {
-                 toast.error(`Update failed: ${e}`);
-               }
-            }
-          }
+              try {
+                const dlToast = toast.loading(`Downloading v${update.version}...`);
+                await update.downloadAndInstall();
+                toast.dismiss(dlToast);
+                toast.success('Update installed. Restarting...');
+                await relaunch();
+              } catch (e) {
+                toast.error(`Update failed: ${e}`);
+              }
+            },
+          },
         });
       } else {
         toast.success('You are on the latest version.');
@@ -375,8 +391,10 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
               <button
                 onClick={() => setActiveTab('general')}
                 className={clsx(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  activeTab === 'general' ? "bg-accent text-accent-foreground" : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  activeTab === 'general'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 )}
               >
                 <SettingsIcon size={16} />
@@ -385,8 +403,10 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
               <button
                 onClick={() => setActiveTab('ai')}
                 className={clsx(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  activeTab === 'ai' ? "bg-accent text-accent-foreground" : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  activeTab === 'ai'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 )}
               >
                 <BrainCircuit size={16} />
@@ -395,8 +415,10 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
               <button
                 onClick={() => setActiveTab('folders')}
                 className={clsx(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  activeTab === 'folders' ? "bg-accent text-accent-foreground" : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  activeTab === 'folders'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 )}
               >
                 <FolderIcon size={16} />
@@ -408,26 +430,44 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
           {/* Content Area */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="mx-auto max-w-2xl space-y-8">
-              
               {/* --- GENERAL TAB --- */}
               {activeTab === 'general' && (
                 <>
                   <section className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Appearance & Behavior</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Appearance & Behavior
+                    </h3>
 
-                    <div className="space-y-3">
-                      <label className="block">
-                        <span className="text-sm font-medium">Theme</span>
-                      </label>
-                      <select
-                        value={settings.theme}
-                        onChange={(e) => handleThemeChange(e.target.value)}
-                        className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      >
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
-                        <option value="system">System</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <label className="block">
+                          <span className="text-sm font-medium">Theme</span>
+                        </label>
+                        <select
+                          value={settings.theme}
+                          onChange={(e) => handleThemeChange(e.target.value)}
+                          className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="dark">Dark</option>
+                          <option value="light">Light</option>
+                          <option value="system">System</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="block">
+                          <span className="text-sm font-medium">Window Effect</span>
+                        </label>
+                        <select
+                          value={settings.mica_effect || 'clear'}
+                          onChange={(e) => updateSetting('mica_effect', e.target.value)}
+                          className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="auto">Mica Auto</option>
+                          <option value="dark">Mica Dark</option>
+                          <option value="clear">Clear</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
@@ -438,7 +478,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                         </p>
                       </div>
                       <button
-                        onClick={() => updateSetting('startup_with_windows', !settings.startup_with_windows)}
+                        onClick={() =>
+                          updateSetting('startup_with_windows', !settings.startup_with_windows)
+                        }
                         className={`h-6 w-11 rounded-full transition-colors ${settings.startup_with_windows ? 'bg-primary' : 'bg-accent'}`}
                       >
                         <div
@@ -472,7 +514,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                         </p>
                       </div>
                       <button
-                        onClick={() => updateSetting('ignore_ghost_clips', !settings.ignore_ghost_clips)}
+                        onClick={() =>
+                          updateSetting('ignore_ghost_clips', !settings.ignore_ghost_clips)
+                        }
                         className={`h-6 w-11 rounded-full transition-colors ${settings.ignore_ghost_clips ? 'bg-primary' : 'bg-accent'}`}
                       >
                         <div
@@ -530,7 +574,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Privacy Exceptions</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Privacy Exceptions
+                    </h3>
                     <div className="space-y-3">
                       <label className="block">
                         <span className="text-sm font-medium">Ignored Applications</span>
@@ -627,7 +673,7 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                 <>
                   <section className="space-y-4">
                     <h3 className="text-sm font-medium text-muted-foreground">AI Configuration</h3>
-                    
+
                     <div className="space-y-3">
                       <label className="block">
                         <span className="text-sm font-medium">Provider</span>
@@ -637,14 +683,14 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                         onChange={(e) => {
                           const newProvider = e.target.value;
                           const updates: Partial<Settings> = { ai_provider: newProvider };
-                          
+
                           // Auto-fill Base URL based on provider
                           if (newProvider === 'openai') {
                             updates.ai_base_url = 'https://api.openai.com/v1';
                           } else if (newProvider === 'deepseek') {
                             updates.ai_base_url = 'https://api.deepseek.com';
                           }
-                          
+
                           updateSettings(updates);
                         }}
                         className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -661,16 +707,16 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                       </label>
                       <div className="relative">
                         <input
-                          type={showApiKey ? "text" : "password"}
+                          type={showApiKey ? 'text' : 'password'}
                           value={settings.ai_api_key || ''}
                           onChange={(e) => updateSetting('ai_api_key', e.target.value)}
                           placeholder="sk-..."
-                          className="w-full rounded-lg border border-border bg-input pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="w-full rounded-lg border border-border bg-input py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                         <button
                           type="button"
                           onClick={() => setShowApiKey(!showApiKey)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                         >
                           {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
@@ -693,7 +739,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                     <div className="space-y-3">
                       <label className="block">
                         <span className="text-sm font-medium">Base URL (Optional)</span>
-                        <p className="text-xs text-muted-foreground">For local models or custom endpoints</p>
+                        <p className="text-xs text-muted-foreground">
+                          For local models or custom endpoints
+                        </p>
                       </label>
                       <input
                         type="text"
@@ -705,10 +753,12 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                     </div>
                   </section>
 
-                  <section className="space-y-4 pt-4 border-t border-border/50">
+                  <section className="space-y-4 border-t border-border/50 pt-4">
                     <h3 className="text-sm font-medium text-muted-foreground">Custom Prompts</h3>
-                    <p className="text-xs text-muted-foreground italic">Leave blank to use default prompts.</p>
-                    
+                    <p className="text-xs italic text-muted-foreground">
+                      Leave blank to use default prompts.
+                    </p>
+
                     <div className="space-y-4">
                       <PromptEditor
                         label="Summarize"
@@ -718,7 +768,7 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                         onSaveTitle={(val) => updateSetting('ai_title_summarize', val)}
                         placeholder="Default: You are a helpful assistant. Summarize the following text concisely."
                       />
-                      
+
                       <PromptEditor
                         label="Translate"
                         value={settings.ai_prompt_translate || ''}
@@ -754,7 +804,7 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
               {activeTab === 'folders' && (
                 <section className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Manage Folders</h3>
-                  
+
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -774,66 +824,84 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                     </button>
                   </div>
 
-                  <div className="space-y-2 mt-4">
-                    {folders.filter(f => !f.is_system).length === 0 ? (
-                       <p className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">No custom folders created.</p>
+                  <div className="mt-4 space-y-2">
+                    {folders.filter((f) => !f.is_system).length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-border py-4 text-center text-xs text-muted-foreground">
+                        No custom folders created.
+                      </p>
                     ) : (
-                      folders.filter(f => !f.is_system).map(folder => (
-                        <div key={folder.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
-                          {editingFolderId === folder.id ? (
-                            <div className="flex flex-1 items-center gap-2">
-                              <input
-                                type="text"
-                                value={renameValue}
-                                onChange={(e) => setRenameValue(e.target.value)}
-                                className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') saveRenameFolder();
-                                  if (e.key === 'Escape') setEditingFolderId(null);
-                                }}
-                              />
-                              <button onClick={saveRenameFolder} className="text-xs text-primary hover:underline">Save</button>
-                              <button onClick={() => setEditingFolderId(null)} className="text-xs text-muted-foreground hover:underline">Cancel</button>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="flex items-center gap-3">
-                                <FolderIcon size={16} className="text-blue-400" />
-                                <span className="text-sm font-medium">{folder.name}</span>
-                                <span className="text-xs text-muted-foreground">({folder.item_count} items)</span>
-                              </div>
-                              <div className="flex items-center gap-2">
+                      folders
+                        .filter((f) => !f.is_system)
+                        .map((folder) => (
+                          <div
+                            key={folder.id}
+                            className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
+                          >
+                            {editingFolderId === folder.id ? (
+                              <div className="flex flex-1 items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={renameValue}
+                                  onChange={(e) => setRenameValue(e.target.value)}
+                                  className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') saveRenameFolder();
+                                    if (e.key === 'Escape') setEditingFolderId(null);
+                                  }}
+                                />
                                 <button
-                                  onClick={() => startRenameFolder(folder)}
-                                  className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                                  title="Rename"
+                                  onClick={saveRenameFolder}
+                                  className="text-xs text-primary hover:underline"
                                 >
-                                  <MoreHorizontal size={14} />
+                                  Save
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteFolder(folder.id)}
-                                  className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                  title="Delete"
+                                  onClick={() => setEditingFolderId(null)}
+                                  className="text-xs text-muted-foreground hover:underline"
                                 >
-                                  <Trash2 size={14} />
+                                  Cancel
                                 </button>
                               </div>
-                            </>
-                          )}
-                        </div>
-                      ))
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-3">
+                                  <FolderIcon size={16} className="text-blue-400" />
+                                  <span className="text-sm font-medium">{folder.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({folder.item_count} items)
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => startRenameFolder(folder)}
+                                    className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    title="Rename"
+                                  >
+                                    <MoreHorizontal size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteFolder(folder.id)}
+                                    className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))
                     )}
                   </div>
                 </section>
               )}
-
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border bg-background px-4 py-3 text-center flex flex-col gap-1 items-center">
+        <div className="flex flex-col items-center gap-1 border-t border-border bg-background px-4 py-3 text-center">
           <button
             onClick={() => openUrl('https://github.com/XueshiQiao/PastePaw').catch(console.error)}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -841,11 +909,11 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
             PastePaw {appVersion || '...'}
           </button>
           <div className="flex gap-2 text-xs text-muted-foreground">
-             <span>© 2025</span>
-             <span>•</span>
-             <button onClick={handleCheckUpdate} className="hover:text-foreground underline">
-               Check for Updates
-             </button>
+            <span>© 2025</span>
+            <span>•</span>
+            <button onClick={handleCheckUpdate} className="underline hover:text-foreground">
+              Check for Updates
+            </button>
           </div>
         </div>
       </div>

@@ -475,14 +475,14 @@ function App() {
       <div
         className="absolute inset-0"
         style={{
-          backgroundColor: `hsl(var(--background) / ${LAYOUT.PADDING_OPACITY})`,
-          backdropFilter: 'blur(10px)',
+          backgroundColor: 'transparent',
+          backdropFilter: 'blur(2px)',
         }}
       />
 
       {/* Content Container */}
       <div className="relative h-full w-full" style={{ padding: `${LAYOUT.WINDOW_PADDING}px` }}>
-        <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background/80 font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
           {draggingClipId && (
             <DragPreview
               clip={clips.find((c) => c.id === draggingClipId)!}
@@ -500,19 +500,23 @@ function App() {
                   ? [
                       {
                         label: `${settings?.ai_title_summarize || 'Summarize'} (AI)`,
-                        onClick: () => handleAiAction(contextMenu.itemId, 'summarize', 'AI Summary'),
+                        onClick: () =>
+                          handleAiAction(contextMenu.itemId, 'summarize', 'AI Summary'),
                       },
                       {
                         label: `${settings?.ai_title_translate || 'Translate'} (AI)`,
-                        onClick: () => handleAiAction(contextMenu.itemId, 'translate', 'AI Translation'),
+                        onClick: () =>
+                          handleAiAction(contextMenu.itemId, 'translate', 'AI Translation'),
                       },
                       {
                         label: `${settings?.ai_title_explain_code || 'Explain Code'} (AI)`,
-                        onClick: () => handleAiAction(contextMenu.itemId, 'explain_code', 'Code Explanation'),
+                        onClick: () =>
+                          handleAiAction(contextMenu.itemId, 'explain_code', 'Code Explanation'),
                       },
                       {
                         label: `${settings?.ai_title_fix_grammar || 'Fix Grammar'} (AI)`,
-                        onClick: () => handleAiAction(contextMenu.itemId, 'fix_grammar', 'Grammar Check'),
+                        onClick: () =>
+                          handleAiAction(contextMenu.itemId, 'fix_grammar', 'Grammar Check'),
                       },
                       {
                         label: 'Delete',
@@ -608,11 +612,7 @@ function App() {
               onClose={() => setAiResult((prev) => ({ ...prev, isOpen: false }))}
             />
           </main>
-          <Toaster
-            richColors
-            position="bottom-center"
-            theme={effectiveTheme}
-          />
+          <Toaster richColors position="bottom-center" theme={effectiveTheme} />
         </div>
       </div>
     </div>

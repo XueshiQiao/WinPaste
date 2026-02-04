@@ -12,6 +12,11 @@ use std::fs;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
+#[cfg(target_os = "windows")]
+use window_vibrancy::apply_mica;
+#[cfg(target_os = "macos")]
+use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+
 static IS_ANIMATING: AtomicBool = AtomicBool::new(false);
 static LAST_SHOW_TIME: AtomicI64 = AtomicI64::new(0);
 
@@ -204,15 +209,12 @@ pub fn run_app() {
 
             #[cfg(target_os = "windows")]
             {
-                // if apply_blur(&win, Some((16, 16, 16, 125))).is_err() {
-                //     if apply_mica(&win, None).is_err() {
-                //         let _ = apply_acrylic(&win, None);
-                //     }
-                // }
-                //let _ = apply_blur(&win, Some((16, 16, 16, 125)));
-                // let _ = apply_mica(&win, Some(true));
+                let db_for_mica = db_for_clipboard.clone();
+                let mica_effect = get_runtime().unwrap().block_on(async {
+                    db_for_mica.get_setting("mica_effect").await.ok().flatten()
+                }).unwrap_or_else(|| "clear".to_string());
 
-                //let _ = apply_acrylic(&win, Some((16, 16, 16, 125)));
+                crate::apply_window_effect(&win, &mica_effect);
             }
 
             #[cfg(target_os = "macos")]
@@ -498,5 +500,27 @@ pub fn get_monitor_at_cursor(window: &tauri::WebviewWindow) -> Option<tauri::Mon
     #[cfg(not(target_os = "windows"))]
     {
         window.current_monitor().ok().flatten()
+    }
+}
+
+pub fn apply_window_effect(window: &tauri::WebviewWindow, effect: &str) {
+    #[cfg(target_os = "windows")]
+    {
+        match effect {
+            "clear" => {
+                use window_vibrancy::clear_mica;
+                let _ = clear_mica(window);
+                log::info!("Mica effect cleared");
+            },
+            "dark" => {
+                let _ = apply_mica(window, Some(true));
+                log::info!("Applied Mica (Dark)");
+            },
+            "auto" | _ => {
+                // "auto" or default
+                let _ = apply_mica(window, None);
+                log::info!("Applied Mica (Auto)");
+            }
+        }
     }
 }

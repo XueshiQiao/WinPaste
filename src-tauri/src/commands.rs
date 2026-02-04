@@ -512,9 +512,16 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
         "show_in_taskbar": false,
         "hotkey": "Ctrl+Shift+V",
         "theme": "dark",
+        "mica_effect": "clear",
         "auto_paste": true,
         "ignore_ghost_clips": false
     });
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'mica_effect'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())
+    {
+        settings["mica_effect"] = serde_json::json!(value);
+    }
 
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ignore_ghost_clips'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string())
@@ -623,6 +630,16 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('theme', ?)"#)
             .bind(theme)
             .execute(pool).await.ok();
+    }
+
+    if let Some(mica_effect) = settings.get("mica_effect").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('mica_effect', ?)"#)
+            .bind(mica_effect)
+            .execute(pool).await.ok();
+        
+        if let Some(win) = app.get_webview_window("main") {
+            crate::apply_window_effect(&win, mica_effect);
+        }
     }
 
     if let Some(ai_provider) = settings.get("ai_provider").and_then(|v| v.as_str()) {
