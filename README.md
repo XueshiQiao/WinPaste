@@ -35,9 +35,25 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 - 🤖 **AI Powered** - Built-in AI to summarize, translate, explain code, and fix grammar
 - ⚙️ **Customizable AI** - Fully customize AI action names and system prompts to suit your workflow
 
+## Keyboard Shortcuts
+
+### Global
+- **Toggle Window**: `Ctrl+Shift+V` (Default, Customizable in Settings)
+
+### In-App
+
+- `Ctrl + F` - Focus search
+- `Escape` - Close window / Clear search
+- `Enter` - Paste selected item
+- `Delete` - Delete selected item
+- `P` - Pin/Unpin selected item
+- `Arrow Up/Down` - Navigate items
+
 ## Application Exceptions (Ignored Apps)
 
 PastePaw allows you to exclude specific applications from being recorded in the clipboard history. This is useful for privacy-sensitive applications like password managers or banking apps.
+
+(You need to provide the API Key for the AI provider)
 
 **Logic & Behavior:**
 - **How to manage:** Go to Settings -> Ignored Applications. You can browse for an executable (`.exe`) or strictly type its name.
@@ -166,19 +182,6 @@ To add more or less space at the top/bottom of the cards (e.g., to prevent clipp
 1.  Modify `CARD_VERTICAL_PADDING` in `frontend/src/constants.ts`.
 2.  Increasing this value makes cards **shorter**; decreasing it makes them **taller**.
 
-## Keyboard Shortcuts
-
-### Global
-- **Toggle Window**: `Ctrl+Shift+V` (Default, Customizable in Settings)
-
-### In-App
-
-- `Ctrl + F` - Focus search
-- `Escape` - Close window / Clear search
-- `Enter` - Paste selected item
-- `Delete` - Delete selected item
-- `P` - Pin/Unpin selected item
-- `Arrow Up/Down` - Navigate items
 
 ## License
 
