@@ -32,6 +32,8 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 - ⌨️ **Customizable Hotkey** - Set your preferred shortcut to open the history
 - 🔄 **Infinite Scroll** - Seamlessly browse through unlimited history
 - 🛡️ **Smart Filtering** - Intelligent debounce logic to ignore "Ghost Copies" from other clipboard tools
+- 🤖 **AI Powered** - Built-in AI to summarize, translate, explain code, and fix grammar
+- ⚙️ **Customizable AI** - Fully customize AI action names and system prompts to suit your workflow
 
 ## Application Exceptions (Ignored Apps)
 
@@ -44,6 +46,20 @@ PastePaw allows you to exclude specific applications from being recorded in the 
     1.  **Executable Name** (e.g., `notepad.exe`) - Matches any instance of this app regardless of location.
     2.  **Full File Path** (e.g., `C:\Windows\System32\notepad.exe`) - Matches only the specific installed instance.
 - **Case Insensitive:** Matching is case-insensitive to ensure reliable detection on Windows.
+
+## AI Features
+
+PastePaw integrates powerful AI capabilities to help you process your clipboard content more efficiently.
+
+- **Actions:** Right-click any clip to access AI actions:
+    - **Summarize:** Get a concise summary of long texts.
+    - **Translate:** Translate content to your preferred language.
+    - **Explain Code:** Understand complex code snippets instantly.
+    - **Fix Grammar:** Polishing your writing with professional grammar checks.
+- **Full Customization:**
+    - **Custom Names:** Rename AI actions in Settings (e.g., change "Translate" to "To Spanish").
+    - **Custom Prompts:** Override default system prompts to tailor the AI's behavior and output style.
+    - **Provider Support:** Support for OpenAI, DeepSeek, and other OpenAI-compatible APIs.
 
 ## Tech Stack
 

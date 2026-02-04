@@ -32,6 +32,14 @@ export interface Settings {
   ai_api_key?: string;
   ai_model?: string;
   ai_base_url?: string;
+  ai_prompt_summarize?: string;
+  ai_prompt_translate?: string;
+  ai_prompt_explain_code?: string;
+  ai_prompt_fix_grammar?: string;
+  ai_title_summarize?: string;
+  ai_title_translate?: string;
+  ai_title_explain_code?: string;
+  ai_title_fix_grammar?: string;
 }
 
 export type ClipType = 'text' | 'image' | 'html' | 'rtf' | 'file' | 'url';

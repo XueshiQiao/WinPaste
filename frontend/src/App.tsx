@@ -25,6 +25,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [theme, setTheme] = useState('system');
+  const [settings, setSettings] = useState<Settings | null>(null);
 
   // Simulated Drag State
   const [draggingClipId, setDraggingClipId] = useState<string | null>(null);
@@ -51,12 +52,16 @@ function App() {
 
   useEffect(() => {
     invoke<Settings>('get_settings')
-      .then((s) => setTheme(s.theme))
+      .then((s) => {
+        setTheme(s.theme);
+        setSettings(s);
+      })
       .catch(console.error);
 
     // Listen for setting changes from the settings window
     const unlisten = listen<Settings>('settings-changed', (event) => {
       setTheme(event.payload.theme);
+      setSettings(event.payload);
     });
 
     return () => {
@@ -494,19 +499,19 @@ function App() {
                 contextMenu.type === 'card'
                   ? [
                       {
-                        label: 'Summarize (AI)',
+                        label: `${settings?.ai_title_summarize || 'Summarize'} (AI)`,
                         onClick: () => handleAiAction(contextMenu.itemId, 'summarize', 'AI Summary'),
                       },
                       {
-                        label: 'Translate to English (AI)',
+                        label: `${settings?.ai_title_translate || 'Translate'} (AI)`,
                         onClick: () => handleAiAction(contextMenu.itemId, 'translate', 'AI Translation'),
                       },
                       {
-                        label: 'Explain Code (AI)',
+                        label: `${settings?.ai_title_explain_code || 'Explain Code'} (AI)`,
                         onClick: () => handleAiAction(contextMenu.itemId, 'explain_code', 'Code Explanation'),
                       },
                       {
-                        label: 'Fix Grammar (AI)',
+                        label: `${settings?.ai_title_fix_grammar || 'Fix Grammar'} (AI)`,
                         onClick: () => handleAiAction(contextMenu.itemId, 'fix_grammar', 'Grammar Check'),
                       },
                       {

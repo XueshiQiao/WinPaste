@@ -1,5 +1,5 @@
 import { Settings, FolderItem } from '../types';
-import { X, Trash2, Plus, FolderOpen, Settings as SettingsIcon, BrainCircuit, Folder as FolderIcon, MoreHorizontal } from 'lucide-react';
+import { X, Trash2, Plus, FolderOpen, Settings as SettingsIcon, BrainCircuit, Folder as FolderIcon, MoreHorizontal, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { invoke } from '@tauri-apps/api/core';
@@ -20,11 +20,71 @@ interface SettingsPanelProps {
 
 type Tab = 'general' | 'ai' | 'folders';
 
+function PromptEditor({ 
+  label, 
+  value, 
+  titleValue,
+  placeholder, 
+  onSave,
+  onSaveTitle
+}: { 
+  label: string; 
+  value: string; 
+  titleValue?: string;
+  placeholder: string; 
+  onSave: (val: string) => void;
+  onSaveTitle?: (val: string) => void;
+}) {
+  const [localValue, setLocalValue] = useState(value);
+  const [localTitle, setLocalTitle] = useState(titleValue || label);
+
+  // Sync with prop if it changes externally
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    setLocalTitle(titleValue || label);
+  }, [titleValue, label]);
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border/40 bg-accent/5 p-3">
+      <div className="flex items-center justify-between gap-4">
+        <input 
+          type="text"
+          value={localTitle}
+          onChange={(e) => setLocalTitle(e.target.value)}
+          onBlur={() => {
+            if (onSaveTitle && localTitle !== (titleValue || label)) {
+              onSaveTitle(localTitle);
+            }
+          }}
+          className="bg-transparent text-xs font-semibold text-foreground/70 outline-none focus:text-primary transition-colors"
+          title="Click to rename action"
+        />
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">Action Name</span>
+      </div>
+      <textarea
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={() => {
+          if (localValue !== value) {
+            onSave(localValue);
+          }
+        }}
+        placeholder={placeholder}
+        className="w-full min-h-[60px] rounded-md border border-border bg-input px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none transition-all"
+      />
+    </div>
+  );
+}
+
 export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [_historySize, setHistorySize] = useState<number>(0);
   const [isRecordingMode, setIsRecordingMode] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   // Folder Management State
   const [folders, setFolders] = useState<FolderItem[]>([]);
@@ -36,32 +96,50 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
   useTheme(settings.theme);
 
   // Generic handler for immediate settings updates
-  const updateSetting = async (key: keyof Settings, value: any) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-
-    try {
-      await invoke('save_settings', { settings: newSettings });
-      await emit('settings-changed', newSettings);
+  const updateSettings = async (updates: Partial<Settings>) => {
+    // Determine the next state before updating React state
+    setSettings(prev => {
+      const newSettings = { ...prev, ...updates };
       
-      // Handle side effects like hotkey registration immediately
-      if (key === 'hotkey') {
-         await invoke('register_global_shortcut', { hotkey: value });
-      }
+      // Schedule async actions - we use newSettings which is local to this scope
+      // This avoids race conditions with 'settings' variable
+      (async () => {
+        try {
+          await invoke('save_settings', { settings: newSettings });
+          await emit('settings-changed', newSettings);
+          
+          if (updates.hotkey) {
+             await invoke('register_global_shortcut', { hotkey: updates.hotkey });
+          }
+        } catch (error) {
+          console.error(`Failed to save settings:`, error);
+          toast.error(`Failed to save settings`);
+        }
+      })();
 
       // Feedback for changes
-      if (key !== 'theme') {
-         const label = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-         if (typeof value === 'boolean') {
-            toast.success(`${label} was ${value ? 'enabled' : 'disabled'}`);
-         } else {
-            toast.success(`${label} updated`);
-         }
+      const keys = Object.keys(updates);
+      if (keys.length === 1) {
+        const key = keys[0] as keyof Settings;
+        const value = updates[key];
+        if (key !== 'theme') {
+           const label = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+           if (typeof value === 'boolean') {
+              toast.success(`${label} was ${value ? 'enabled' : 'disabled'}`);
+           } else {
+              toast.success(`${label} updated`);
+           }
+        }
+      } else if (keys.length > 1) {
+        toast.success("Settings updated");
       }
-    } catch (error) {
-      console.error(`Failed to save setting ${key}:`, error);
-      toast.error(`Failed to save ${key}`);
-    }
+
+      return newSettings;
+    });
+  };
+
+  const updateSetting = (key: keyof Settings, value: any) => {
+    updateSettings({ [key]: value });
   };
 
   const handleThemeChange = (newTheme: string) => {
@@ -546,64 +624,130 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
 
               {/* --- AI PROCESSING TAB --- */}
               {activeTab === 'ai' && (
-                <section className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">AI Configuration</h3>
-                  
-                  <div className="space-y-3">
-                    <label className="block">
-                      <span className="text-sm font-medium">Provider</span>
-                    </label>
-                    <select
-                      value={settings.ai_provider || 'openai'}
-                      onChange={(e) => updateSetting('ai_provider', e.target.value)}
-                      className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="openai">OpenAI</option>
-                      <option value="deepseek">DeepSeek</option>
-                      <option value="custom">Custom (OpenAI Compatible)</option>
-                    </select>
-                  </div>
+                <>
+                  <section className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">AI Configuration</h3>
+                    
+                    <div className="space-y-3">
+                      <label className="block">
+                        <span className="text-sm font-medium">Provider</span>
+                      </label>
+                      <select
+                        value={settings.ai_provider || 'openai'}
+                        onChange={(e) => {
+                          const newProvider = e.target.value;
+                          const updates: Partial<Settings> = { ai_provider: newProvider };
+                          
+                          // Auto-fill Base URL based on provider
+                          if (newProvider === 'openai') {
+                            updates.ai_base_url = 'https://api.openai.com/v1';
+                          } else if (newProvider === 'deepseek') {
+                            updates.ai_base_url = 'https://api.deepseek.com';
+                          }
+                          
+                          updateSettings(updates);
+                        }}
+                        className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="openai">OpenAI</option>
+                        <option value="deepseek">DeepSeek</option>
+                        <option value="custom">Custom (OpenAI Compatible)</option>
+                      </select>
+                    </div>
 
-                  <div className="space-y-3">
-                    <label className="block">
-                      <span className="text-sm font-medium">API Key</span>
-                    </label>
-                    <input
-                      type="password"
-                      value={settings.ai_api_key || ''}
-                      onChange={(e) => updateSetting('ai_api_key', e.target.value)}
-                      placeholder="sk-..."
-                      className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
+                    <div className="space-y-3">
+                      <label className="block">
+                        <span className="text-sm font-medium">API Key</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showApiKey ? "text" : "password"}
+                          value={settings.ai_api_key || ''}
+                          onChange={(e) => updateSetting('ai_api_key', e.target.value)}
+                          placeholder="sk-..."
+                          className="w-full rounded-lg border border-border bg-input pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
 
-                  <div className="space-y-3">
-                    <label className="block">
-                      <span className="text-sm font-medium">Model</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={settings.ai_model || 'gpt-3.5-turbo'}
-                      onChange={(e) => updateSetting('ai_model', e.target.value)}
-                      placeholder="gpt-4o, deepseek-chat, etc."
-                      className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
+                    <div className="space-y-3">
+                      <label className="block">
+                        <span className="text-sm font-medium">Model</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.ai_model || 'gpt-3.5-turbo'}
+                        onChange={(e) => updateSetting('ai_model', e.target.value)}
+                        placeholder="gpt-4o, deepseek-chat, etc."
+                        className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
 
-                  <div className="space-y-3">
-                    <label className="block">
-                      <span className="text-sm font-medium">Base URL (Optional)</span>
-                      <p className="text-xs text-muted-foreground">For local models or custom endpoints</p>
-                    </label>
-                    <input
-                      type="text"
-                      value={settings.ai_base_url || ''}
-                      onChange={(e) => updateSetting('ai_base_url', e.target.value)}
-                      placeholder="https://api.openai.com/v1"
-                      className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-                </section>
+                    <div className="space-y-3">
+                      <label className="block">
+                        <span className="text-sm font-medium">Base URL (Optional)</span>
+                        <p className="text-xs text-muted-foreground">For local models or custom endpoints</p>
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.ai_base_url || ''}
+                        onChange={(e) => updateSetting('ai_base_url', e.target.value)}
+                        placeholder="https://api.openai.com/v1"
+                        className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                  </section>
+
+                  <section className="space-y-4 pt-4 border-t border-border/50">
+                    <h3 className="text-sm font-medium text-muted-foreground">Custom Prompts</h3>
+                    <p className="text-xs text-muted-foreground italic">Leave blank to use default prompts.</p>
+                    
+                    <div className="space-y-4">
+                      <PromptEditor
+                        label="Summarize"
+                        value={settings.ai_prompt_summarize || ''}
+                        titleValue={settings.ai_title_summarize}
+                        onSave={(val) => updateSetting('ai_prompt_summarize', val)}
+                        onSaveTitle={(val) => updateSetting('ai_title_summarize', val)}
+                        placeholder="Default: You are a helpful assistant. Summarize the following text concisely."
+                      />
+                      
+                      <PromptEditor
+                        label="Translate"
+                        value={settings.ai_prompt_translate || ''}
+                        titleValue={settings.ai_title_translate}
+                        onSave={(val) => updateSetting('ai_prompt_translate', val)}
+                        onSaveTitle={(val) => updateSetting('ai_title_translate', val)}
+                        placeholder="Default: You are a helpful assistant. Translate the following text to English (or specify your target language)."
+                      />
+
+                      <PromptEditor
+                        label="Explain Code"
+                        value={settings.ai_prompt_explain_code || ''}
+                        titleValue={settings.ai_title_explain_code}
+                        onSave={(val) => updateSetting('ai_prompt_explain_code', val)}
+                        onSaveTitle={(val) => updateSetting('ai_title_explain_code', val)}
+                        placeholder="Default: You are a helpful assistant. Explain what the following code does."
+                      />
+
+                      <PromptEditor
+                        label="Fix Grammar"
+                        value={settings.ai_prompt_fix_grammar || ''}
+                        titleValue={settings.ai_title_fix_grammar}
+                        onSave={(val) => updateSetting('ai_prompt_fix_grammar', val)}
+                        onSaveTitle={(val) => updateSetting('ai_title_fix_grammar', val)}
+                        placeholder="Default: You are a helpful assistant. Fix the grammar and improve the style..."
+                      />
+                    </div>
+                  </section>
+                </>
               )}
 
               {/* --- FOLDERS TAB --- */}

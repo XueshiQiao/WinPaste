@@ -49,8 +49,17 @@ pub async fn ai_process_clip(clip_id: String, action: String, db: tauri::State<'
         _ => return Err("Invalid AI action".to_string()),
     };
 
+    let prompt_key = match ai_action {
+        AiAction::Summarize => "ai_prompt_summarize",
+        AiAction::Translate => "ai_prompt_translate",
+        AiAction::ExplainCode => "ai_prompt_explain_code",
+        AiAction::FixGrammar => "ai_prompt_fix_grammar",
+    };
+
+    let custom_prompt = db.get_setting(prompt_key).await.unwrap_or(None);
+
     // 3. Call AI
-    let result = ai::process_text(&text_content, ai_action.clone(), &config).await.map_err(|e| e.to_string())?;
+    let result = ai::process_text(&text_content, ai_action.clone(), &config, custom_prompt).await.map_err(|e| e.to_string())?;
 
     // 4. Update Metadata
     let mut metadata: serde_json::Value = if let Some(meta_str) = &clip.metadata {
@@ -558,6 +567,30 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_base_url'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_base_url"] = serde_json::json!(value); }
 
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_prompt_summarize'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_prompt_summarize"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_prompt_translate'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_prompt_translate"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_prompt_explain_code'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_prompt_explain_code"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_prompt_fix_grammar'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_prompt_fix_grammar"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_title_summarize'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_title_summarize"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_title_translate'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_title_translate"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_title_explain_code'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_title_explain_code"] = serde_json::json!(value); }
+
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_title_fix_grammar'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_title_fix_grammar"] = serde_json::json!(value); }
+
     // Check actual autostart status
     if let Ok(is_enabled) = app.autolaunch().is_enabled() {
         settings["startup_with_windows"] = serde_json::json!(is_enabled);
@@ -610,6 +643,54 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
     if let Some(ai_base_url) = settings.get("ai_base_url").and_then(|v| v.as_str()) {
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_base_url', ?)"#)
             .bind(ai_base_url)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_prompt_summarize) = settings.get("ai_prompt_summarize").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_prompt_summarize', ?)"#)
+            .bind(ai_prompt_summarize)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_prompt_translate) = settings.get("ai_prompt_translate").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_prompt_translate', ?)"#)
+            .bind(ai_prompt_translate)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_prompt_explain_code) = settings.get("ai_prompt_explain_code").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_prompt_explain_code', ?)"#)
+            .bind(ai_prompt_explain_code)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_prompt_fix_grammar) = settings.get("ai_prompt_fix_grammar").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_prompt_fix_grammar', ?)"#)
+            .bind(ai_prompt_fix_grammar)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_title_summarize) = settings.get("ai_title_summarize").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_title_summarize', ?)"#)
+            .bind(ai_title_summarize)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_title_translate) = settings.get("ai_title_translate").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_title_translate', ?)"#)
+            .bind(ai_title_translate)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_title_explain_code) = settings.get("ai_title_explain_code").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_title_explain_code', ?)"#)
+            .bind(ai_title_explain_code)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(ai_title_fix_grammar) = settings.get("ai_title_fix_grammar").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_title_fix_grammar', ?)"#)
+            .bind(ai_title_fix_grammar)
             .execute(pool).await.ok();
     }
 
