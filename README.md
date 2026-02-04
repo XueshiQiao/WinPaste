@@ -1,6 +1,15 @@
-# PastePaw - Clipboard History Manager
+<h1 align="center">
+    <picture>
+      <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png" alt="Claude-Mem" width="32">
+    </picture>
+    PastePaw - Clipboard History Manager
+</h1>
 
-[中文文档](./README_CN.md)
+
+<p align="center">
+  <a href="README_CN.md">中文</a> •
+  <a href="README.md">English</a>
+</p>
 
 A beautiful clipboard history manager for Windows, built with Rust + Tauri + React + TypeScript.
 
