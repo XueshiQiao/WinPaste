@@ -1,57 +1,57 @@
 {
-    "$schema":  "https://schema.tauri.app/config/2.0.0",
-    "productName":  "PastePaw",
-    "version":  "1.1.4",
-    "identifier":  "me.xueshi.pastepaw",
-    "build":  {
-                  "beforeDevCommand":  "pnpm dev",
-                  "devUrl":  "http://localhost:1420",
-                  "beforeBuildCommand":  "pnpm build",
-                  "frontendDist":  "../dist"
-              },
-    "app":  {
-                "windows":  [
-                                {
-                                    "title":  "PastePaw",
-                                    "width":  1920,
-                                    "height":  540,
-                                    "minWidth":  700,
-                                    "minHeight":  400,
-                                    "resizable":  false,
-                                    "fullscreen":  false,
-                                    "decorations":  false,
-                                    "transparent":  true,
-                                    "shadow":  false,
-                                    "visible":  false,
-                                    "center":  false,
-                                    "label":  "main"
-                                }
-                            ],
-                "security":  {
-                                 "csp":  null,
-                                 "capabilities":  [
-                                                      "default"
-                                                  ]
-                             },
-                "withGlobalTauri":  true
-            },
-    "bundle":  {
-                   "active":  true,
-                   "targets":  "nsis",
-                   "icon":  [
-                                "icons/32x32.png",
-                                "icons/128x128.png",
-                                "icons/128x128@2x.png",
-                                "icons/icon.icns"
-                            ],
-                   "createUpdaterArtifacts":  true
-               },
-    "plugins":  {
-                    "updater":  {
-                                    "endpoints":  [
-                                                      "https://github.com/XueshiQiao/PastePaw/releases/latest/download/latest.json"
-                                                  ],
-                                    "pubkey":  "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDAxNDhBMzY2RUIxMTkzQTcKUldTbmt4SHJacU5JQVEzdWxCUXNWcE9hN2N2QzhzSjB3OC9RT0lPbVNUSXR2YlZQRWxsaE8ydzMK"
-                                }
-                }
+    "$schema": "https://schema.tauri.app/config/2.0.0",
+    "productName": "PastePaw",
+    "version": "1.1.5",
+    "identifier": "me.xueshi.pastepaw",
+    "build": {
+        "beforeDevCommand": "pnpm dev",
+        "devUrl": "http://localhost:1420",
+        "beforeBuildCommand": "pnpm build",
+        "frontendDist": "../dist"
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "PastePaw",
+                "width": 1920,
+                "height": 540,
+                "minWidth": 700,
+                "minHeight": 400,
+                "resizable": false,
+                "fullscreen": false,
+                "decorations": false,
+                "transparent": true,
+                "shadow": false,
+                "visible": false,
+                "center": false,
+                "label": "main"
+            }
+        ],
+        "security": {
+            "csp": null,
+            "capabilities": [
+                "default"
+            ]
+        },
+        "withGlobalTauri": true
+    },
+    "bundle": {
+        "active": true,
+        "targets": "nsis",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns"
+        ],
+        "createUpdaterArtifacts": true
+    },
+    "plugins": {
+        "updater": {
+            "endpoints": [
+                "https://github.com/XueshiQiao/PastePaw/releases/latest/download/latest.json"
+            ],
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDAxNDhBMzY2RUIxMTkzQTcKUldTbmt4SHJacU5JQVEzdWxCUXNWcE9hN2N2QzhzSjB3OC9RT0lPbVNUSXR2YlZQRWxsaE8ydzMK"
+        }
+    }
 }

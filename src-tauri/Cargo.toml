@@ -1,6 +1,6 @@
 [package]
 name = "PastePaw"
-version = "1.1.4"
+version = "1.1.5"
 description = "A beautiful clipboard history manager for Windows"
 authors = ["XueshiQiao"]
 license = "GPL-3.0"
@@ -19,7 +19,7 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 sha2 = "0.10"
 image = "0.24"
-thiserror = "1"
+
 futures = "0.3"
 dirs = "5"
 parking_lot = "0.12"
@@ -38,8 +38,7 @@ window-vibrancy = { git = "https://github.com/XueshiQiao/window-vibrancy.git" }
 reqwest = { version = "0.13.1", features = ["json"] }
 dark-light = "2.0.0"
 tauri-plugin-clipboard-x = "2.0.1"
-clipboard-rs = "0.2.4"
-clipboard-win = "5.4.0"
+
 
 [features]
 default = ["custom-protocol"]
