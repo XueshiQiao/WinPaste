@@ -38,6 +38,7 @@ log = "0.4.29"
 window-vibrancy = { git = "https://github.com/XueshiQiao/window-vibrancy.git" }
 reqwest = { version = "0.13.1", features = ["json"] }
 dark-light = "2.0.0"
+tauri-plugin-clipboard-x = "2.0.1"
 
 [features]
 default = ["custom-protocol"]

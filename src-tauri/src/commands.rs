@@ -1,5 +1,5 @@
 use tauri::{AppHandle, Emitter, Manager};
-use tauri_plugin_clipboard::Clipboard;
+use tauri_plugin_clipboard_x::{write_image, write_text, stop_listening, start_listening};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use std::str::FromStr;
 use crate::database::Database;
@@ -204,12 +204,13 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
             // Synchronize clipboard access across the app
             let _guard = crate::clipboard::CLIPBOARD_SYNC.lock().await;
 
-            let clipboard_plugin = app.state::<Clipboard>();
             let content_hash = clip.content_hash.clone();
             let uuid = clip.uuid.clone();
 
-            // Stop monitor during write to avoid race condition/panic within the plugin
-            let _ = clipboard_plugin.stop_monitor(app.clone());
+            // Stop monitor
+            if let Err(e) = stop_listening().await {
+                 log::error!("Failed to stop listener: {}", e);
+            }
 
             let mut final_res = Ok(());
 
@@ -217,21 +218,39 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                 crate::clipboard::set_ignore_hash(content_hash.clone());
                 crate::clipboard::set_last_stable_hash(content_hash.clone());
 
-                // For images, we use a robust manual Windows implementation to avoid plugin panics
-                #[cfg(target_os = "windows")]
-                {
-                    match crate::clipboard::write_image_to_clipboard(clip.content.clone()) {
-                        Ok(_) => {},
-                        Err(e) => {
-                            log::error!("Failed to write image to clipboard (WinAPI): {}", e);
-                            final_res = Err(format!("Failed to write image to clipboard: {}", e));
+                // Write image to temp file
+                let temp_dir = app.path().temp_dir().unwrap_or(std::path::PathBuf::from("."));
+                let temp_file_path = temp_dir.join(format!("pastepaw_paste_{}.png", uuid));
+
+                if let Err(e) = std::fs::write(&temp_file_path, &clip.content) {
+                    final_res = Err(format!("Failed to write temp image file: {}", e));
+                } else {
+                    if let Some(path_str) = temp_file_path.to_str() {
+                        // Execute on main thread to avoid "Thread does not have a clipboard open"
+                        let app_handle = app.clone();
+                        let path_str_cloned = path_str.to_string(); // Clone here for the move closure
+
+                        let (tx, rx) = std::sync::mpsc::channel();
+                        let _ = app_handle.run_on_main_thread(move || {
+                            let res = tauri::async_runtime::block_on(async {
+                                write_image(path_str_cloned).await
+                            });
+                            let _ = tx.send(res);
+                        });
+
+                        // Wait for result
+                        match rx.recv() {
+                            Ok(Ok(_)) => {},
+                            Ok(Err(e)) => {
+                                 final_res = Err(format!("Failed to write image to clipboard: {}", e));
+                            }
+                            Err(_) => {
+                                 final_res = Err("Failed to receive clipboard write result".to_string());
+                            }
                         }
+                    } else {
+                         final_res = Err("Invalid temp file path".to_string());
                     }
-                }
-                #[cfg(not(target_os = "windows"))]
-                {
-                    let base64_img = BASE64.encode(&clip.content);
-                    final_res = clipboard_plugin.write_image_base64(base64_img).map_err(|e| e.to_string());
                 }
             } else {
                 let content_str = String::from_utf8_lossy(&clip.content).to_string();
@@ -240,7 +259,8 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
 
                 let mut last_err = String::new();
                 for i in 0..5 {
-                    match clipboard_plugin.write_text(content_str.clone()) {
+                    // write_text is public function
+                    match write_text(content_str.clone()).await {
                         Ok(_) => { last_err.clear(); break; },
                         Err(e) => {
                             last_err = e.to_string();
@@ -261,7 +281,10 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                 .await;
 
             // Restart monitor
-            let _ = clipboard_plugin.start_monitor(app.clone());
+            let app_clone = app.clone();
+            if let Err(e) = start_listening(app_clone).await {
+                log::error!("Failed to restart listener: {}", e);
+            }
 
             if final_res.is_ok() {
                 let content = if clip.clip_type == "image" { "[Image]".to_string() } else { String::from_utf8_lossy(&clip.content).to_string() };

@@ -1,27 +1,25 @@
 
-use tauri::{AppHandle, Manager, Listener, Emitter};
-use tauri_plugin_clipboard::Clipboard as ClipboardPlugin;
+use tauri::{AppHandle, Listener, Emitter};
+// Import functions directly from the crate root
+use tauri_plugin_clipboard_x::{read_image, read_text, start_listening};
 use std::sync::Arc;
 use crate::database::Database;
 use uuid::Uuid;
 use sha2::{Digest, Sha256};
-use std::io::Cursor;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use windows::Win32::Foundation::{MAX_PATH, HANDLE};
+use windows::Win32::Foundation::MAX_PATH;
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
 use windows::Win32::System::ProcessStatus::{GetModuleBaseNameW, GetModuleFileNameExW};
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
-use windows::Win32::System::DataExchange::{GetClipboardOwner, OpenClipboard, EmptyClipboard, SetClipboardData, CloseClipboard};
-use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
+use windows::Win32::System::DataExchange::GetClipboardOwner;
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId, DestroyIcon, DrawIconEx, DI_NORMAL, GetIconInfo, ICONINFO};
 use windows::Win32::UI::Input::KeyboardAndMouse::{SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_CONTROL, VK_V};
 use windows::Win32::UI::Shell::{SHGetFileInfoW, SHGFI_ICON, SHGFI_LARGEICON, SHFILEINFOW, SHGFI_USEFILEATTRIBUTES};
 use windows::Win32::Graphics::Gdi::{
-    GetObjectW, DeleteObject, GetDC, ReleaseDC, CreateCompatibleDC, SelectObject, DeleteDC,
+    GetObjectW, GetDC, ReleaseDC, CreateCompatibleDC, SelectObject, DeleteDC,
     GetDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
-    BITMAP, HBITMAP, CreateCompatibleBitmap
+    BITMAP, HBITMAP, CreateCompatibleBitmap, DeleteObject
 };
-use std::ptr;
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use once_cell::sync::Lazy;
@@ -49,34 +47,32 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
     let app_clone = app.clone();
     let db_clone = db.clone();
 
-    // Attempt to start the monitor
-    if let Some(plugin) = app.try_state::<ClipboardPlugin>() {
-         if let Err(e) = plugin.start_monitor(app.clone()) {
-             log::info!("CLIPBOARD: Failed to start monitor: {}", e);
-         }
-    } else {
-        log::info!("CLIPBOARD: Plugin state not found");
-    }
+    // Start monitor
+    // tauri-plugin-clipboard-x exposes start_listening(app_handle)
+    // It returns impl Future, so we need to spawn it or block.
+    // Since init is synchronous here, we spawn it.
+    let app_for_start = app.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = start_listening(app_for_start).await {
+            log::error!("CLIPBOARD: Failed to start listener: {}", e);
+        }
+    });
 
-    // Listen to the generic update event from the plugin
-    let event_name = "plugin:clipboard://clipboard-monitor/update";
+    // Listen to clipboard changes
+    // The event name found in source code: "plugin:clipboard-x://clipboard_changed"
+    let event_name = "plugin:clipboard-x://clipboard_changed";
 
     app.listen(event_name, move |_event| {
         let app = app_clone.clone();
         let db = db_clone.clone();
 
         // DEBOUNCE LOGIC:
-        // Increment counter to signal a new event has arrived.
         let current_count = DEBOUNCE_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
 
         tauri::async_runtime::spawn(async move {
-            // Wait for stability (debounce window)
-            // 150ms should be enough to cover the "Copy -> Restore" cycle
             tokio::time::sleep(std::time::Duration::from_millis(150)).await;
 
-            // Check if our execution is still the latest one
             if DEBOUNCE_COUNTER.load(Ordering::SeqCst) != current_count {
-                // A newer event arrived while we were sleeping, so we abort this one.
                 log::debug!("CLIPBOARD: Debounce: Aborting older event, current_count:{}", current_count);
                 return;
             }
@@ -87,11 +83,7 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
 }
 
 async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
-    // Synchronize clipboard access
     let _guard = CLIPBOARD_SYNC.lock().await;
-
-    // Initialize Clipboard struct
-    let clipboard = app.state::<ClipboardPlugin>();
 
     let mut clip_type = "text";
     let mut clip_content = Vec::new();
@@ -100,34 +92,39 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
     let mut metadata = String::new();
     let mut found_content = false;
 
-    // Try Image first using base64
-    if let Ok(base64_image) = clipboard.read_image_base64() {
-         if let Ok(bytes) = BASE64.decode(base64_image) {
+    // Try Image
+    // read_image saves to disk and returns info
+    // We pass None for save_path to use default
+    if let Ok(read_image_result) = read_image(app.clone(), None).await {
+         // read_image_result is ReadImage { path: PathBuf, ... }
+         // We need to read the file content
+         if let Ok(bytes) = std::fs::read(&read_image_result.path) {
              if let Ok(image) = image::load_from_memory(&bytes) {
                  let width = image.width();
                  let height = image.height();
-
                  let size_bytes = bytes.len();
+
                  clip_hash = calculate_hash(&bytes);
-                 //clip_content = bytes.to_vec();
                  clip_content = bytes;
                  clip_type = "image";
                  clip_preview = "[Image]".to_string();
                  metadata = serde_json::json!({
                      "width": width,
                      "height": height,
-                     "format": "png",
+                     "format": "png", // Usually it saves as png? Code said format string "{hash}.png"
                      "size_bytes": size_bytes
                  }).to_string();
                  found_content = true;
+
+                 // Clean up the temp file
+                 let _ = std::fs::remove_file(read_image_result.path);
              }
          }
     }
 
     if !found_content {
         // Try Text
-        if let Ok(text) = clipboard.read_text() {
-             let text: String = text; // Force type
+        if let Ok(text) = read_text().await {
              let text = text.trim();
              if !text.is_empty() {
                  clip_content = text.as_bytes().to_vec();
@@ -144,32 +141,28 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
         return;
     }
 
-    // Stable Hash Check: Avoid bumping timestamp if the content is exactly the same as what we last processed.
+    // Stable Hash Check
     {
         let mut lock = LAST_STABLE_HASH.lock();
         if let Some(ref last_hash) = *lock {
             if last_hash == &clip_hash {
-                // Content matches last known stable state, ignore update (no bump to top)
                 return;
             }
         }
-        // Update stable hash
         *lock = Some(clip_hash.clone());
     }
 
-    // Check if we should ignore this update (it's our own paste via double clickiing the card)
+    // Check ignore self-paste
     {
         let mut lock = IGNORE_HASH.lock();
         if let Some(ignore_hash) = lock.take() {
             if ignore_hash == clip_hash {
                 log::info!("CLIPBOARD: Detected self-paste for hash {}, proceeding to update timestamp", ignore_hash);
-                // We don't return here anymore, because we WANT to bump the item to the top (LRU)
             }
         }
     }
 
     // capture source app info
-    // app_name is likely the friendly name, exe_name is the executable filename
     let (source_app, source_icon, exe_name, full_path, is_explicit_owner) = get_clipboard_owner_app_info();
     log::info!("CLIPBOARD: Source app: {:?}, exe_name: {:?}, full_path: {:?}, explicit: {}", source_app, exe_name, full_path, is_explicit_owner);
 
@@ -188,10 +181,7 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
     }
 
     // Check if the app is in the ignore list
-    // We check against both the full path and the executable name
     if let Some(ref path) = full_path {
-        // If we have text content, maybe print debug
-        // log::info!("CLIPBOARD: Checking ignore for path: {}", path);
         if let Ok(true) = db.is_app_ignored(path).await {
              log::info!("CLIPBOARD: Ignoring content from ignored app (path match): {}", path);
              return;
@@ -208,7 +198,6 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
     // DB Logic
     let pool = &db.pool;
 
-    // Check if exists
     let existing_uuid: Option<String> = sqlx::query_scalar::<_, String>(r#"SELECT uuid FROM clips WHERE content_hash = ?"#)
         .bind(&clip_hash)
         .fetch_optional(pool)
@@ -321,7 +310,6 @@ fn get_clipboard_owner_app_info() -> (Option<String>, Option<String>, Option<Str
             (if !exe_name.is_empty() { Some(exe_name.clone()) } else { None }, None, None)
         };
 
-        // Return (Friendly Name, Icon, Executable Name, Full Path, Is Explicit)
         let exe_val = if !exe_name.is_empty() { Some(exe_name) } else { None };
         (app_name, app_icon, exe_val, full_path, is_explicit)
     }
@@ -357,20 +345,15 @@ unsafe fn get_app_description(path: &str) -> Option<String> {
     let mut lang_code = pairs[0];
     let mut charset_code = pairs[1];
 
-    // Log available translations
     for i in 0..num_pairs {
         let code = pairs[i * 2];
         let charset = pairs[i * 2 + 1];
-        log::info!("CLIPBOARD: Found translation: lang={:04x}, charset={:04x}", code, charset);
 
-        // Prioritize Chinese Simplified (0x0804)
         if code == 0x0804 {
             lang_code = code;
             charset_code = charset;
         }
     }
-
-    log::info!("CLIPBOARD: Using translation: lang={:04x}, charset={:04x}", lang_code, charset_code);
 
     let keys = ["FileDescription", "ProductName"];
 
@@ -385,12 +368,8 @@ unsafe fn get_app_description(path: &str) -> Option<String> {
              let desc = std::slice::from_raw_parts(desc_ptr as *const u16, desc_len as usize);
              let len = if desc.last() == Some(&0) { desc.len() - 1 } else { desc.len() };
              if len > 0 {
-                 let val = String::from_utf16_lossy(&desc[..len]);
-                 log::info!("CLIPBOARD: Found {} = {}", key, val);
-                 return Some(val);
+                 return Some(String::from_utf16_lossy(&desc[..len]));
              }
-        } else {
-             log::info!("CLIPBOARD: Key {} not found", key);
         }
     }
 
@@ -461,7 +440,6 @@ unsafe fn extract_icon(path: &str) -> Option<String> {
     let _ = DeleteObject(mem_bm.into());
     let _ = ReleaseDC(None, screen_dc);
 
-    // Convert BGRA to RGBA
     for chunk in pixels.chunks_exact_mut(4) {
         let b = chunk[0];
         let r = chunk[2];
@@ -476,82 +454,13 @@ unsafe fn extract_icon(path: &str) -> Option<String> {
     Some(BASE64.encode(&png_data))
 }
 
-#[cfg(target_os = "windows")]
-pub fn write_image_to_clipboard(image_bytes: Vec<u8>) -> Result<(), String> {
 
-    // Load image and convert to BMP to get DIB data
-    let img = image::load_from_memory(&image_bytes)
-        .map_err(|e| format!("Failed to load image from memory: {}", e))?;
 
-    let mut bmp_buf = Vec::new();
-    let mut cursor = Cursor::new(&mut bmp_buf);
-    img.write_to(&mut cursor, image::ImageOutputFormat::Bmp)
-        .map_err(|e| format!("Failed to encode image to BMP: {}", e))?;
-
-    // A BMP file has a BITMAPFILEHEADER (14 bytes) followed by BITMAPINFOHEADER and pixel data (which is the DIB)
-    if bmp_buf.len() <= 14 {
-        return Err("Invalid BMP data generated".to_string());
-    }
-    let dib_data = &bmp_buf[14..];
-
-    // Retry OpenClipboard if it fails (another app might have it open)
-    let mut opened = false;
-    for _ in 0..10 {
-        unsafe {
-            if OpenClipboard(None).is_ok() {
-                opened = true;
-                break;
-            }
-        }
-        std::thread::sleep(std::time::Duration::from_millis(50));
-    }
-
-    if !opened {
-        return Err("Failed to open clipboard after retries".to_string());
-    }
-
-    unsafe {
-        let _ = EmptyClipboard();
-
-        let h_mem = GlobalAlloc(GMEM_MOVEABLE, dib_data.len());
-        if h_mem.is_err() {
-            let _ = CloseClipboard();
-            return Err("Failed to allocate global memory".to_string());
-        }
-        let h_mem = h_mem.unwrap();
-
-        let p_mem = GlobalLock(h_mem);
-        if p_mem.is_null() {
-            let _ = GlobalFree(h_mem);
-            let _ = CloseClipboard();
-            return Err("Failed to lock global memory".to_string());
-        }
-
-        ptr::copy_nonoverlapping(dib_data.as_ptr(), p_mem as *mut u8, dib_data.len());
-        let _ = GlobalUnlock(h_mem);
-
-        if let Err(e) = SetClipboardData(8, Some(HANDLE(h_mem.0))) {
-            let _ = GlobalFree(h_mem);
-            let _ = CloseClipboard();
-            return Err(format!("SetClipboardData failed: {}", e));
-        }
-
-        let _ = CloseClipboard();
-    }
-
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-extern "system" {
-    fn GlobalFree(hmem: windows::Win32::Foundation::HGLOBAL) -> windows::Win32::Foundation::HGLOBAL;
-}
 
 #[cfg(target_os = "windows")]
 pub fn send_paste_input() {
     unsafe {
         let inputs = vec![
-            // Ctrl Down
             INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
@@ -561,7 +470,6 @@ pub fn send_paste_input() {
                     },
                 },
             },
-            // V Down
             INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
@@ -571,7 +479,6 @@ pub fn send_paste_input() {
                     },
                 },
             },
-            // V Up
             INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
@@ -582,7 +489,6 @@ pub fn send_paste_input() {
                     },
                 },
             },
-            // Ctrl Up
             INPUT {
                 r#type: INPUT_KEYBOARD,
                 Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
