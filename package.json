@@ -12,6 +12,8 @@
     "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-clipboard-manager": "^2.0.0",
     "@tauri-apps/plugin-log": "^2.8.0",
@@ -26,6 +28,7 @@
     "react-window": "^2.2.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.1.0",
+    "three": "^0.182.0",
     "use-shortcut-recorder": "^2.2.0"
   },
   "devDependencies": {
@@ -33,6 +36,7 @@
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/react-window": "^2.0.0",
+    "@types/three": "^0.182.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",

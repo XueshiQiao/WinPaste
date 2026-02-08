@@ -10,6 +10,7 @@ import { DragPreview } from './components/DragPreview';
 import { ContextMenu } from './components/ContextMenu';
 import { FolderModal } from './components/FolderModal';
 import { AiResultDialog } from './components/AiResultDialog';
+import { ThreeDPet } from './components/ThreeDPet';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTheme } from './hooks/useTheme';
 import { Toaster, toast } from 'sonner';
@@ -552,7 +553,11 @@ function App() {
 
       {/* Content Container */}
       <div className="relative h-full w-full" style={{ padding: `${LAYOUT.WINDOW_PADDING}px` }}>
-        <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background/80 font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
+        <div className="flex h-full w-full flex-row overflow-hidden rounded-[12px] border border-border/10 bg-background/80 font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
+          <div className="relative w-[180px] flex-shrink-0 border-r border-border/10 bg-accent/5">
+             <ThreeDPet theme={effectiveTheme as 'light' | 'dark'} />
+          </div>
+          <div className="flex flex-1 flex-col overflow-hidden relative">
           {draggingClipId && (
             <DragPreview
               clip={clips.find((c) => c.id === draggingClipId)!}
@@ -683,6 +688,7 @@ function App() {
             />
           </main>
           <Toaster richColors position="bottom-center" theme={effectiveTheme} />
+          </div>
         </div>
       </div>
     </div>
