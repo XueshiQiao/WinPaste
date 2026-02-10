@@ -554,6 +554,12 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
         settings["theme"] = serde_json::json!(value);
     }
 
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'hotkey'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())
+    {
+        settings["hotkey"] = serde_json::json!(value);
+    }
+
     // AI Settings
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_provider'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_provider"] = serde_json::json!(value); }
@@ -731,6 +737,12 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
     if let Some(ai_title_fix_grammar) = settings.get("ai_title_fix_grammar").and_then(|v| v.as_str()) {
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('ai_title_fix_grammar', ?)"#)
             .bind(ai_title_fix_grammar)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(hotkey) = settings.get("hotkey").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('hotkey', ?)"#)
+            .bind(hotkey)
             .execute(pool).await.ok();
     }
 
