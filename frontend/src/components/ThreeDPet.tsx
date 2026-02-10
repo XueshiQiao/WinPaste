@@ -57,9 +57,17 @@ export function ThreeDPet({ theme = 'light' }: { theme?: 'light' | 'dark' }) {
         {/* Revert camera to original working position [0, 0, 5] */}
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={35} />
         
-        <ambientLight intensity={theme === 'dark' ? 0.4 : 0.8} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+        {/* Global ambient light - boosted for visibility */}
+        <ambientLight intensity={theme === 'dark' ? 0.8 : 1.2} />
+        
+        {/* Main light from top-front-right */}
+        <spotLight position={[5, 10, 5]} angle={0.3} penumbra={1} intensity={1.5} castShadow />
+        
+        {/* Fill light from top-left to soften shadows */}
+        <pointLight position={[-5, 5, 2]} intensity={1} color="#ffffff" />
+
+        {/* Rim light from behind-top to highlight the fox's edges/fur */}
+        <pointLight position={[0, 5, -5]} intensity={0.8} color="#ffffff" />
         
         {/* Removed Environment and Suspense to match original working state */}
         <FoxModel />
