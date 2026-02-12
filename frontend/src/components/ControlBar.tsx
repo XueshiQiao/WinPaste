@@ -223,7 +223,7 @@ export function ControlBar({
   };
 
   return (
-    <div className="drag-area flex min-h-[52px] items-center gap-4 border-b border-border bg-background/90 px-6 py-2">
+    <div className="drag-area flex min-h-[44px] items-center gap-4 bg-background/90 px-6 pt-2">
       {/* Search Toggle / Input */}
       <div
         className={clsx(
