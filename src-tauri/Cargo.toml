@@ -44,6 +44,8 @@ windows = { version = "0.62.2", features = ["Win32_UI_WindowsAndMessaging", "Win
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.23"
+cocoa = "0.26"
+objc = "0.2"
 
 [features]
 default = ["custom-protocol"]

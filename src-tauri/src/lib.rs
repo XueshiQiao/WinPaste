@@ -220,6 +220,12 @@ pub fn run_app() {
                 crate::apply_window_effect(&win, &mica_effect, &current_theme);
             }
 
+            #[cfg(target_os = "macos")]
+            {
+                // Set window level to NSStatusWindowLevel (25) to be above the Dock
+                crate::set_window_level(&win, 25);
+            }
+
             // Load saved hotkey from database or use default
             let db_for_hotkey = db_for_clipboard.clone();
             let saved_hotkey = get_runtime().unwrap().block_on(async {
@@ -574,5 +580,18 @@ pub fn apply_window_effect(window: &tauri::WebviewWindow, effect: &str, theme: &
         let _ = theme;
         let _ = window;
         // No vibrancy on macOS — solid background via CSS
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn set_window_level(window: &tauri::WebviewWindow, level: i64) {
+    use cocoa::appkit::NSWindow;
+    use cocoa::base::id;
+    
+    if let Ok(handle) = window.ns_window() {
+        unsafe {
+            let ns_window: id = handle as id;
+            ns_window.setLevel_(level);
+        }
     }
 }
