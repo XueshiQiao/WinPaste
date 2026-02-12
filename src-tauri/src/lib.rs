@@ -437,7 +437,9 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
             #[cfg(not(target_os = "macos"))]
             let bottom_inset_px = 0;
             let start_y = work_area_bottom - (window_height_px as i32) - window_margin_px + bottom_inset_px;
-            let target_y = work_area_bottom; // Off screen (at work area bottom, not further)
+            // On macOS, slide past the Dock visual top so window is fully behind Dock before hide()
+            // On Windows, Z-order trick handles this, so work_area_bottom is fine
+            let target_y = work_area_bottom + dock_gap;
 
             // Fix Z-Order: Dynamic Switch & Fade Out
             #[cfg(target_os = "windows")]
@@ -559,6 +561,7 @@ pub fn get_monitor_at_cursor(window: &tauri::WebviewWindow) -> Option<tauri::Mon
     #[cfg(not(target_os = "windows"))]
     {
         window.current_monitor().ok().flatten()
+            .or_else(|| window.available_monitors().ok().and_then(|m| m.into_iter().next()))
     }
 }
 

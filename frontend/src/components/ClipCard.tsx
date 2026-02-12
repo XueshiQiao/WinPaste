@@ -2,6 +2,7 @@ import { ClipboardItem } from '../types';
 import { clsx } from 'clsx';
 import { useMemo, memo, useState } from 'react';
 import { LAYOUT, TOTAL_COLUMN_WIDTH, PREVIEW_CHAR_LIMIT } from '../constants';
+import { isMacOS } from '../utils/platform';
 import { Copy, Check } from 'lucide-react';
 
 interface ClipCardProps {
@@ -90,7 +91,7 @@ export const ClipCard = memo(function ClipCard({
     <div
       style={{
         width: TOTAL_COLUMN_WIDTH - LAYOUT.CARD_GAP,
-        height: LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT - LAYOUT.CARD_VERTICAL_PADDING * 2,
+        height: isMacOS() ? 'calc(100% - 32px)' : LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT - LAYOUT.CARD_VERTICAL_PADDING * 2,
       }}
       className="flex-shrink-0"
     >

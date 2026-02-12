@@ -650,7 +650,7 @@ function App() {
             theme={effectiveTheme}
           />
 
-          <main className="no-scrollbar relative flex-1">
+          <main className="no-scrollbar relative flex-1 overflow-hidden">
             <ClipList
               clips={clips}
               isLoading={isLoading}
