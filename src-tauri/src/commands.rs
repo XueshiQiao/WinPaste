@@ -866,8 +866,6 @@ pub async fn register_global_shortcut(hotkey: String, window: tauri::WebviewWind
     if let Err(e) = app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
         if event.state() == ShortcutState::Pressed {
             crate::position_window_at_bottom(&win_clone);
-            let _ = win_clone.show();
-            let _ = win_clone.set_focus();
         }
     }) {
         return Err(format!("Failed to register hotkey: {:?}", e));
@@ -899,12 +897,6 @@ pub async fn focus_window(app: AppHandle, label: String) -> Result<(), String> {
 #[tauri::command]
 pub fn show_window(window: tauri::WebviewWindow) -> Result<(), String> {
     crate::position_window_at_bottom(&window);
-    if let Err(e) = window.show() {
-        return Err(format!("Failed to show window: {:?}", e));
-    }
-    if let Err(e) = window.set_focus() {
-        return Err(format!("Failed to focus window: {:?}", e));
-    }
     Ok(())
 }
 
