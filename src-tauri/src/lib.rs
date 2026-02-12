@@ -456,9 +456,9 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
                  }
             }
 
-            // Hide animation is fast (~120ms)
-            let steps = 15;
-            let step_duration = std::time::Duration::from_millis(8);
+            // Hide animation matched to show duration: ~200ms (20 steps * 10ms)
+            let steps = 20;
+            let step_duration = std::time::Duration::from_millis(10);
             let total_dist = (target_y - start_y) as f64;
             let mut z_order_switched = false;
 
