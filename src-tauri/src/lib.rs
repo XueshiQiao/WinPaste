@@ -319,8 +319,8 @@ pub fn position_window_at_bottom(window: &tauri::WebviewWindow) {
     animate_window_show(window);
 }
 
-fn ease_out_quint(x: f64) -> f64 {
-    1.0 - (1.0 - x).powi(5)
+fn ease_linear(x: f64) -> f64 {
+    x
 }
 
 pub fn animate_window_show(window: &tauri::WebviewWindow) {
@@ -338,7 +338,7 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let screen_size = monitor.size();
             let monitor_pos = monitor.position();
             let work_area = monitor.work_area();
-            
+
             let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
             let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
 
@@ -367,17 +367,16 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let _ = window.show();
             let _ = window.set_focus();
 
-            // Animation loop: ~200ms total (20 steps * 10ms)
-            // Quintic out starts fast and has a very long, smooth tail.
-            let steps = 20;
-            let step_duration = std::time::Duration::from_millis(10);
+            // Animation loop: ~=60ms total (30 steps * 2ms)
+            let steps = 30;
+            let step_duration = std::time::Duration::from_millis(2);
             let total_dist = (target_y - start_y) as f64;
 
             for i in 1..=steps {
                 let progress = i as f64 / steps as f64;
-                let eased_progress = ease_out_quint(progress);
+                let eased_progress = ease_linear(progress);
                 let current_y = start_y as f64 + total_dist * eased_progress;
-                
+
                 let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                     x: work_area.position.x + window_margin_px,
                     y: current_y as i32,
@@ -408,7 +407,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
             let work_area = monitor.work_area();
             let screen_size = monitor.size();
             let monitor_pos = monitor.position();
-            
+
             let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
             let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
 
@@ -435,7 +434,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
 
                 let class_name: Vec<u16> = "Shell_TrayWnd".encode_utf16().chain(std::iter::once(0)).collect();
                 let hwnd = unsafe { FindWindowW(PCWSTR(class_name.as_ptr()), PCWSTR::null()) }.unwrap_or(HWND(std::ptr::null_mut()));
-                
+
                 if !hwnd.0.is_null() {
                     let mut rect = RECT::default();
                     if unsafe { GetWindowRect(hwnd, &mut rect).is_ok() } {
@@ -456,17 +455,17 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
                  }
             }
 
-            // Hide animation matched to show duration: ~200ms (20 steps * 10ms)
-            let steps = 20;
-            let step_duration = std::time::Duration::from_millis(10);
+            // Hide animation matched to show duration: ~60ms (30 steps * 2ms)
+            let steps = 30;
+            let step_duration = std::time::Duration::from_millis(2);
             let total_dist = (target_y - start_y) as f64;
             let mut z_order_switched = false;
 
             for i in 1..=steps {
                 let progress = i as f64 / steps as f64;
-                let eased_progress = ease_out_quint(progress);
+                let eased_progress = ease_linear(progress);
                 let current_y = start_y as f64 + total_dist * eased_progress;
-                
+
                 let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                     x: work_area.position.x + window_margin_px,
                     y: current_y as i32,
