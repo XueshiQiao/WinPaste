@@ -319,8 +319,8 @@ pub fn position_window_at_bottom(window: &tauri::WebviewWindow) {
     animate_window_show(window);
 }
 
-fn ease_out_cubic(x: f64) -> f64 {
-    1.0 - (1.0 - x).powi(3)
+fn ease_out_quart(x: f64) -> f64 {
+    1.0 - (1.0 - x).powi(4)
 }
 
 pub fn animate_window_show(window: &tauri::WebviewWindow) {
@@ -367,14 +367,14 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let _ = window.show();
             let _ = window.set_focus();
 
-            // Animation loop: ~300ms total (30 steps * 10ms)
-            let steps = 30;
-            let step_duration = std::time::Duration::from_millis(10);
+            // Animation loop: ~120ms total (15 steps * 8ms)
+            let steps = 15;
+            let step_duration = std::time::Duration::from_millis(8);
             let total_dist = (target_y - start_y) as f64;
 
             for i in 1..=steps {
                 let progress = i as f64 / steps as f64;
-                let eased_progress = ease_out_cubic(progress);
+                let eased_progress = ease_out_quart(progress);
                 let current_y = start_y as f64 + total_dist * eased_progress;
                 
                 let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
@@ -455,15 +455,15 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
                  }
             }
 
-            // Hide animation can be slightly faster for responsiveness (~250ms)
-            let steps = 25;
-            let step_duration = std::time::Duration::from_millis(10);
+            // Hide animation is even faster (~100ms)
+            let steps = 12;
+            let step_duration = std::time::Duration::from_millis(8);
             let total_dist = (target_y - start_y) as f64;
             let mut z_order_switched = false;
 
             for i in 1..=steps {
                 let progress = i as f64 / steps as f64;
-                let eased_progress = ease_out_cubic(progress);
+                let eased_progress = ease_out_quart(progress);
                 let current_y = start_y as f64 + total_dist * eased_progress;
                 
                 let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
