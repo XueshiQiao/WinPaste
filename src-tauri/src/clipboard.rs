@@ -613,13 +613,45 @@ fn extract_macos_app_icon(bundle_id: &str) -> Option<String> {
 }
 
 #[cfg(target_os = "macos")]
+pub fn write_png_to_pasteboard(png_bytes: &[u8]) -> Result<(), String> {
+    use cocoa::base::{nil, id, BOOL};
+    use cocoa::foundation::NSString;
+    use objc::{msg_send, sel, sel_impl, class};
+
+    // Write PNG to a temp file so target apps can read via file URL (fast SSD path)
+    let tmp_dir = std::env::temp_dir().join("pastepaw_images");
+    let _ = std::fs::create_dir_all(&tmp_dir);
+    let tmp_path = tmp_dir.join(format!("paste_{}.png", std::process::id()));
+    std::fs::write(&tmp_path, png_bytes)
+        .map_err(|e| format!("Failed to write temp PNG: {}", e))?;
+    let file_url_str = format!("file://{}", tmp_path.to_string_lossy());
+
+    unsafe {
+        let pasteboard: id = msg_send![class!(NSPasteboard), generalPasteboard];
+        let _: i64 = msg_send![pasteboard, clearContents];
+
+        let png_data: id = msg_send![class!(NSData), dataWithBytes:png_bytes.as_ptr() length:png_bytes.len()];
+        let url_nsstring = NSString::alloc(nil).init_str(&file_url_str);
+
+        let png_type = NSString::alloc(nil).init_str("public.png");
+        let file_url_type = NSString::alloc(nil).init_str("public.file-url");
+
+        let _: BOOL = msg_send![pasteboard, setData:png_data forType:png_type];
+
+        // Set file URL as UTF-8 data — target apps read the image from disk directly
+        let url_data: id = msg_send![url_nsstring, dataUsingEncoding:4u64]; // NSUTF8StringEncoding = 4
+        let _: BOOL = msg_send![pasteboard, setData:url_data forType:file_url_type];
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
 pub fn send_paste_input() {
     use core_graphics::event::{CGEvent, CGEventTapLocation, CGEventFlags, CGKeyCode};
     use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 
-    log::info!("CLIPBOARD: Preparing to send Cmd+V...");
-    // Give a delay for focus to switch
-    std::thread::sleep(std::time::Duration::from_millis(50));
+    // Give a brief delay for focus to switch
+    std::thread::sleep(std::time::Duration::from_millis(20));
 
     // kVK_ANSI_V = 0x09
     let v_key: CGKeyCode = 0x09;
@@ -661,5 +693,5 @@ pub fn send_paste_input() {
         event.post(CGEventTapLocation::HID);
     }
 
-    log::info!("CLIPBOARD: Sent explicit Cmd Down -> V -> Cmd Up via CoreGraphics");
+    log::info!("CLIPBOARD: Sent Cmd+V via CoreGraphics");
 }

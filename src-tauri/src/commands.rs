@@ -219,7 +219,18 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                 crate::clipboard::set_ignore_hash(content_hash.clone());
                 crate::clipboard::set_last_stable_hash(content_hash.clone());
 
-                println!("DEBUG: Frontend handled image. Skipping backend write.");
+                #[cfg(target_os = "macos")]
+                {
+                    // Write PNG to temp file + file URL on pasteboard (fast path via disk)
+                    if let Err(e) = crate::clipboard::write_png_to_pasteboard(&clip.content) {
+                        final_res = Err(format!("Failed to write image to clipboard: {}", e));
+                    }
+                }
+
+                #[cfg(not(target_os = "macos"))]
+                {
+                    // On Windows, frontend writes image via navigator.clipboard API
+                }
 
             } else {
                 let content_str = String::from_utf8_lossy(&clip.content).to_string();
@@ -228,7 +239,6 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
 
                 let mut last_err = String::new();
                 for i in 0..5 {
-                    // write_text is public function
                     match write_text(content_str.clone()).await {
                         Ok(_) => { last_err.clear(); break; },
                         Err(e) => {
@@ -280,7 +290,7 @@ pub async fn paste_clip(id: String, app: AppHandle, window: tauri::WebviewWindow
                         }
                         #[cfg(target_os = "macos")]
                         {
-                            std::thread::sleep(std::time::Duration::from_millis(300));
+                            std::thread::sleep(std::time::Duration::from_millis(100));
                             crate::clipboard::send_paste_input();
                         }
                     })));

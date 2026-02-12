@@ -338,19 +338,16 @@ function App() {
   const handlePaste = async (clipId: string) => {
     try {
       const clip = clips.find((c) => c.id === clipId);
-      if (clip && clip.clip_type === 'image') {
+      if (clip && clip.clip_type === 'image' && !isMacOS()) {
         try {
-           // clip.content is Base64 for images (from get_clips in commands.rs)
            const blob = base64ToBlob(clip.content, 'image/png');
            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-           console.log("Frontend clipboard write success");
         } catch (e) {
            console.error("Frontend clipboard write failed", e);
         }
       }
 
-      await invoke('paste_clip', { id: clipId });
-      // Backend now handles hiding and auto-pasting (and database update)
+      invoke('paste_clip', { id: clipId }).catch(console.error);
     } catch (error) {
       console.error('Failed to paste clip:', error);
     }
@@ -359,7 +356,7 @@ function App() {
   const handleCopy = async (clipId: string) => {
     try {
       const clip = clips.find((c) => c.id === clipId);
-      if (clip && clip.clip_type === 'image') {
+      if (clip && clip.clip_type === 'image' && !isMacOS()) {
         const blob = base64ToBlob(clip.content, 'image/png');
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
         // For copy, we might not need to call backend 'paste_clip' if we just want to copy?
