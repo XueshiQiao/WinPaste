@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+#![allow(unexpected_cfgs)] // objc crate macros check cfg(feature = "cargo-clippy") internally
+#![allow(deprecated)] // cocoa crate deprecated its API in favor of objc2; suppress until migration
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
@@ -465,6 +467,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
             let steps = 30;
             let step_duration = std::time::Duration::from_millis(2);
             let total_dist = (target_y - start_y) as f64;
+            #[cfg(target_os = "windows")]
             let mut z_order_switched = false;
 
             for i in 1..=steps {

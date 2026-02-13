@@ -89,8 +89,9 @@ pub fn start_frontmost_app_observer() {
 
         let observer_class = decl.register();
         let observer: id = msg_send![observer_class, new];
-        // Leak the observer intentionally — it must live for the entire app lifetime
-        std::mem::forget(observer as *const _ as *const std::ffi::c_void);
+        // Prevent the observer from being released — it must live for the entire app lifetime.
+        // Retain it so ARC won't deallocate it.
+        let _: () = msg_send![observer, retain];
 
         let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
         let nc: id = msg_send![workspace, notificationCenter];
