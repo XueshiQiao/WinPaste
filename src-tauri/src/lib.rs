@@ -22,6 +22,8 @@ mod models;
 mod commands;
 mod constants;
 mod ai;
+#[cfg(target_os = "macos")]
+mod source_app_macos;
 
 use models::get_runtime;
 use database::Database;
@@ -57,7 +59,8 @@ pub fn run_app() {
                 message
             ))
         })
-        .level(log::LevelFilter::Debug);
+        .level(log::LevelFilter::Debug)
+        .level_for("sqlx", log::LevelFilter::Warn);
 
     #[cfg(debug_assertions)]
     {
@@ -260,6 +263,9 @@ pub fn run_app() {
             } else {
                 log::error!("Failed to parse hotkey: {}", saved_hotkey);
             }
+
+            #[cfg(target_os = "macos")]
+            source_app_macos::start_frontmost_app_observer();
 
             let handle_for_clip = app_handle.clone();
             let db_for_clip = db_for_clipboard.clone();

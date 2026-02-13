@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::database::Database;
 use uuid::Uuid;
 use sha2::{Digest, Sha256};
+#[cfg(target_os = "windows")]
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 #[cfg(target_os = "windows")]
 use windows::Win32::Foundation::MAX_PATH;
@@ -77,6 +78,11 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
         let app = app_clone.clone();
         let db = db_clone.clone();
 
+        // Capture source app info IMMEDIATELY at event time, before debounce delay.
+        // If we wait until after the delay, the user may have already switched to PastePaw,
+        // causing frontmostApplication to return our own app instead of the real source.
+        let source_app_info = get_clipboard_owner_app_info();
+
         // DEBOUNCE LOGIC:
         let current_count = DEBOUNCE_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
 
@@ -88,12 +94,14 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
                 return;
             }
 
-            process_clipboard_change(app, db).await;
+            process_clipboard_change(app, db, source_app_info).await;
         });
     });
 }
 
-async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
+type SourceAppInfo = (Option<String>, Option<String>, Option<String>, Option<String>, bool);
+
+async fn process_clipboard_change(app: AppHandle, db: Arc<Database>, source_app_info: SourceAppInfo) {
     let _guard = CLIPBOARD_SYNC.lock().await;
 
     let mut clip_type = "text";
@@ -173,8 +181,8 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
         }
     }
 
-    // capture source app info
-    let (source_app, source_icon, exe_name, full_path, is_explicit_owner) = get_clipboard_owner_app_info();
+    // Source app info was captured at event time (before debounce) to avoid race conditions
+    let (source_app, source_icon, exe_name, full_path, is_explicit_owner) = source_app_info;
     log::info!("CLIPBOARD: Source app: {:?}, exe_name: {:?}, full_path: {:?}, explicit: {}", source_app, exe_name, full_path, is_explicit_owner);
 
     // Check ignore_ghost_clips setting
@@ -216,7 +224,9 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
         .unwrap_or(None);
 
     if let Some(existing_id) = existing_uuid {
-        let _ = sqlx::query(r#"UPDATE clips SET created_at = CURRENT_TIMESTAMP, is_deleted = 0 WHERE uuid = ?"#)
+        let _ = sqlx::query(r#"UPDATE clips SET created_at = CURRENT_TIMESTAMP, is_deleted = 0, source_app = ?, source_icon = ? WHERE uuid = ?"#)
+            .bind(&source_app)
+            .bind(&source_icon)
             .bind(&existing_id)
             .execute(pool)
             .await;
@@ -521,95 +531,7 @@ pub fn send_paste_input() {
 
 #[cfg(target_os = "macos")]
 fn get_clipboard_owner_app_info() -> (Option<String>, Option<String>, Option<String>, Option<String>, bool) {
-    use std::process::Command;
-
-    let output = Command::new("osascript")
-        .args(["-e", "tell application \"System Events\" to get {name, bundle identifier} of first application process whose frontmost is true"])
-        .output();
-
-    match output {
-        Ok(out) if out.status.success() => {
-            let result = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            // Result format: "AppName, com.example.app"
-            let parts: Vec<&str> = result.splitn(2, ", ").collect();
-            let app_name = parts.first().map(|s| s.to_string());
-            let bundle_id = parts.get(1).map(|s| s.to_string());
-
-            let icon = bundle_id.as_ref().and_then(|bid| extract_macos_app_icon(bid));
-
-            (app_name, icon, bundle_id.clone(), bundle_id, true)
-        }
-        _ => {
-            log::warn!("CLIPBOARD: Failed to get frontmost app info via osascript");
-            (None, None, None, None, false)
-        }
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn extract_macos_app_icon(bundle_id: &str) -> Option<String> {
-    use std::process::Command;
-
-    // Find the .app bundle path from bundle ID
-    let mdfind_output = Command::new("mdfind")
-        .args([&format!("kMDItemCFBundleIdentifier == '{}'", bundle_id)])
-        .output()
-        .ok()?;
-
-    let app_path = String::from_utf8_lossy(&mdfind_output.stdout)
-        .lines()
-        .find(|l| l.ends_with(".app"))
-        .map(|s| s.to_string())?;
-
-    // Read CFBundleIconFile from Info.plist
-    let plist_path = format!("{}/Contents/Info.plist", app_path);
-    let icon_name_output = Command::new("/usr/libexec/PlistBuddy")
-        .args(["-c", "Print :CFBundleIconFile", &plist_path])
-        .output()
-        .ok()?;
-
-    if !icon_name_output.status.success() {
-        // Try CFBundleIconName as fallback
-        let icon_name_output2 = Command::new("/usr/libexec/PlistBuddy")
-            .args(["-c", "Print :CFBundleIconName", &plist_path])
-            .output()
-            .ok()?;
-        if !icon_name_output2.status.success() {
-            return None;
-        }
-    }
-
-    let icon_name_raw = String::from_utf8_lossy(&icon_name_output.stdout).trim().to_string();
-    // Append .icns if not present
-    let icon_file = if icon_name_raw.ends_with(".icns") {
-        icon_name_raw
-    } else {
-        format!("{}.icns", icon_name_raw)
-    };
-
-    let icns_path = format!("{}/Contents/Resources/{}", app_path, icon_file);
-
-    // Check if the icns file exists
-    if !std::path::Path::new(&icns_path).exists() {
-        return None;
-    }
-
-    // Convert .icns to PNG via sips (built-in macOS tool)
-    let tmp_png = format!("/tmp/pastepaw_icon_{}.png", bundle_id.replace('.', "_"));
-    let sips_result = Command::new("sips")
-        .args(["-s", "format", "png", "--resampleWidth", "64", &icns_path, "--out", &tmp_png])
-        .output()
-        .ok()?;
-
-    if !sips_result.status.success() {
-        return None;
-    }
-
-    // Read and encode as base64
-    let png_data = std::fs::read(&tmp_png).ok()?;
-    let _ = std::fs::remove_file(&tmp_png);
-
-    Some(BASE64.encode(&png_data))
+    crate::source_app_macos::get_frontmost_app_info()
 }
 
 #[cfg(target_os = "macos")]
