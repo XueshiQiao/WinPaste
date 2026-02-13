@@ -99,6 +99,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
   const [_historySize, setHistorySize] = useState<number>(0);
   const [isRecordingMode, setIsRecordingMode] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [localApiKey, setLocalApiKey] = useState(initialSettings.ai_api_key || '');
+  const [localBaseUrl, setLocalBaseUrl] = useState(initialSettings.ai_base_url || '');
+  const [localModel, setLocalModel] = useState(initialSettings.ai_model || 'gpt-3.5-turbo');
 
   // Folder Management State
   const [folders, setFolders] = useState<FolderItem[]>([]);
@@ -687,11 +690,15 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                           const newProvider = e.target.value;
                           const updates: Partial<Settings> = { ai_provider: newProvider };
 
-                          // Auto-fill Base URL based on provider
+                          // Auto-fill Base URL and Model based on provider
                           if (newProvider === 'openai') {
                             updates.ai_base_url = 'https://api.openai.com/v1';
+                            setLocalBaseUrl('https://api.openai.com/v1');
                           } else if (newProvider === 'deepseek') {
                             updates.ai_base_url = 'https://api.deepseek.com';
+                            updates.ai_model = 'deepseek-chat';
+                            setLocalBaseUrl('https://api.deepseek.com');
+                            setLocalModel('deepseek-chat');
                           }
 
                           updateSettings(updates);
@@ -711,8 +718,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                       <div className="relative">
                         <input
                           type={showApiKey ? 'text' : 'password'}
-                          value={settings.ai_api_key || ''}
-                          onChange={(e) => updateSetting('ai_api_key', e.target.value)}
+                          value={localApiKey}
+                          onChange={(e) => setLocalApiKey(e.target.value)}
+                          onBlur={() => updateSetting('ai_api_key', localApiKey)}
                           placeholder="sk-..."
                           className="w-full rounded-lg border border-border bg-input py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
@@ -732,8 +740,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                       </label>
                       <input
                         type="text"
-                        value={settings.ai_model || 'gpt-3.5-turbo'}
-                        onChange={(e) => updateSetting('ai_model', e.target.value)}
+                        value={localModel}
+                        onChange={(e) => setLocalModel(e.target.value)}
+                        onBlur={() => updateSetting('ai_model', localModel)}
                         placeholder="gpt-4o, deepseek-chat, etc."
                         className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       />
@@ -748,8 +757,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                       </label>
                       <input
                         type="text"
-                        value={settings.ai_base_url || ''}
-                        onChange={(e) => updateSetting('ai_base_url', e.target.value)}
+                        value={localBaseUrl}
+                        onChange={(e) => setLocalBaseUrl(e.target.value)}
+                        onBlur={() => updateSetting('ai_base_url', localBaseUrl)}
                         placeholder="https://api.openai.com/v1"
                         className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       />
