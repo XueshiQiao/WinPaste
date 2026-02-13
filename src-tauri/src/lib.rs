@@ -332,11 +332,6 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let work_area_bottom = work_area.position.y + work_area.size.height as i32;
             let dock_gap = screen_bottom - work_area_bottom;
 
-            let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-                width: work_area.size.width - (window_margin_px as u32 * 2),
-                height: window_height_px,
-            }));
-
             #[cfg(target_os = "macos")]
             let bottom_inset_px = dock_gap * 30 / 100;
             #[cfg(not(target_os = "macos"))]
@@ -344,14 +339,25 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
 
             let target_y = work_area_bottom - (window_height_px as i32) - window_margin_px + bottom_inset_px;
             let start_y = work_area_bottom;
+            let x = work_area.position.x + window_margin_px;
+            let width = work_area.size.width - (window_margin_px as u32 * 2);
 
-            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                x: work_area.position.x + window_margin_px,
-                y: start_y,
-            }));
-
-            let _ = window.show();
-            let _ = window.set_focus();
+            // Set initial size, position, and show window — all on main thread
+            {
+                let win = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    let _ = win.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                        width,
+                        height: window_height_px,
+                    }));
+                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x,
+                        y: start_y,
+                    }));
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                });
+            }
 
             // Animation loop: ~=60ms total (30 steps * 2ms)
             let steps = 30;
@@ -363,18 +369,26 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
                 let eased_progress = ease_linear(progress);
                 let current_y = start_y as f64 + total_dist * eased_progress;
 
-                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                    x: work_area.position.x + window_margin_px,
-                    y: current_y as i32,
-                }));
+                let win = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x,
+                        y: current_y as i32,
+                    }));
+                });
                 tokio::time::sleep(step_duration).await;
             }
 
             // Ensure final position is exact
-            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                x: work_area.position.x + window_margin_px,
-                y: target_y,
-            }));
+            {
+                let win = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x,
+                        y: target_y,
+                    }));
+                });
+            }
         }
         IS_ANIMATING.store(false, Ordering::SeqCst);
     });
@@ -452,10 +466,14 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
                 let eased_progress = ease_linear(progress);
                 let current_y = start_y as f64 + total_dist * eased_progress;
 
-                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                    x: work_area.position.x + window_margin_px,
-                    y: current_y as i32,
-                }));
+                let win = window.clone();
+                let x = work_area.position.x + window_margin_px;
+                let _ = window.run_on_main_thread(move || {
+                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x,
+                        y: current_y as i32,
+                    }));
+                });
 
                 #[cfg(target_os = "windows")]
                 if !z_order_switched && taskbar_top_y > 0 && current_y as i32 >= taskbar_top_y {
@@ -475,17 +493,22 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
                 tokio::time::sleep(step_duration).await;
             }
 
-            let _ = window.hide();
-
-            #[cfg(target_os = "macos")]
             {
-                use cocoa::appkit::NSApplication;
-                use cocoa::base::nil;
-                use objc::{msg_send, sel, sel_impl};
-                unsafe {
-                    let app = NSApplication::sharedApplication(nil);
-                    let _: () = msg_send![app, hide:nil];
-                }
+                let win = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    let _ = win.hide();
+
+                    #[cfg(target_os = "macos")]
+                    {
+                        use cocoa::appkit::NSApplication;
+                        use cocoa::base::nil;
+                        use objc::{msg_send, sel, sel_impl};
+                        unsafe {
+                            let app = NSApplication::sharedApplication(nil);
+                            let _: () = msg_send![app, hide:nil];
+                        }
+                    }
+                });
             }
 
             if let Some(callback) = on_done {
