@@ -1,6 +1,5 @@
 import { ClipboardItem } from '../types';
 import { clsx } from 'clsx';
-// import { PREVIEW_CHAR_LIMIT } from '../constants'; // Unused
 import { CLIP_TYPE_ICONS, ClipType } from '../types';
 import { FileText, Image, Code, Type, File, Link } from 'lucide-react';
 
@@ -54,7 +53,7 @@ export function DragPreview({ clip, position }: DragPreviewProps) {
 
   return (
     <div
-      className="pointer-events-none fixed z-50 w-64 overflow-hidden rounded-xl border border-border bg-card opacity-90 shadow-xl ring-2 ring-primary"
+      className="pointer-events-none fixed z-50 w-64 overflow-hidden rounded-2xl border border-border bg-card opacity-90 shadow-xl ring-2 ring-primary"
       style={{
         left: position.x,
         top: position.y,

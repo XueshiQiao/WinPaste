@@ -82,7 +82,7 @@
 
 @layer components {
   .clip-card {
-    @apply relative rounded-xl border border-border bg-card p-4 transition-all duration-200;
+    @apply relative rounded-2xl border border-border bg-card p-4 transition-all duration-200;
   }
 
   .clip-card:hover {

@@ -40,7 +40,7 @@ export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: Fo
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-80 rounded-xl border border-border bg-card p-6 shadow-2xl">
+      <div className="w-80 rounded-2xl border border-border bg-card p-6 shadow-2xl">
         <h3 className="mb-4 text-lg font-semibold text-foreground">
           {mode === 'create' ? 'Create New Folder' : 'Rename Folder'}
         </h3>

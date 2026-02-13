@@ -39,7 +39,6 @@ export function ClipList({
 
     // If scrolled within 300px of the end
     if (scrollLeft + clientWidth >= scrollWidth - 300) {
-      console.log('Scroll to end detected (native), loading more...');
       onLoadMore();
     }
   };

@@ -2,7 +2,6 @@ import { ClipboardItem } from '../types';
 import { clsx } from 'clsx';
 import { useMemo, memo, useState } from 'react';
 import { LAYOUT, TOTAL_COLUMN_WIDTH, PREVIEW_CHAR_LIMIT } from '../constants';
-import { isMacOS } from '../utils/platform';
 import { Copy, Check } from 'lucide-react';
 
 interface ClipCardProps {
@@ -91,7 +90,7 @@ export const ClipCard = memo(function ClipCard({
     <div
       style={{
         width: TOTAL_COLUMN_WIDTH - LAYOUT.CARD_GAP,
-        height: isMacOS() ? 'calc(100% - 32px)' : LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT - LAYOUT.CARD_VERTICAL_PADDING * 2,
+        height: 'calc(100% - 32px)',
       }}
       className="flex-shrink-0"
     >
@@ -101,7 +100,7 @@ export const ClipCard = memo(function ClipCard({
         onDoubleClick={onPaste}
         onContextMenu={handleContextMenu}
         className={clsx(
-          'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all',
+          'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all',
           isSelected
             ? 'z-10 scale-[1.02] transform ring-4 ring-blue-500'
             : 'hover:-translate-y-1 hover:ring-2 hover:ring-primary/30',
@@ -116,7 +115,7 @@ export const ClipCard = memo(function ClipCard({
               className="h-4 w-4 object-contain"
             />
           )}
-          <span className="flex-1 truncate text-[11px] font-bold uppercase tracking-wider text-foreground shadow-sm">
+          <span className="flex-1 truncate text-[11px] font-bold uppercase tracking-wider text-foreground">
             {title}
           </span>
           <button

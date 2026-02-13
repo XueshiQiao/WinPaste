@@ -44,7 +44,7 @@ export function AiResultDialog({ isOpen, title, content, onClose }: AiResultDial
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="flex h-[80vh] w-[90vw] max-w-2xl flex-col rounded-xl border border-border bg-background shadow-2xl">
+      <div className="flex h-[80vh] w-[90vw] max-w-2xl flex-col rounded-2xl border border-border bg-background shadow-2xl">
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="text-lg font-semibold">{title}</h2>
           <div className="flex items-center gap-2">

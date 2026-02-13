@@ -329,16 +329,21 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
             let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
 
             let screen_bottom = monitor_pos.y + screen_size.height as i32;
-            let work_area_bottom = work_area.position.y + work_area.size.height as i32;
-            let dock_gap = screen_bottom - work_area_bottom;
 
             #[cfg(target_os = "macos")]
-            let bottom_inset_px = dock_gap * 30 / 100;
+            let (target_y, start_y) = (
+                screen_bottom - (window_height_px as i32) - window_margin_px,
+                screen_bottom,
+            );
             #[cfg(not(target_os = "macos"))]
-            let bottom_inset_px = 0;
+            let (target_y, start_y) = {
+                let work_area_bottom = work_area.position.y + work_area.size.height as i32;
+                (
+                    work_area_bottom - (window_height_px as i32) - window_margin_px,
+                    work_area_bottom,
+                )
+            };
 
-            let target_y = work_area_bottom - (window_height_px as i32) - window_margin_px + bottom_inset_px;
-            let start_y = work_area_bottom;
             let x = work_area.position.x + window_margin_px;
             let width = work_area.size.width - (window_margin_px as u32 * 2);
 
@@ -412,16 +417,21 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
             let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
 
             let screen_bottom = monitor_pos.y + screen_size.height as i32;
-            let work_area_bottom = work_area.position.y + work_area.size.height as i32;
-            let dock_gap = screen_bottom - work_area_bottom;
 
             #[cfg(target_os = "macos")]
-            let bottom_inset_px = dock_gap * 30 / 100;
+            let (start_y, target_y) = (
+                screen_bottom - (window_height_px as i32) - window_margin_px,
+                screen_bottom,
+            );
             #[cfg(not(target_os = "macos"))]
-            let bottom_inset_px = 0;
-
-            let start_y = work_area_bottom - (window_height_px as i32) - window_margin_px + bottom_inset_px;
-            let target_y = work_area_bottom + dock_gap;
+            let (start_y, target_y) = {
+                let work_area_bottom = work_area.position.y + work_area.size.height as i32;
+                let dock_gap = screen_bottom - work_area_bottom;
+                (
+                    work_area_bottom - (window_height_px as i32) - window_margin_px,
+                    work_area_bottom + dock_gap,
+                )
+            };
 
             // Windows-specific setup
             #[cfg(target_os = "windows")]
@@ -459,6 +469,7 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
             let steps = 30;
             let step_duration = std::time::Duration::from_millis(2);
             let total_dist = (target_y - start_y) as f64;
+            #[cfg(target_os = "windows")]
             let mut z_order_switched = false;
 
             for i in 1..=steps {

@@ -31,7 +31,7 @@ export function SettingsWindow() {
 
   return (
     <div className="h-screen p-2">
-      <div className="h-full overflow-hidden rounded-xl bg-background text-foreground shadow-lg">
+      <div className="h-full overflow-hidden rounded-2xl bg-background text-foreground shadow-lg">
         <SettingsPanel settings={settings} onClose={handleClose} />
         <Toaster
           richColors
