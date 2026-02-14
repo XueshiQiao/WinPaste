@@ -509,7 +509,8 @@ pub async fn get_folders(db: tauri::State<'_, Arc<Database>>) -> Result<Vec<Fold
 }
 
 #[tauri::command]
-pub async fn get_settings(_app: AppHandle, db: tauri::State<'_, Arc<Database>>) -> Result<serde_json::Value, String> {
+#[allow(unused_variables)]
+pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -> Result<serde_json::Value, String> {
     #[cfg(not(feature = "app-store"))]
     use tauri_plugin_autostart::ManagerExt;
     let pool = &db.pool;
