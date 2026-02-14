@@ -20,7 +20,7 @@
     "textLength": "{{count}} 个字符"
   },
   "folders": {
-    "all": "全部剪贴",
+    "all": "全部",
     "addFolder": "添加文件夹",
     "createFolder": "创建文件夹",
     "renameFolder": "重命名文件夹",
@@ -43,8 +43,8 @@
   },
   "settings": {
     "title": "设置",
-    "general": "常规",
-    "ai": "AI",
+    "general": "通用",
+    "ai": "AI 配置",
     "folders": "文件夹",
     "appearance": "外观",
     "advanced": "高级",
@@ -68,7 +68,7 @@
     "startupWithWindows": "开机启动",
     "startupWithWindowsDesc": "Windows 启动时自动运行",
     "autoPaste": "自动粘贴",
-    "autoPasteDesc": "选择后自动粘贴内容",
+    "autoPasteDesc": "双击或者回车自动粘贴内容",
     "ignoreGhostClips": "忽略临时剪贴",
     "ignoreGhostClipsDesc": "忽略临时剪贴板项目",
     "hotkey": "全局快捷键",
