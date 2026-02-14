@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from 'react';
 import { isMacOS } from '../utils/platform';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -113,6 +114,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
   // Apply theme immediately when settings.theme changes
   useTheme(settings.theme);
 
+  // i18n hook
+  const { i18n } = useTranslation();
+
   // Generic handler for immediate settings updates
   const updateSettings = async (updates: Partial<Settings>) => {
     // Determine the next state before updating React state
@@ -165,6 +169,13 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
 
   const handleThemeChange = (newTheme: string) => {
     updateSetting('theme', newTheme);
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    updateSetting('language', newLanguage);
+    // Change language immediately
+    i18n.changeLanguage(newLanguage);
+    localStorage.setItem('pastepaw_language', newLanguage);
   };
 
   // Use use-shortcut-recorder for recording (shows current keys held in real-time)
@@ -470,23 +481,37 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                         </select>
                       </div>
 
-                      {!isMacOS() && (
-                        <div className="space-y-3">
-                          <label className="block">
-                            <span className="text-sm font-medium">Window Effect</span>
-                          </label>
-                          <select
-                            value={settings.mica_effect || 'clear'}
-                            onChange={(e) => updateSetting('mica_effect', e.target.value)}
-                            className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                          >
-                            <option value="mica_alt">Mica Alt</option>
-                            <option value="mica">Mica</option>
-                            <option value="clear">Clear</option>
-                          </select>
-                        </div>
-                      )}
+                      <div className="space-y-3">
+                        <label className="block">
+                          <span className="text-sm font-medium">Language</span>
+                        </label>
+                        <select
+                          value={settings.language || 'en'}
+                          onChange={(e) => handleLanguageChange(e.target.value)}
+                          className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="en">English</option>
+                          <option value="zh">中文</option>
+                        </select>
+                      </div>
                     </div>
+
+                    {!isMacOS() && (
+                      <div className="space-y-3">
+                        <label className="block">
+                          <span className="text-sm font-medium">Window Effect</span>
+                        </label>
+                        <select
+                          value={settings.mica_effect || 'clear'}
+                          onChange={(e) => updateSetting('mica_effect', e.target.value)}
+                          className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="mica_alt">Mica Alt</option>
+                          <option value="mica">Mica</option>
+                          <option value="clear">Clear</option>
+                        </select>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
                       <div>

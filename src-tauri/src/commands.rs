@@ -575,6 +575,12 @@ pub async fn get_settings(app: AppHandle, db: tauri::State<'_, Arc<Database>>) -
         settings["hotkey"] = serde_json::json!(value);
     }
 
+    if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'language'"#)
+        .fetch_optional(pool).await.map_err(|e| e.to_string())
+    {
+        settings["language"] = serde_json::json!(value);
+    }
+
     // AI Settings
     if let Ok(Some(value)) = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ai_provider'"#)
         .fetch_optional(pool).await.map_err(|e| e.to_string()) { settings["ai_provider"] = serde_json::json!(value); }
@@ -649,6 +655,12 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value, db: taur
     if let Some(mica_effect) = settings.get("mica_effect").and_then(|v| v.as_str()) {
         sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('mica_effect', ?)"#)
             .bind(mica_effect)
+            .execute(pool).await.ok();
+    }
+
+    if let Some(language) = settings.get("language").and_then(|v| v.as_str()) {
+        sqlx::query(r#"INSERT OR REPLACE INTO settings (key, value) VALUES ('language', ?)"#)
+            .bind(language)
             .execute(pool).await.ok();
     }
 
