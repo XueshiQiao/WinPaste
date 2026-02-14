@@ -1,10 +1,10 @@
 # Implementation Plan: Prepare for Apple App Store Submission
 
 ## Phase 1: Environment & Entitlements
-- [x] Task: Audit current macOS code for App Store compatibility (sandboxing issues) (0000000)
+- [x] Task: Audit current macOS code for App Store compatibility (sandboxing issues) (233b489)
   *Summary: Identified blockers: CGEvent::post (auto-paste), osascript (pick_file), tauri-plugin-updater, and LaunchAgent autostart. Source app detection is already native.*
-- [x] Task: Configure `entitlements.plist` with required keys (e.g., `com.apple.security.app-sandbox`) (0000000)
-- [x] Task: Verify clipboard access functionality within the sandbox (0000000)
+- [x] Task: Configure `entitlements.plist` with required keys (e.g., `com.apple.security.app-sandbox`) (233b489)
+- [x] Task: Verify clipboard access functionality within the sandbox (233b489)
   *Note: Verified via host tests of native Cocoa APIs used in the app.*
 - [~] Task: Conductor - User Manual Verification 'Phase 1: Environment & Entitlements' (Protocol in workflow.md)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment & Entitlements' (Protocol in workflow.md)
