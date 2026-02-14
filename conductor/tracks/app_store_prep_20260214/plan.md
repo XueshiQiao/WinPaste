@@ -23,3 +23,6 @@
 - [x] Task: Validate the final `.pkg` or `.app` bundle using Apple's validation tools (5836ad2)
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Build & Validation' (Protocol in workflow.md) (d263e72)
   *Note: Final fixes implemented for native Auto-Paste (Accessibility API) and window styling (border/padding resolution).*
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 60eeb25
