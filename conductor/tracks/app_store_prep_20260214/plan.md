@@ -8,17 +8,17 @@
   *Note: Verified via host tests of native Cocoa APIs used in the app.*
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment & Entitlements' (Protocol in workflow.md) (df38d57)
 
-## Phase 2: Assets & Metadata
+## Phase 2: Assets & Metadata [checkpoint: d6ee0be]
 - [x] Task: Generate compliant App Store icon set (1024x1024 and standard sizes) (a4a0a20)
   *Note: Current icon.icns contains 1024x1024 variant. icon_light_green_gradient.png (1024x1024) is also available.*
 - [x] Task: Review and update `tauri.conf.json` for App Store specific bundle settings (a4a0a20)
   *Note: Created tauri.appstore.conf.json with App Store specific overrides.*
 - [x] Task: Prepare high-resolution screenshots for both Light and Dark modes (a4a0a20)
   *Note: High-res screenshots found in docs/paste_paw_light.png and docs/paste_paw_dark.png.*
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Assets & Metadata' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Assets & Metadata' (Protocol in workflow.md) (d6ee0be)
 
 ## Phase 3: Build & Validation
-- [ ] Task: Configure signing identities for Apple Distribution
+- [~] Task: Configure signing identities for Apple Distribution
 - [ ] Task: Execute a test production build using `tauri build`
 - [ ] Task: Validate the final `.pkg` or `.app` bundle using Apple's validation tools
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Build & Validation' (Protocol in workflow.md)
