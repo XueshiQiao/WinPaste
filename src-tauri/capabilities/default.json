@@ -21,6 +21,7 @@
     "updater:default",
     "process:default",
     "aptabase:default",
+    "notification:default",
     {
       "identifier": "opener:allow-open-url",
       "allow": [
