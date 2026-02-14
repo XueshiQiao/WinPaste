@@ -111,6 +111,13 @@ pub fn run_app() {
         .plugin(tauri_plugin_aptabase::Builder::new("A-US-2920723583").build())
         .manage(db_arc.clone())
         .on_window_event(|window, event| {
+            #[cfg(target_os = "macos")]
+            {
+                if let Ok(handle) = window.ns_window() {
+                    crate::setup_macos_window(handle as cocoa::base::id);
+                }
+            }
+
             match event {
                 tauri::WindowEvent::ThemeChanged(theme) => {
                     log::info!("THEME:System theme changed to: {:?}, win.theme(): {:?}", theme, window.theme());
@@ -250,7 +257,9 @@ pub fn run_app() {
                 // Set activation policy to Accessory to hide dock icon and menu bar
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
                 // Apply custom native window styling
-                crate::setup_macos_window(&win);
+                if let Ok(handle) = win.ns_window() {
+                    crate::setup_macos_window(handle as cocoa::base::id);
+                }
                 // Set window level to NSStatusWindowLevel (25) to be above the Dock
                 crate::set_window_level(&win, 25);
             }
@@ -676,35 +685,36 @@ fn set_window_level(window: &tauri::WebviewWindow, level: i64) {
 }
 
 #[cfg(target_os = "macos")]
-fn setup_macos_window(window: &tauri::WebviewWindow) {
-    use cocoa::appkit::{NSWindow, NSWindowStyleMask};
-    use cocoa::base::{id, NO};
+fn setup_macos_window(ns_window: cocoa::base::id) {
+    use cocoa::appkit::NSWindow;
+    use cocoa::foundation::NSString;
+    use cocoa::base::{id, nil, NO, YES};
     use objc::{msg_send, sel, sel_impl, class};
 
-    if let Ok(handle) = window.ns_window() {
-        unsafe {
-            let ns_window: id = handle as id;
+    unsafe {
+        // 1. Set window to non-opaque and clear background to allow rounded corners
+        ns_window.setOpaque_(NO);
+        ns_window.setBackgroundColor_(msg_send![class!(NSColor), clearColor]);
+
+        // 2. Access the WKWebView and disable its background drawing
+        let content_view: id = ns_window.contentView();
+        let subviews: id = msg_send![content_view, subviews];
+        let count: usize = msg_send![subviews, count];
+        
+        if count > 0 {
+            let webview: id = msg_send![subviews, objectAtIndex:0];
             
-            // 1. Set background color to match dark theme (#1E1E1E roughly 0.12)
-            let color: id = msg_send![class!(NSColor), colorWithRed:0.12 green:0.12 blue:0.12 alpha:1.0];
-            ns_window.setBackgroundColor_(color);
-
-            // 2. Disable opacity to allow the color to take effect properly
-            ns_window.setOpaque_(NO);
-
-            // 3. Ensure the window is borderless but still has proper sizing behavior
-            // NSWindowStyleMaskBorderless = 0
-            // NSWindowStyleMaskFullSizeContentView = 1 << 15
-            let mut style_mask: NSWindowStyleMask = ns_window.styleMask();
-            style_mask.insert(NSWindowStyleMask::NSFullSizeContentViewWindowMask);
-            ns_window.setStyleMask_(style_mask);
-
-            // 4. Hide the titlebar completely
-            ns_window.setTitlebarAppearsTransparent_(cocoa::base::YES);
-            ns_window.setTitleVisibility_(cocoa::appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
-
-            // 5. Remove standard shadow if it's causing white glow
-            ns_window.setHasShadow_(NO);
+            // Fix white background in WKWebView
+            let no_num: id = msg_send![class!(NSNumber), numberWithBool:NO];
+            let draws_bg_key = NSString::alloc(nil).init_str("drawsBackground");
+            let _: () = msg_send![webview, setValue:no_num forKey:draws_bg_key];
         }
+
+        // 3. Hide the titlebar completely
+        ns_window.setTitlebarAppearsTransparent_(YES);
+        ns_window.setTitleVisibility_(cocoa::appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
+
+        // 4. Ensure shadow is enabled
+        ns_window.setHasShadow_(YES);
     }
 }
