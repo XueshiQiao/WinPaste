@@ -1,0 +1,88 @@
+{
+  "common": {
+    "close": "关闭",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "rename": "重命名",
+    "create": "创建",
+    "save": "保存",
+    "search": "搜索",
+    "loading": "加载中...",
+    "copied": "已复制到剪贴板",
+    "pasteSuccess": "粘贴成功"
+  },
+  "clipList": {
+    "empty": "暂无剪贴",
+    "emptyDesc": "复制内容后将显示在这里",
+    "loadingClips": "加载中...",
+    "imageSize": "图片 ({{size}}KB)",
+    "textLength": "{{count}} 个字符"
+  },
+  "folders": {
+    "all": "全部剪贴",
+    "addFolder": "添加文件夹",
+    "createFolder": "创建文件夹",
+    "renameFolder": "重命名文件夹",
+    "deleteFolder": "删除文件夹",
+    "folderCreated": "文件夹 \"{{name}}\" 已创建",
+    "folderRenamed": "已重命名为 \"{{name}}\"",
+    "folderDeleted": "文件夹已删除",
+    "folderNamePlaceholder": "文件夹名称"
+  },
+  "contextMenu": {
+    "copy": "复制",
+    "paste": "粘贴",
+    "delete": "删除",
+    "moveToFolder": "移动到文件夹",
+    "summarize": "总结 (AI)",
+    "translate": "翻译 (AI)",
+    "explainCode": "解释代码 (AI)",
+    "fixGrammar": "修正语法 (AI)"
+  },
+  "settings": {
+    "title": "设置",
+    "general": "常规",
+    "appearance": "外观",
+    "advanced": "高级",
+    "about": "关于",
+    "theme": "主题",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "跟随系统",
+    "language": "语言",
+    "hotkey": "全局快捷键",
+    "hotkeyDesc": "显示/隐藏 PastePaw 的快捷键",
+    "autostart": "开机启动",
+    "autostartDesc": "登录时自动启动 PastePaw",
+    "maxHistory": "最大历史记录数",
+    "maxHistoryDesc": "保留的最大剪贴板项目数",
+    "ignoredApps": "忽略的应用",
+    "ignoredAppsDesc": "不从这些应用捕获剪贴板",
+    "addApp": "添加应用",
+    "clearHistory": "清除历史",
+    "clearHistoryDesc": "删除所有剪贴板项目",
+    "clearHistoryConfirm": "确定要清除所有剪贴板历史记录吗?",
+    "removeDuplicates": "删除重复项",
+    "removeDuplicatesDesc": "删除重复的剪贴板项目",
+    "micaEffect": "窗口效果",
+    "micaEffectDesc": "窗口背景的视觉效果",
+    "version": "版本",
+    "checkUpdates": "检查更新"
+  },
+  "ai": {
+    "processing": "AI 处理中...",
+    "summary": "AI 摘要",
+    "translation": "AI 翻译",
+    "codeExplanation": "代码说明",
+    "grammarCheck": "语法检查",
+    "error": "AI 错误: {{error}}"
+  },
+  "notifications": {
+    "clipDeleted": "剪贴已删除",
+    "clipDeleteFailed": "删除剪贴失败",
+    "folderDeleteFailed": "删除文件夹失败",
+    "folderRenameFailed": "重命名文件夹失败",
+    "copyFailed": "复制失败"
+  }
+}

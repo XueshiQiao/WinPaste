@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ClipboardItem } from '../types';
 import { ClipCard } from './ClipCard';
 import { TOTAL_COLUMN_WIDTH } from '../constants';
@@ -29,6 +30,7 @@ export function ClipList({
   onDragStart,
   onCardContextMenu,
 }: ClipListProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -103,7 +105,7 @@ export function ClipList({
       <div className="flex h-full w-full items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-          <p className="text-sm text-muted-foreground">Loading clips...</p>
+          <p className="text-sm text-muted-foreground">{t('clipList.loadingClips')}</p>
         </div>
       </div>
     );
@@ -112,9 +114,9 @@ export function ClipList({
   if (clips.length === 0) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
-        <h3 className="mb-2 text-lg font-semibold text-gray-400">No clips yet</h3>
+        <h3 className="mb-2 text-lg font-semibold text-gray-400">{t('clipList.empty')}</h3>
         <p className="max-w-xs text-sm text-gray-500">
-          Copy something to your clipboard and it will appear here.
+          {t('clipList.emptyDesc')}
         </p>
       </div>
     );

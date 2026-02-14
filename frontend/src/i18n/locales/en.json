@@ -1,0 +1,88 @@
+{
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "rename": "Rename",
+    "create": "Create",
+    "save": "Save",
+    "search": "Search",
+    "loading": "Loading...",
+    "copied": "Copied to clipboard",
+    "pasteSuccess": "Pasted successfully"
+  },
+  "clipList": {
+    "empty": "No clips yet",
+    "emptyDesc": "Copy something to your clipboard and it will appear here.",
+    "loadingClips": "Loading clips...",
+    "imageSize": "Image ({{size}}KB)",
+    "textLength": "{{count}} characters"
+  },
+  "folders": {
+    "all": "All Clips",
+    "addFolder": "Add Folder",
+    "createFolder": "Create Folder",
+    "renameFolder": "Rename Folder",
+    "deleteFolder": "Delete Folder",
+    "folderCreated": "Folder \"{{name}}\" created",
+    "folderRenamed": "Renamed to \"{{name}}\"",
+    "folderDeleted": "Folder deleted",
+    "folderNamePlaceholder": "Folder name"
+  },
+  "contextMenu": {
+    "copy": "Copy",
+    "paste": "Paste",
+    "delete": "Delete",
+    "moveToFolder": "Move to Folder",
+    "summarize": "Summarize (AI)",
+    "translate": "Translate (AI)",
+    "explainCode": "Explain Code (AI)",
+    "fixGrammar": "Fix Grammar (AI)"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "appearance": "Appearance",
+    "advanced": "Advanced",
+    "about": "About",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "language": "Language",
+    "hotkey": "Global Hotkey",
+    "hotkeyDesc": "Shortcut to show/hide PastePaw",
+    "autostart": "Launch at Login",
+    "autostartDesc": "Start PastePaw when you log in",
+    "maxHistory": "Maximum History Size",
+    "maxHistoryDesc": "Maximum number of clipboard items to keep",
+    "ignoredApps": "Ignored Applications",
+    "ignoredAppsDesc": "Don't capture clipboard from these apps",
+    "addApp": "Add Application",
+    "clearHistory": "Clear History",
+    "clearHistoryDesc": "Remove all clipboard items",
+    "clearHistoryConfirm": "Are you sure you want to clear all clipboard history?",
+    "removeDuplicates": "Remove Duplicates",
+    "removeDuplicatesDesc": "Remove duplicate clipboard items",
+    "micaEffect": "Window Effect",
+    "micaEffectDesc": "Visual effect for the window background",
+    "version": "Version",
+    "checkUpdates": "Check for Updates"
+  },
+  "ai": {
+    "processing": "Processing with AI...",
+    "summary": "AI Summary",
+    "translation": "AI Translation",
+    "codeExplanation": "Code Explanation",
+    "grammarCheck": "Grammar Check",
+    "error": "AI Error: {{error}}"
+  },
+  "notifications": {
+    "clipDeleted": "Clip deleted",
+    "clipDeleteFailed": "Failed to delete clip",
+    "folderDeleteFailed": "Failed to delete folder",
+    "folderRenameFailed": "Failed to rename folder",
+    "copyFailed": "Failed to copy"
+  }
+}

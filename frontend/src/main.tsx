@@ -3,6 +3,7 @@ import App from './App';
 import { SettingsWindow } from './windows/SettingsWindow';
 import { attachConsole } from '@tauri-apps/plugin-log';
 import { isMacOS } from './utils/platform';
+import './i18n/config'; // Initialize i18n
 import './index.css';
 
 attachConsole()

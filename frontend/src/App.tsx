@@ -12,6 +12,7 @@ import { FolderModal } from './components/FolderModal';
 import { AiResultDialog } from './components/AiResultDialog';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTheme } from './hooks/useTheme';
+import { useLanguage } from './hooks/useLanguage';
 import { Toaster, toast } from 'sonner';
 import { LAYOUT } from './constants';
 import { isMacOS } from './utils/platform';
@@ -56,6 +57,7 @@ function App() {
   });
 
   const effectiveTheme = useTheme(theme);
+  useLanguage(settings?.language);
 
   const appWindow = getCurrentWindow();
   const selectedFolderRef = useRef(selectedFolder);
