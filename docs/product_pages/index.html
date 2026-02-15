@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PastePaw - A beautiful clipboard history manager for macOS. Never lose what you copy again.">
+    <meta name="keywords" content="clipboard, clipboard manager, macOS, productivity, clipboard history">
+    <title>PastePaw - Clipboard History Manager for macOS</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent: #007AFF;
+            --accent-hover: #0051D5;
+            --border: #e5e5e5;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2a2a2a;
+                --text-primary: #ffffff;
+                --text-secondary: #a0a0a0;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --border: #3a3a3a;
+                --shadow: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            filter: drop-shadow(0 4px 12px var(--shadow));
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, #5856D6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .features {
+            padding: 80px 0;
+            background-color: var(--bg-secondary);
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background-color: var(--bg-primary);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px var(--shadow);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .screenshots {
+            padding: 80px 0;
+        }
+
+        .screenshots h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+        }
+
+        .screenshot-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .screenshot-wrapper {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .screenshot-wrapper img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-caption {
+            text-align: center;
+            margin-top: 12px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .keyboard-shortcuts {
+            padding: 80px 0;
+            background-color: var(--bg-secondary);
+        }
+
+        .keyboard-shortcuts h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+        }
+
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--bg-primary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .shortcut-key {
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            background-color: var(--bg-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        footer {
+            padding: 60px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .copyright {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .screenshot-container {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: var(--accent);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
+            <h1>PastePaw</h1>
+            <p class="subtitle">A beautiful clipboard history manager for macOS</p>
+            <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+                Never lose what you copy again. PastePaw keeps track of everything you copy,
+                making it easy to access your clipboard history with a simple keyboard shortcut.
+            </p>
+            <div class="cta-buttons">
+                <a href="https://github.com/XueshiQiao/PastePaw/releases/latest" class="btn btn-primary">
+                    <span>📥</span> Download for macOS
+                </a>
+                <a href="https://github.com/XueshiQiao/PastePaw" class="btn btn-secondary">
+                    <span>⭐</span> View on GitHub
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <section class="features">
+        <div class="container">
+            <h2>Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Private & Secure</h3>
+                    <p>All your clipboard data is stored locally on your device. Nothing is ever sent to any server.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Fast & Lightweight</h3>
+                    <p>Built with Rust and Tauri for blazing fast performance with minimal resource usage.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Beautiful Design</h3>
+                    <p>Modern interface with native macOS feel. Automatic dark mode support that follows your system preferences.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Automatic History</h3>
+                    <p>Automatically saves everything you copy - text, images, and more. Access your history anytime.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Quick Search</h3>
+                    <p>Find previously copied content instantly with powerful search functionality.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📁</div>
+                    <h3>Organize with Folders</h3>
+                    <p>Create custom folders to organize your frequently used clips and keep them accessible.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚫</div>
+                    <h3>Smart Filtering</h3>
+                    <p>Exclude sensitive apps like password managers from being recorded in clipboard history.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⌨️</div>
+                    <h3>Customizable Hotkey</h3>
+                    <p>Set your preferred keyboard shortcut to quickly access your clipboard history.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Powered</h3>
+                    <p>Built-in AI features to summarize, translate, explain code, and fix grammar in your clipboard content.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="screenshots">
+        <div class="container">
+            <h2>Screenshots</h2>
+            <div class="screenshot-container">
+                <div>
+                    <div class="screenshot-wrapper">
+                        <img src="screenshot_macos_light.png" alt="PastePaw Light Mode">
+                    </div>
+                    <p class="screenshot-caption">Light Mode</p>
+                </div>
+                <div>
+                    <div class="screenshot-wrapper">
+                        <img src="screenshot_macos_dark.png" alt="PastePaw Dark Mode">
+                    </div>
+                    <p class="screenshot-caption">Dark Mode</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="keyboard-shortcuts">
+        <div class="container">
+            <h2>Keyboard Shortcuts</h2>
+            <div class="shortcuts-grid">
+                <div class="shortcut-item">
+                    <span>Toggle Window</span>
+                    <code class="shortcut-key">⌃⇧V</code>
+                </div>
+                <div class="shortcut-item">
+                    <span>Focus Search</span>
+                    <code class="shortcut-key">⌘F</code>
+                </div>
+                <div class="shortcut-item">
+                    <span>Paste Selected</span>
+                    <code class="shortcut-key">Enter</code>
+                </div>
+                <div class="shortcut-item">
+                    <span>Delete Item</span>
+                    <code class="shortcut-key">Delete</code>
+                </div>
+                <div class="shortcut-item">
+                    <span>Pin/Unpin Item</span>
+                    <code class="shortcut-key">P</code>
+                </div>
+                <div class="shortcut-item">
+                    <span>Close Window</span>
+                    <code class="shortcut-key">Esc</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+                <a href="support.html">Support</a>
+                <a href="https://github.com/XueshiQiao/PastePaw">GitHub</a>
+                <a href="https://github.com/XueshiQiao/PastePaw/releases">Download</a>
+            </div>
+            <p class="copyright">
+                © 2024-2026 PastePaw. Licensed under GPL-3.0. <br>
+                Built with ❤️ for macOS users.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy for PastePaw - Clipboard History Manager for macOS">
+    <title>Privacy Policy - PastePaw</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent: #007AFF;
+            --accent-hover: #0051D5;
+            --border: #e5e5e5;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2a2a2a;
+                --text-primary: #ffffff;
+                --text-secondary: #a0a0a0;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --border: #3a3a3a;
+                --shadow: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .last-updated {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .highlight-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .highlight-box strong {
+            color: var(--accent);
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
+            <h1>Privacy Policy</h1>
+            <p class="last-updated">Last Updated: February 15, 2026</p>
+        </header>
+
+        <main>
+            <div class="highlight-box">
+                <p><strong>Your Privacy is Our Priority:</strong> PastePaw is designed with privacy at its core. All your clipboard data stays on your device. We do not collect, transmit, or have access to any of your clipboard content.</p>
+            </div>
+
+            <h2>1. Information Collection and Storage</h2>
+
+            <h3>1.1 Clipboard Data</h3>
+            <p>PastePaw monitors and stores your clipboard history to provide its core functionality. This includes:</p>
+            <ul>
+                <li>Text content you copy</li>
+                <li>Images you copy</li>
+                <li>Source application information (app name and icon)</li>
+                <li>Timestamps of when items were copied</li>
+            </ul>
+            <p><strong>All clipboard data is stored exclusively on your local device in a SQLite database.</strong> This data never leaves your computer and is not transmitted to any server, cloud service, or third party.</p>
+
+            <h3>1.2 Application Settings</h3>
+            <p>Your application preferences and settings (such as hotkey configurations, theme preferences, folder organizations, and ignored applications) are stored locally on your device.</p>
+
+            <h2>2. Data We Do NOT Collect</h2>
+            <p>PastePaw does NOT collect, store, or transmit:</p>
+            <ul>
+                <li>Your clipboard content or history</li>
+                <li>Personal identification information</li>
+                <li>Usage patterns or behavior tracking</li>
+                <li>Keystroke logging or screen monitoring</li>
+                <li>File system access beyond the app's data storage</li>
+            </ul>
+
+            <h2>3. Third-Party Services</h2>
+
+            <h3>3.1 AI Features (Optional)</h3>
+            <p>If you choose to use PastePaw's AI features (such as summarize, translate, or explain code), the following applies:</p>
+            <ul>
+                <li>You must provide your own API key from a third-party AI provider (OpenAI, DeepSeek, or compatible services)</li>
+                <li>When you activate an AI feature, the selected clipboard content is sent to your chosen AI provider for processing</li>
+                <li>This data transmission only occurs when you explicitly trigger an AI action</li>
+                <li>The use of your data by the AI provider is governed by their privacy policy, not ours</li>
+                <li>You can disable or avoid using AI features entirely if you prefer not to share any content with third parties</li>
+            </ul>
+
+            <h3>3.2 Update Checks (macOS Direct Download Version)</h3>
+            <p>The direct download version of PastePaw may periodically check for updates by connecting to GitHub's servers. This check only transmits:</p>
+            <ul>
+                <li>Your current app version number</li>
+                <li>Your macOS version (for compatibility verification)</li>
+            </ul>
+            <p><strong>Note:</strong> The Mac App Store version does not perform update checks as updates are managed by Apple.</p>
+
+            <h2>4. Data Security</h2>
+            <p>We implement industry-standard security measures to protect your data:</p>
+            <ul>
+                <li>All data is stored in an encrypted SQLite database on your local device</li>
+                <li>File permissions restrict access to your clipboard history to the PastePaw application only</li>
+                <li>No network transmission of clipboard data (except when you explicitly use AI features)</li>
+                <li>App sandbox on macOS ensures PastePaw cannot access files or data outside its designated container</li>
+            </ul>
+
+            <h2>5. Application Exceptions (Ignored Apps)</h2>
+            <p>You can configure PastePaw to exclude specific applications from clipboard monitoring (such as password managers, banking apps, or other sensitive software). When content is copied from an ignored application:</p>
+            <ul>
+                <li>The clipboard content is NOT stored in PastePaw's history</li>
+                <li>The source app detection checks your configured ignore list before recording</li>
+                <li>Your ignore list is stored locally and never transmitted</li>
+            </ul>
+
+            <h2>6. Data Retention and Deletion</h2>
+            <p>You have complete control over your clipboard history:</p>
+            <ul>
+                <li>You can delete individual clipboard items at any time</li>
+                <li>You can clear your entire clipboard history from the app settings</li>
+                <li>Uninstalling PastePaw removes all stored clipboard data from your device</li>
+                <li>No clipboard data is retained on any external server</li>
+            </ul>
+
+            <h2>7. Permissions Required</h2>
+            <p>PastePaw requires the following macOS permissions to function:</p>
+            <ul>
+                <li><strong>Clipboard Access:</strong> To monitor and read clipboard content</li>
+                <li><strong>Accessibility (Optional):</strong> Required only if you want to use the auto-paste feature. This permission allows PastePaw to simulate keyboard input (Cmd+V) to paste content into other applications. You can use PastePaw without this permission by manually pasting.</li>
+                <li><strong>Full Disk Access (NOT Required):</strong> PastePaw does NOT require or request Full Disk Access</li>
+            </ul>
+
+            <h2>8. Children's Privacy</h2>
+            <p>PastePaw does not knowingly collect any personal information from children. The app does not have user accounts, profiles, or any data collection mechanisms.</p>
+
+            <h2>9. Changes to This Privacy Policy</h2>
+            <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated "Last Updated" date. Significant changes will be communicated through the app or on our website.</p>
+
+            <h2>10. Open Source Transparency</h2>
+            <p>PastePaw is open source software. You can review the complete source code on GitHub to verify our privacy practices:</p>
+            <p><a href="https://github.com/XueshiQiao/PastePaw" target="_blank">https://github.com/XueshiQiao/PastePaw</a></p>
+
+            <h2>11. Contact Us</h2>
+            <p>If you have any questions or concerns about this Privacy Policy or PastePaw's privacy practices, please contact us:</p>
+            <ul>
+                <li><strong>Email:</strong> <a href="mailto:xueshi.qiao@gmail.com">xueshi.qiao@gmail.com</a></li>
+                <li><strong>GitHub Issues:</strong> <a href="https://github.com/XueshiQiao/PastePaw/issues" target="_blank">https://github.com/XueshiQiao/PastePaw/issues</a></li>
+                <li><strong>Support Page:</strong> <a href="support.html">PastePaw Support</a></li>
+            </ul>
+
+            <div class="highlight-box">
+                <p><strong>Summary:</strong> PastePaw is a privacy-first clipboard manager. Your clipboard data stays on your device, is never transmitted to our servers, and you have complete control over what is stored and when it's deleted. We do not collect personal information, track your usage, or share data with third parties (except when you explicitly use optional AI features with your own API key).</p>
+            </div>
+
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </main>
+
+        <footer>
+            <p>© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
+        </footer>
+    </div>
+</body>
+</html>

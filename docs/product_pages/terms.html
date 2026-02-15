@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Terms of Service for PastePaw - Clipboard History Manager for macOS">
+    <title>Terms of Service - PastePaw</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent: #007AFF;
+            --accent-hover: #0051D5;
+            --border: #e5e5e5;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2a2a2a;
+                --text-primary: #ffffff;
+                --text-secondary: #a0a0a0;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --border: #3a3a3a;
+                --shadow: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .last-updated {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .highlight-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
+            <h1>Terms of Service</h1>
+            <p class="last-updated">Last Updated: February 15, 2026</p>
+        </header>
+
+        <main>
+            <p>Welcome to PastePaw. These Terms of Service ("Terms") govern your use of the PastePaw application ("Software", "App", "Service"). By downloading, installing, or using PastePaw, you agree to be bound by these Terms.</p>
+
+            <h2>1. License Grant</h2>
+            <p>PastePaw is free and open source software licensed under the GNU General Public License v3.0 (GPL-3.0). Subject to your compliance with these Terms, you are granted a non-exclusive, worldwide, royalty-free license to:</p>
+            <ul>
+                <li>Use the Software for personal or commercial purposes</li>
+                <li>Modify the Software's source code</li>
+                <li>Distribute copies of the Software</li>
+                <li>Distribute modified versions of the Software</li>
+            </ul>
+            <p>The full GPL-3.0 license text is available at: <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">https://www.gnu.org/licenses/gpl-3.0.en.html</a></p>
+
+            <h2>2. Acceptable Use</h2>
+            <p>You agree to use PastePaw only for lawful purposes. You must not:</p>
+            <ul>
+                <li>Use the Software to violate any applicable laws or regulations</li>
+                <li>Use the Software to infringe on the intellectual property rights of others</li>
+                <li>Attempt to reverse engineer, decompile, or disassemble proprietary components (Note: The source code is already available on GitHub)</li>
+                <li>Use the Software to collect or harvest personal information about others without their consent</li>
+                <li>Introduce viruses, malware, or any malicious code into the Software</li>
+            </ul>
+
+            <h2>3. Privacy and Data</h2>
+            <p>Your privacy is important to us. PastePaw is designed to store all clipboard data locally on your device. We do not collect, transmit, or have access to your clipboard content. For detailed information about how we handle data, please refer to our <a href="privacy.html">Privacy Policy</a>.</p>
+
+            <h2>4. Disclaimer of Warranties</h2>
+            <div class="highlight-box">
+                <p><strong>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.</strong></p>
+            </div>
+            <p>We do not warrant that:</p>
+            <ul>
+                <li>The Software will meet your specific requirements</li>
+                <li>The Software will be uninterrupted, timely, secure, or error-free</li>
+                <li>The results obtained from using the Software will be accurate or reliable</li>
+                <li>Any errors in the Software will be corrected</li>
+            </ul>
+
+            <h2>5. Limitation of Liability</h2>
+            <p><strong>IN NO EVENT SHALL THE AUTHORS, COPYRIGHT HOLDERS, OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</strong></p>
+            <p>This includes, but is not limited to:</p>
+            <ul>
+                <li>Loss of data or clipboard history</li>
+                <li>Interruption of business or loss of profits</li>
+                <li>Any direct, indirect, incidental, special, consequential, or exemplary damages</li>
+            </ul>
+
+            <h2>6. User Responsibilities</h2>
+            <p>As a user of PastePaw, you are responsible for:</p>
+            <ul>
+                <li>Maintaining the security of your device and data</li>
+                <li>Ensuring you have proper permissions to copy and store content in the clipboard history</li>
+                <li>Configuring the "Ignored Applications" feature to exclude sensitive apps (e.g., password managers)</li>
+                <li>Regularly backing up important clipboard data if needed</li>
+                <li>Understanding that clipboard data is stored unencrypted in a local SQLite database</li>
+            </ul>
+
+            <h2>7. Third-Party Services</h2>
+            <p>PastePaw may integrate with third-party services (such as AI providers for optional features). Your use of these third-party services is governed by their respective terms of service and privacy policies. We are not responsible for the practices or policies of third-party services.</p>
+
+            <h2>8. Open Source and Contributions</h2>
+            <p>PastePaw is open source software. The source code is available at <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">https://github.com/XueshiQiao/PastePaw</a>. Contributions to the project are welcome and are subject to the GPL-3.0 license.</p>
+
+            <h2>9. Updates and Modifications</h2>
+            <p>We reserve the right to:</p>
+            <ul>
+                <li>Modify, suspend, or discontinue the Software at any time</li>
+                <li>Update these Terms at any time by posting the revised Terms on our website</li>
+                <li>Release updates, bug fixes, and new features</li>
+            </ul>
+            <p>Continued use of the Software after any modifications to these Terms constitutes acceptance of the modified Terms.</p>
+
+            <h2>10. Mac App Store Additional Terms</h2>
+            <p>If you downloaded PastePaw from the Mac App Store, your use is also governed by Apple's Licensed Application End User License Agreement (EULA). In case of conflict between these Terms and Apple's EULA, Apple's EULA shall prevail.</p>
+
+            <h2>11. Termination</h2>
+            <p>These Terms are effective until terminated. You may terminate these Terms at any time by uninstalling and ceasing to use PastePaw. We may terminate or suspend your access to the Software immediately, without prior notice, if you breach these Terms.</p>
+
+            <h2>12. Governing Law</h2>
+            <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which the developer resides, without regard to its conflict of law provisions.</p>
+
+            <h2>13. Severability</h2>
+            <p>If any provision of these Terms is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that these Terms shall otherwise remain in full force and effect.</p>
+
+            <h2>14. Entire Agreement</h2>
+            <p>These Terms, together with the Privacy Policy, constitute the entire agreement between you and PastePaw regarding the use of the Software and supersede all prior agreements and understandings.</p>
+
+            <h2>15. Contact Information</h2>
+            <p>If you have any questions about these Terms, please contact us:</p>
+            <ul>
+                <li><strong>Email:</strong> <a href="mailto:xueshi.qiao@gmail.com">xueshi.qiao@gmail.com</a></li>
+                <li><strong>GitHub:</strong> <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">https://github.com/XueshiQiao/PastePaw</a></li>
+                <li><strong>Support:</strong> <a href="support.html">PastePaw Support</a></li>
+            </ul>
+
+            <h2>16. Acknowledgment</h2>
+            <p>By using PastePaw, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.</p>
+
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </main>
+
+        <footer>
+            <p>© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
+        </footer>
+    </div>
+</body>
+</html>

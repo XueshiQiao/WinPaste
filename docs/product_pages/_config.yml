@@ -1,0 +1,23 @@
+# Jekyll configuration for GitHub Pages
+# This file is optional but helps with GitHub Pages setup
+
+title: PastePaw
+description: A beautiful clipboard history manager for macOS
+url: "https://xueshiqiao.github.io"
+baseurl: "/PastePaw"
+
+# Theme
+theme: null
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - gemini-TODO.md
+  - appstore_or_others.md
+  - appstore_submit.md
+  - fix_warning_expr.md
+  - macos_get_foremost_app.md
+  - macOS-grab-appname_icon.md
+  - macOS-mainthread.md
+  - submit_to_appstore.md
+  - TODO.md
