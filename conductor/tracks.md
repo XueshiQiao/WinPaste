@@ -4,5 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Prepare for Apple App Store Submission**
-  *Link: [./tracks/app_store_prep_20260214/](./tracks/app_store_prep_20260214/)*
+## Archived
+
+- [x] **Track: Prepare for Apple App Store Submission**
+  *Link: [./archive/app_store_prep_20260214/](./archive/app_store_prep_20260214/)*
