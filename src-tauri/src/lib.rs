@@ -3,7 +3,7 @@
 #![allow(deprecated)] // cocoa crate deprecated its API in favor of objc2; suppress until migration
 use tauri::{
     image::Image,
-    menu::{Menu, MenuItem},
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
     Manager,
 };
@@ -186,9 +186,13 @@ pub fn run_app() {
             let handle = app.handle().clone();
             let db_for_clipboard = db_arc.clone();
 
-            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Show PastePaw", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            let version = env!("CARGO_PKG_VERSION");
+            let title = format!("v{}", version);
+            let title_i = MenuItem::with_id(app, "title", &title, false, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "Quit PastePaw", true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
+            let separator_i = PredefinedMenuItem::separator(app)?;
+            let menu = Menu::with_items(app, &[&title_i, &show_i, &separator_i, &quit_i])?;
 
             let icon_data = include_bytes!("../icons/tray.png");
             let icon = Image::from_bytes(icon_data).map_err(|e| {
