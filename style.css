@@ -246,22 +246,59 @@ nav {
 
 /* --- Hero Image --- */
 .hero-visual {
+    margin-top: 80px;
+    display: flex;
+    justify-content: center;
+    padding: 0 40px;
+}
+
+.screenshot-stack {
     position: relative;
-    margin-top: 60px;
-    perspective: 1000px;
+    width: 100%;
+    max-width: 850px;
 }
 
 .screenshot-main {
     width: 100%;
-    max-width: 900px;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-xl);
     border: 1px solid var(--glass-border);
+    position: relative;
+    z-index: 2;
     transition: transform var(--duration) var(--ease-out);
 }
 
+.screenshot-secondary {
+    position: absolute;
+    top: -40px;
+    left: -40px;
+    width: 100%;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--glass-border);
+    z-index: 1;
+    opacity: 0.4;
+    filter: blur(1px);
+    transition: all var(--duration) var(--ease-out);
+}
+
 .hero-visual:hover .screenshot-main {
-    transform: rotateX(2deg) scale(1.02);
+    transform: translate(10px, 10px);
+}
+
+.hero-visual:hover .screenshot-secondary {
+    transform: translate(-10px, -10px);
+    opacity: 0.7;
+    filter: blur(0);
+}
+
+@media (max-width: 768px) {
+    .screenshot-secondary {
+        display: none;
+    }
+    .hero-visual {
+        padding: 0;
+    }
 }
 
 /* --- Bento Grid --- */
