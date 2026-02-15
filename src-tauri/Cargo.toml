@@ -1,6 +1,6 @@
 [package]
 name = "PastePaw"
-version = "1.1.7"
+version = "1.1.8"
 description = "A beautiful clipboard history manager"
 authors = ["XueshiQiao"]
 license = "GPL-3.0"

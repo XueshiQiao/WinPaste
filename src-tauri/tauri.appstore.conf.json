@@ -33,7 +33,10 @@
         ],
         "macOS": {
             "entitlements": "./Entitlements.plist",
-            "signingIdentity": "Apple Distribution"
+            "signingIdentity": "Apple Distribution",
+            "files": {
+                "embedded.provisionprofile": "PastePaw.provisionprofile"
+            }
         }
     },
     "plugins": {

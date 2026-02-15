@@ -8,11 +8,15 @@ set -e
 APP_NAME="PastePaw"
 # Users must update these with their own identity names from Keychain Access
 # e.g. "Apple Distribution: Your Name (TEAM_ID)"
-APPLE_DIST_IDENTITY="Apple Distribution" 
+APPLE_DIST_IDENTITY="Apple Distribution: xueshi qiao (584KQTRF3B)"
 # e.g. "3rd Party Mac Developer Installer: Your Name (TEAM_ID)"
-INSTALLER_DIST_IDENTITY="3rd Party Mac Developer Installer"
+INSTALLER_DIST_IDENTITY="3rd Party Mac Developer Installer: xueshi qiao (584KQTRF3B)"
 
 echo "🚀 Starting App Store build for $APP_NAME..."
+
+# Extract version from package.json
+VERSION=$(grep '"version":' package.json | cut -d'"' -f4)
+PKG_NAME="${APP_NAME}-${VERSION}.pkg"
 
 # Check for placeholder TEAM_ID in Entitlements.plist
 if grep -q "YOUR_TEAM_ID" src-tauri/Entitlements.plist; then
@@ -39,7 +43,7 @@ echo "🎁 Creating .pkg installer..."
 xcrun productbuild \
   --sign "$INSTALLER_DIST_IDENTITY" \
   --component "$APP_PATH" /Applications \
-  "$APP_NAME.pkg"
+  "$PKG_NAME"
 
-echo "✅ Build complete! Output: $APP_NAME.pkg"
+echo "✅ Build complete! Output: $PKG_NAME"
 echo "👉 You can now validate this package using Transporter or 'xcrun altool --validate-app'."
