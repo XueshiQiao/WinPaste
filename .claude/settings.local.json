@@ -17,7 +17,22 @@
       "WebFetch(domain:v2.tauri.app)",
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:it-waves.com)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(osascript:*)",
+      "Bash(swift:*)",
+      "Bash(cat:*)",
+      "Bash(cargo build:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:alexop.dev)",
+      "Bash(git push:*)",
+      "WebFetch(domain:docs.rs)",
+      "Bash(cargo clippy:*)",
+      "Bash(git restore:*)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm add:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

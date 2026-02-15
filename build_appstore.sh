@@ -11,13 +11,27 @@ APP_NAME="PastePaw"
 APPLE_DIST_IDENTITY="Apple Distribution: xueshi qiao (584KQTRF3B)"
 # e.g. "3rd Party Mac Developer Installer: Your Name (TEAM_ID)"
 INSTALLER_DIST_IDENTITY="3rd Party Mac Developer Installer: xueshi qiao (584KQTRF3B)"
+APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/$APP_NAME.app"
+
 
 echo "🚀 Starting App Store build for $APP_NAME..."
+
+# Kill any running instances
+echo "🛑 Ensuring PastePaw is not running..."
+pkill -x "$APP_NAME" || true
+
+# Clean previous build artifacts to prevent permission issues
+echo "🧹 Cleaning previous build artifacts..."
+
+if [ -d "$APP_PATH" ]; then
+  echo "🛑 Removing existing app bundle at $APP_PATH"
+  sudo rm -rf "$APP_PATH"
+fi
 
 # Check for -bumpversion flag
 if [[ "$1" == "-bumpversion" ]]; then
   echo "📈 Bumping patch version..."
-  
+
   # 1. Bump package.json
   # Use npm version to bump and output new version
   NEW_VERSION=$(npm version patch --no-git-tag-version)
@@ -35,7 +49,7 @@ if [[ "$1" == "-bumpversion" ]]; then
   # We match 'version = "x.y.z"'
   sed -i '' "s/^version = \".*\"/version = \"$NEW_VERSION\"/" src-tauri/Cargo.toml
   echo "   Updated src-tauri/Cargo.toml"
-  
+
   # 4. Commit the bump (Optional, but good practice for a build script flag)
   # git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
   # git commit -m "chore(release): Bump version to $NEW_VERSION"
@@ -57,7 +71,6 @@ echo "📦 Building universal app bundle..."
 pnpm tauri build --bundles app --target universal-apple-darwin \
   --config src-tauri/tauri.appstore.conf.json
 
-APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/$APP_NAME.app"
 
 # 2. Verify signing (Tauri handles basic signing, but we verify it's deep and strict)
 echo "🔍 Verifying code signing..."
