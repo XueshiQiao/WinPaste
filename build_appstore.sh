@@ -30,31 +30,14 @@ fi
 
 # Check for -bumpversion flag
 if [[ "$1" == "-bumpversion" ]]; then
-  echo "📈 Bumping patch version..."
-
-  # 1. Bump package.json
-  # Use npm version to bump and output new version
-  NEW_VERSION=$(npm version patch --no-git-tag-version)
-  # Remove 'v' prefix if present
-  NEW_VERSION=${NEW_VERSION#v}
-  echo "   New version: $NEW_VERSION"
-
-  # 2. Update tauri.conf.json
-  # Use a temporary python script for reliable JSON editing
-  python3 -c "import json; f='src-tauri/tauri.conf.json'; d=json.load(open(f)); d['version']='$NEW_VERSION'; json.dump(d, open(f,'w'), indent=4)"
-  echo "   Updated tauri.conf.json"
-
-  # 3. Update Cargo.toml
-  # Simple sed replacement for the version line under [package]
-  # We match 'version = "x.y.z"'
-  sed -i '' "s/^version = \".*\"/version = \"$NEW_VERSION\"/" src-tauri/Cargo.toml
-  echo "   Updated src-tauri/Cargo.toml"
-
-  # 4. Commit the bump (Optional, but good practice for a build script flag)
-  # git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
-  # git commit -m "chore(release): Bump version to $NEW_VERSION"
+  echo "📈 Bumping patch version using tauri-version..."
+  
+  # Use tauri-version to handle package.json, tauri.conf.json, and Cargo.toml
+  # Using --no-git to avoid committing inside the build script for now (unless you want it to)
+  npx --yes tauri-version patch --no-git
+  
+  echo "   Version bump complete."
 fi
-
 # Extract version from package.json
 VERSION=$(grep '"version":' package.json | cut -d'"' -f4)
 PKG_NAME="${APP_NAME}-${VERSION}.pkg"
