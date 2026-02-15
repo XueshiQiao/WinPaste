@@ -7,17 +7,25 @@
     <title>Privacy Policy - PastePaw</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="page-privacy">
-    <div class="container">
-        <header>
-            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
-            <h1>Privacy Policy</h1>
-            <p class="last-updated">Last Updated: February 15, 2026</p>
-        </header>
+    <div class="grid-bg"></div>
+    
+    <div class="container page-content">
+        <a href="index.html" class="back-btn">
+            <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+            Back to Home
+        </a>
 
-        <main>
-            <div class="content-card glass">
+        <div class="content-card reveal revealed">
+            <header style="text-align: center; margin-bottom: 48px;">
+                <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" style="width: 80px; height: 80px; margin-bottom: 20px;">
+                <h1>Privacy Policy</h1>
+                <p style="color: var(--text-muted);">Last Updated: February 15, 2026</p>
+            </header>
+
+            <main>
                 <div class="highlight-box">
                     <p><strong>Your Privacy is Our Priority:</strong> PastePaw is designed with privacy at its core. All your clipboard data stays on your device. We do not collect, transmit, or have access to any of your clipboard content.</p>
                 </div>
@@ -137,14 +145,16 @@
                 <div class="highlight-box">
                     <p><strong>Summary:</strong> PastePaw is a privacy-first clipboard manager. Your clipboard data stays on your device, is never transmitted to our servers, and you have complete control over what is stored and when it's deleted. We do not collect personal information, track your usage, or share data with third parties (except when you explicitly use optional AI features with your own API key).</p>
                 </div>
-            </div>
-
-            <a href="index.html" class="back-link">← Back to Home</a>
-        </main>
-
-        <footer>
-            <p>© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
-        </footer>
+            </main>
+        </div>
     </div>
+
+    <footer style="margin-top: 0; padding-bottom: 60px;">
+        <div class="container" style="text-align: center;">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

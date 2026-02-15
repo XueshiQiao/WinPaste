@@ -7,17 +7,25 @@
     <title>Terms of Service - PastePaw</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="page-terms">
-    <div class="container">
-        <header>
-            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
-            <h1>Terms of Service</h1>
-            <p class="last-updated">Last Updated: February 15, 2026</p>
-        </header>
+    <div class="grid-bg"></div>
+    
+    <div class="container page-content">
+        <a href="index.html" class="back-btn">
+            <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+            Back to Home
+        </a>
 
-        <main>
-            <div class="content-card glass">
+        <div class="content-card reveal revealed">
+            <header style="text-align: center; margin-bottom: 48px;">
+                <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" style="width: 80px; height: 80px; margin-bottom: 20px;">
+                <h1>Terms of Service</h1>
+                <p style="color: var(--text-muted);">Last Updated: February 15, 2026</p>
+            </header>
+
+            <main>
                 <p>Welcome to PastePaw. These Terms of Service ("Terms") govern your use of the PastePaw application ("Software", "App", "Service"). By downloading, installing, or using PastePaw, you agree to be bound by these Terms.</p>
 
                 <h2>1. License Grant</h2>
@@ -114,14 +122,16 @@
 
                 <h2>16. Acknowledgment</h2>
                 <p>By using PastePaw, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.</p>
-            </div>
-
-            <a href="index.html" class="back-link">← Back to Home</a>
-        </main>
-
-        <footer>
-            <p>© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
-        </footer>
+            </main>
+        </div>
     </div>
+
+    <footer style="margin-top: 0; padding-bottom: 60px;">
+        <div class="container" style="text-align: center;">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -7,131 +7,125 @@
     <title>Support - PastePaw</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="page-support">
-    <div class="container">
-        <header>
-            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
-            <h1>Support</h1>
-            <p class="subtitle">Get help with PastePaw</p>
+    <div class="grid-bg"></div>
+    
+    <div class="container page-content">
+        <a href="index.html" class="back-btn">
+            <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+            Back to Home
+        </a>
+
+        <header style="text-align: center; margin-bottom: 60px;">
+            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" style="width: 80px; height: 80px; margin-bottom: 20px;">
+            <h1>Support Center</h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">How can we help you today?</p>
         </header>
 
         <main>
-            <div class="support-cards">
-                <div class="support-card glass">
-                    <div class="support-card-icon">📧</div>
+            <div class="bento-grid" style="margin-bottom: 80px;">
+                <div class="bento-item" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <i data-lucide="mail" class="bento-icon" style="color: var(--accent);"></i>
                     <h3>Email Support</h3>
-                    <p>Have a question or need help? Send us an email and we'll get back to you as soon as possible.</p>
-                    <a href="mailto:qiaoxueshi@gmail.com" class="btn btn-primary btn-sm">Email Us</a>
+                    <p>Have a question or need help? Send us an email.</p>
+                    <a href="mailto:qiaoxueshi@gmail.com" class="btn btn-secondary" style="margin-top: 20px;">Email Us</a>
                 </div>
 
-                <div class="support-card glass">
-                    <div class="support-card-icon">🐛</div>
+                <div class="bento-item" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <i data-lucide="bug" class="bento-icon" style="color: #ef4444;"></i>
                     <h3>Report a Bug</h3>
-                    <p>Found a bug? Report it on GitHub Issues and help us improve PastePaw.</p>
-                    <a href="https://github.com/XueshiQiao/PastePaw/issues/new" class="btn btn-primary btn-sm" target="_blank">Report Bug</a>
+                    <p>Found a bug? Help us improve by reporting it.</p>
+                    <a href="https://github.com/XueshiQiao/PastePaw/issues/new" class="btn btn-secondary" style="margin-top: 20px;" target="_blank">Open Issue</a>
                 </div>
 
-                <div class="support-card glass">
-                    <div class="support-card-icon">💡</div>
+                <div class="bento-item" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <i data-lucide="lightbulb" class="bento-icon" style="color: #f59e0b;"></i>
                     <h3>Feature Request</h3>
-                    <p>Have an idea for a new feature? We'd love to hear your suggestions!</p>
-                    <a href="https://github.com/XueshiQiao/PastePaw/issues/new" class="btn btn-primary btn-sm" target="_blank">Suggest Feature</a>
+                    <p>Have an idea? We'd love to hear your suggestions!</p>
+                    <a href="https://github.com/XueshiQiao/PastePaw/issues/new" class="btn btn-secondary" style="margin-top: 20px;" target="_blank">Suggest</a>
                 </div>
             </div>
 
-            <h2>Frequently Asked Questions</h2>
+            <div class="content-card">
+                <h2 style="margin-top: 0; margin-bottom: 32px; text-align: center;">Frequently Asked Questions</h2>
 
-            <details class="faq-item glass">
-                <summary>How do I open PastePaw?</summary>
-                <div class="faq-answer">Press <code>⌃⇧V</code> (Control + Shift + V) on your keyboard. You can customize this hotkey in the app's Settings.</div>
-            </details>
+                <details class="faq-item" style="margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px;">
+                    <summary style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 8px;">
+                        <i data-lucide="chevron-down" style="width: 18px; height: 18px; color: var(--accent);"></i>
+                        How do I open PastePaw?
+                    </summary>
+                    <div style="padding: 16px 40px; color: var(--text-muted);">
+                        Press <kbd>⌃⇧V</kbd> (Control + Shift + V) on your keyboard. You can customize this hotkey in the app's Settings.
+                    </div>
+                </details>
 
-            <details class="faq-item glass">
-                <summary>Is my clipboard data secure?</summary>
-                <div class="faq-answer">Yes! All your clipboard data is stored locally on your device in an encrypted SQLite database. Nothing is sent to any server or cloud service. Read our <a href="privacy.html">Privacy Policy</a> for more details.</div>
-            </details>
+                <details class="faq-item" style="margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px;">
+                    <summary style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 8px;">
+                        <i data-lucide="chevron-down" style="width: 18px; height: 18px; color: var(--accent);"></i>
+                        Is my clipboard data secure?
+                    </summary>
+                    <div style="padding: 16px 40px; color: var(--text-muted);">
+                        Yes! All your clipboard data is stored locally on your device in an encrypted SQLite database. Nothing is sent to any server or cloud service. Read our <a href="privacy.html">Privacy Policy</a> for more details.
+                    </div>
+                </details>
 
-            <details class="faq-item glass">
-                <summary>Can I exclude certain apps from being recorded?</summary>
-                <div class="faq-answer">Yes! Go to Settings → Ignored Applications and add any apps you want to exclude (like password managers or banking apps). PastePaw will not record clipboard content from these apps.</div>
-            </details>
+                <details class="faq-item" style="margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px;">
+                    <summary style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 8px;">
+                        <i data-lucide="chevron-down" style="width: 18px; height: 18px; color: var(--accent);"></i>
+                        Can I exclude certain apps from being recorded?
+                    </summary>
+                    <div style="padding: 16px 40px; color: var(--text-muted);">
+                        Yes! Go to Settings → Ignored Applications and add any apps you want to exclude (like password managers or banking apps). PastePaw will not record clipboard content from these apps.
+                    </div>
+                </details>
 
-            <details class="faq-item glass">
-                <summary>How do I delete my clipboard history?</summary>
-                <div class="faq-answer">You can delete individual items by selecting them and pressing <code>Delete</code>, or clear all history from Settings → Clear All History.</div>
-            </details>
+                <details class="faq-item" style="margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px;">
+                    <summary style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 8px;">
+                        <i data-lucide="chevron-down" style="width: 18px; height: 18px; color: var(--accent);"></i>
+                        How do I delete my clipboard history?
+                    </summary>
+                    <div style="padding: 16px 40px; color: var(--text-muted);">
+                        You can delete individual items by selecting them and pressing <kbd>⌫</kbd>, or clear all history from Settings → Clear All History.
+                    </div>
+                </details>
 
-            <details class="faq-item glass">
-                <summary>Does PastePaw work on Apple Silicon (M1/M2/M3) Macs?</summary>
-                <div class="faq-answer">Yes! PastePaw is built as a Universal Binary and runs natively on both Intel and Apple Silicon Macs.</div>
-            </details>
+                <details class="faq-item" style="margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px;">
+                    <summary style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 8px;">
+                        <i data-lucide="chevron-down" style="width: 18px; height: 18px; color: var(--accent);"></i>
+                        Does PastePaw work on Apple Silicon Macs?
+                    </summary>
+                    <div style="padding: 16px 40px; color: var(--text-muted);">
+                        Yes! PastePaw is built as a Universal Binary and runs natively on both Intel and Apple Silicon Macs (M1/M2/M3).
+                    </div>
+                </details>
 
-            <details class="faq-item glass">
-                <summary>How do I use the AI features?</summary>
-                <div class="faq-answer">To use AI features (summarize, translate, explain code, fix grammar), you need to provide your own API key from an AI provider (OpenAI, DeepSeek, or compatible services). Configure this in Settings → AI Settings. Right-click any clipboard item to access AI actions.</div>
-            </details>
+                <h2 style="margin-top: 60px; margin-bottom: 24px;">System Requirements</h2>
+                <ul>
+                    <li><strong>macOS Version:</strong> macOS 11.0 (Big Sur) or later</li>
+                    <li><strong>Architecture:</strong> Intel and Apple Silicon (Universal Binary)</li>
+                    <li><strong>Disk Space:</strong> ~20 MB for the app</li>
+                    <li><strong>Memory:</strong> Minimal RAM usage (~50-100 MB)</li>
+                </ul>
 
-            <details class="faq-item glass">
-                <summary>Why does PastePaw need Accessibility permissions?</summary>
-                <div class="faq-answer">Accessibility permissions are only needed if you want to use the auto-paste feature. This allows PastePaw to simulate keyboard input (Cmd+V) to automatically paste items. You can use PastePaw without this permission and paste items manually.</div>
-            </details>
-
-            <details class="faq-item glass">
-                <summary>How do I uninstall PastePaw?</summary>
-                <div class="faq-answer">Simply drag PastePaw from your Applications folder to the Trash. All clipboard data will be removed when you delete the app. If you want to completely remove all preferences, also delete <code>~/Library/Application Support/me.xueshi.pastepaw</code>.</div>
-            </details>
-
-            <details class="faq-item glass">
-                <summary>Can I sync my clipboard history across multiple Macs?</summary>
-                <div class="faq-answer">Currently, PastePaw stores all data locally and does not support cloud sync. This is by design to ensure maximum privacy and security. Sync features may be considered for future versions.</div>
-            </details>
-
-            <details class="faq-item glass">
-                <summary>Is PastePaw free?</summary>
-                <div class="faq-answer">Yes! PastePaw is free and open source software licensed under GPL-3.0. You can view and contribute to the source code on <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">GitHub</a>.</div>
-            </details>
-
-            <h2>System Requirements</h2>
-            <ul>
-                <li><strong>macOS Version:</strong> macOS 11.0 (Big Sur) or later</li>
-                <li><strong>Architecture:</strong> Intel and Apple Silicon (Universal Binary)</li>
-                <li><strong>Disk Space:</strong> ~20 MB for the app, plus storage for clipboard history</li>
-                <li><strong>Memory:</strong> Minimal RAM usage (~50-100 MB)</li>
-            </ul>
-
-            <h2>Getting Started</h2>
-            <ol>
-                <li>Download PastePaw from the <a href="https://github.com/XueshiQiao/PastePaw/releases/latest">latest release</a></li>
-                <li>Open the downloaded DMG file and drag PastePaw to your Applications folder</li>
-                <li>Launch PastePaw from your Applications folder</li>
-                <li>Grant Accessibility permissions if you want to use auto-paste (optional)</li>
-                <li>Press <code>⌃⇧V</code> to open your clipboard history</li>
-                <li>Start copying and enjoy unlimited clipboard history!</li>
-            </ol>
-
-            <h2>Contact Information</h2>
-            <div class="contact-info">
-                <p><strong>Developer:</strong> Xueshi Qiao</p>
-                <p><strong>Email:</strong> <a href="mailto:qiaoxueshi@gmail.com">qiaoxueshi@gmail.com</a></p>
-                <p><strong>GitHub:</strong> <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">https://github.com/XueshiQiao/PastePaw</a></p>
-                <p><strong>Issues & Bug Reports:</strong> <a href="https://github.com/XueshiQiao/PastePaw/issues" target="_blank">GitHub Issues</a></p>
+                <h2 style="margin-top: 40px; margin-bottom: 24px;">Getting Started</h2>
+                <ol>
+                    <li>Download PastePaw from the <a href="https://github.com/XueshiQiao/PastePaw/releases/latest">latest release</a></li>
+                    <li>Open the DMG file and drag PastePaw to your Applications folder</li>
+                    <li>Launch PastePaw and grant Accessibility permissions if you want auto-paste</li>
+                    <li>Press <kbd>⌃⇧V</kbd> to open your history and start copying!</li>
+                </ol>
             </div>
-
-            <h2>Additional Resources</h2>
-            <ul>
-                <li><a href="index.html">PastePaw Homepage</a></li>
-                <li><a href="privacy.html">Privacy Policy</a></li>
-                <li><a href="https://github.com/XueshiQiao/PastePaw/blob/main/README.md" target="_blank">Documentation</a></li>
-                <li><a href="https://github.com/XueshiQiao/PastePaw/releases" target="_blank">Release Notes</a></li>
-            </ul>
-
-            <a href="index.html" class="back-link">← Back to Home</a>
         </main>
-
-        <footer>
-            <p>© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
-        </footer>
     </div>
+
+    <footer style="margin-top: 0; padding-bottom: 60px;">
+        <div class="container" style="text-align: center;">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

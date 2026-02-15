@@ -8,180 +8,191 @@
     <title>PastePaw - Clipboard History Manager for macOS</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
     <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="page-home">
-    <div class="container" style="position:relative;">
-        <div class="hero-orbs">
-            <div class="orb orb-1"></div>
-            <div class="orb orb-2"></div>
-            <div class="orb orb-3"></div>
+    <div class="grid-bg"></div>
+    <div class="mesh-glow"></div>
+
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo">
+                <span>PastePaw</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#screenshots">Screenshots</a>
+                <a href="#shortcuts">Shortcuts</a>
+                <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">GitHub</a>
+            </div>
+            <a href="https://github.com/XueshiQiao/PastePaw/releases/latest" class="btn btn-primary" style="padding: 8px 20px; font-size: 0.85rem; margin-left: 20px;">
+                Download
+            </a>
         </div>
-        <header>
-            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
-            <h1>PastePaw</h1>
-            <p class="subtitle">A beautiful clipboard history manager for macOS</p>
-            <p class="hero-description">
-                Never lose what you copy again. PastePaw keeps track of everything you copy,
-                making it easy to access your clipboard history with a simple keyboard shortcut.
+    </nav>
+
+    <main class="container">
+        <section class="hero reveal">
+            <div class="badge-new">Version 1.2.0 is out!</div>
+            <h1>Never lose a copy<br>ever again.</h1>
+            <p class="description">
+                PastePaw is a lightweight, privacy-focused clipboard manager for macOS. 
+                Built with Rust for performance and designed to feel native.
             </p>
-            <div class="cta-buttons">
+            <div class="cta-group">
                 <a href="https://github.com/XueshiQiao/PastePaw/releases/latest" class="btn btn-primary">
-                    <span>📥</span> Download for macOS
+                    <i data-lucide="download"></i> Download for macOS
                 </a>
-                <a href="https://github.com/XueshiQiao/PastePaw" class="btn btn-secondary">
-                    <span>⭐</span> View on GitHub
+                <a href="https://github.com/XueshiQiao/PastePaw" class="btn btn-secondary" target="_blank">
+                    <i data-lucide="github"></i> Star on GitHub
                 </a>
             </div>
-        </header>
-    </div>
 
-    <section class="features">
-        <div class="container">
-            <h2>Features</h2>
-            <div class="features-grid">
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Private & Secure</h3>
-                    <p>All your clipboard data is stored locally on your device. Nothing is ever sent to any server.</p>
+            <div class="hero-visual">
+                <img src="screenshot_macos_dark.png" alt="PastePaw Interface" class="screenshot-main">
+            </div>
+        </section>
+
+        <section id="features" class="reveal">
+            <h2 style="text-align: center; margin-bottom: 60px; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em;">Everything you need.</h2>
+            <div class="bento-grid">
+                <div class="bento-item col-span-2">
+                    <i data-lucide="shield-check" class="bento-icon" style="color: #10b981;"></i>
+                    <h3>Private by Design</h3>
+                    <p>All your clipboard data is stored locally in a SQLite database. No tracking, no cloud sync, no data leaves your machine.</p>
                 </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Fast & Lightweight</h3>
-                    <p>Built with Rust and Tauri for blazing fast performance with minimal resource usage.</p>
+                <div class="bento-item">
+                    <i data-lucide="zap" class="bento-icon" style="color: #f59e0b;"></i>
+                    <h3>Blazing Fast</h3>
+                    <p>Built with Rust and Tauri. Minimal memory footprint and instant response times.</p>
                 </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Beautiful Design</h3>
-                    <p>Modern interface with native macOS feel. Automatic dark mode support that follows your system preferences.</p>
+                <div class="bento-item">
+                    <i data-lucide="sparkles" class="bento-icon" style="color: #8b5cf6;"></i>
+                    <h3>AI Assistant</h3>
+                    <p>Summarize, translate, and fix grammar directly from your clipboard using your own API keys.</p>
                 </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">📋</div>
-                    <h3>Automatic History</h3>
-                    <p>Automatically saves everything you copy - text, images, and more. Access your history anytime.</p>
+                <div class="bento-item col-span-2">
+                    <i data-lucide="search" class="bento-icon" style="color: #3b82f6;"></i>
+                    <h3>Instant Search</h3>
+                    <p>Find anything you've copied in seconds. Powerful filtering and fuzzy search help you navigate your history effortlessly.</p>
                 </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">🔍</div>
-                    <h3>Quick Search</h3>
-                    <p>Find previously copied content instantly with powerful search functionality.</p>
+                <div class="bento-item">
+                    <i data-lucide="folder-plus" class="bento-icon" style="color: #ec4899;"></i>
+                    <h3>Smart Folders</h3>
+                    <p>Organize frequent clips into custom folders for quick access later.</p>
                 </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">📁</div>
-                    <h3>Organize with Folders</h3>
-                    <p>Create custom folders to organize your frequently used clips and keep them accessible.</p>
+                <div class="bento-item">
+                    <i data-lucide="eye-off" class="bento-icon" style="color: #ef4444;"></i>
+                    <h3>Sensitive Filtering</h3>
+                    <p>Automatically ignores content from password managers and sensitive applications.</p>
                 </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">🚫</div>
-                    <h3>Smart Filtering</h3>
-                    <p>Exclude sensitive apps like password managers from being recorded in clipboard history.</p>
-                </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">⌨️</div>
-                    <h3>Customizable Hotkey</h3>
-                    <p>Set your preferred keyboard shortcut to quickly access your clipboard history.</p>
-                </div>
-
-                <div class="feature-card glass reveal">
-                    <div class="feature-icon">🤖</div>
-                    <h3>AI Powered</h3>
-                    <p>Built-in AI features to summarize, translate, explain code, and fix grammar in your clipboard content.</p>
+                <div class="bento-item">
+                    <i data-lucide="palette" class="bento-icon" style="color: #06b6d4;"></i>
+                    <h3>Native Look</h3>
+                    <p>A beautiful interface that follows macOS system themes and design guidelines.</p>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="screenshots">
-        <div class="container">
-            <h2>Screenshots</h2>
-            <div class="screenshot-container">
-                <div class="reveal">
-                    <div class="screenshot-wrapper">
-                        <img src="screenshot_macos_light.png" alt="PastePaw Light Mode" loading="lazy">
+        <section id="screenshots" class="reveal">
+            <h2 style="text-align: center; margin-bottom: 60px; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em;">Native at home.</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div>
+                    <img src="screenshot_macos_light.png" alt="Light Mode" style="width: 100%; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                    <p style="text-align: center; margin-top: 16px; color: var(--text-muted); font-weight: 500;">Light Mode</p>
+                </div>
+                <div>
+                    <img src="screenshot_macos_dark.png" alt="Dark Mode" style="width: 100%; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                    <p style="text-align: center; margin-top: 16px; color: var(--text-muted); font-weight: 500;">Dark Mode</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="shortcuts" class="reveal">
+            <div class="shortcuts-wrap">
+                <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 12px;">Power at your fingertips.</h2>
+                <p style="color: var(--text-muted);">Master PastePaw with these simple keyboard shortcuts.</p>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-box">
+                        <span style="font-size: 0.9rem; font-weight: 500;">Toggle Window</span>
+                        <kbd>⌃⇧V</kbd>
                     </div>
-                    <p class="screenshot-caption">Light Mode</p>
-                </div>
-                <div class="reveal">
-                    <div class="screenshot-wrapper">
-                        <img src="screenshot_macos_dark.png" alt="PastePaw Dark Mode" loading="lazy">
+                    <div class="shortcut-box">
+                        <span style="font-size: 0.9rem; font-weight: 500;">Search History</span>
+                        <kbd>⌘F</kbd>
                     </div>
-                    <p class="screenshot-caption">Dark Mode</p>
+                    <div class="shortcut-box">
+                        <span style="font-size: 0.9rem; font-weight: 500;">Paste Selected</span>
+                        <kbd>Enter</kbd>
+                    </div>
+                    <div class="shortcut-box">
+                        <span style="font-size: 0.9rem; font-weight: 500;">Delete Item</span>
+                        <kbd>⌫</kbd>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="keyboard-shortcuts">
-        <div class="container">
-            <h2>Keyboard Shortcuts</h2>
-            <div class="shortcuts-grid">
-                <div class="shortcut-item glass reveal">
-                    <span>Toggle Window</span>
-                    <code class="shortcut-key">⌃⇧V</code>
-                </div>
-                <div class="shortcut-item glass reveal">
-                    <span>Focus Search</span>
-                    <code class="shortcut-key">⌘F</code>
-                </div>
-                <div class="shortcut-item glass reveal">
-                    <span>Paste Selected</span>
-                    <code class="shortcut-key">Enter</code>
-                </div>
-                <div class="shortcut-item glass reveal">
-                    <span>Delete Item</span>
-                    <code class="shortcut-key">Delete</code>
-                </div>
-                <div class="shortcut-item glass reveal">
-                    <span>Pin/Unpin Item</span>
-                    <code class="shortcut-key">P</code>
-                </div>
-                <div class="shortcut-item glass reveal">
-                    <span>Close Window</span>
-                    <code class="shortcut-key">Esc</code>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
     <footer>
         <div class="container">
-            <div class="footer-links">
-                <a href="privacy.html">Privacy Policy</a>
-                <a href="terms.html">Terms of Service</a>
-                <a href="support.html">Support</a>
-                <a href="https://github.com/XueshiQiao/PastePaw">GitHub</a>
-                <a href="https://github.com/XueshiQiao/PastePaw/releases">Download</a>
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h2>PastePaw</h2>
+                    <p style="color: var(--text-muted); max-width: 300px;">The clipboard manager for pros. Built with privacy and speed in mind.</p>
+                </div>
+                <div class="footer-links-group">
+                    <div class="footer-column">
+                        <h4>Product</h4>
+                        <ul>
+                            <li><a href="https://github.com/XueshiQiao/PastePaw/releases">Download</a></li>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="support.html">Support</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <ul>
+                            <li><a href="privacy.html">Privacy Policy</a></li>
+                            <li><a href="terms.html">Terms of Service</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Connect</h4>
+                        <ul>
+                            <li><a href="https://github.com/XueshiQiao/PastePaw">GitHub</a></li>
+                            <li><a href="mailto:qiaoxueshi@gmail.com">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <p class="copyright">
-                © 2024-2026 PastePaw. Licensed under GPL-3.0. <br>
-                Built with ❤️ for macOS users.
-            </p>
+            <div class="footer-bottom">
+                <p>© 2024-2026 PastePaw. Open source under GPL-3.0.</p>
+                <p>Handcrafted for macOS.</p>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Scroll-reveal via IntersectionObserver
-        (function () {
-            var els = document.querySelectorAll('.reveal');
-            if (!('IntersectionObserver' in window)) {
-                els.forEach(function (el) { el.classList.add('revealed'); });
-                return;
-            }
-            var observer = new IntersectionObserver(function (entries) {
-                entries.forEach(function (entry) {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('revealed');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.1 });
-            els.forEach(function (el) { observer.observe(el); });
-        })();
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Scroll Reveal
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     </script>
 </body>
 </html>
