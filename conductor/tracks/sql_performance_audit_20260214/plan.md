@@ -6,7 +6,7 @@
 - [x] Task: Generate a detailed Markdown report.
 
 ## Phase 2: Implementation (Critical Path)
-- [ ] Task: **SQL-01 Fix:** Cache `ignore_ghost_clips` in memory to eliminate DB query in hot clipboard loop.
+- [x] Task: **SQL-01 Fix:** Cache `ignore_ghost_clips` in memory to eliminate DB query in hot clipboard loop.
   -   *Strategy:* Use a dedicated `SettingsCache` struct (AtomicBool) managed by Tauri state.
   -   *Scope:* `lib.rs` (init), `clipboard.rs` (read), `commands.rs` (update).
 

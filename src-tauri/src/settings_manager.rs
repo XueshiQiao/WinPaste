@@ -39,7 +39,7 @@ impl SettingsManager {
     async fn migrate_from_sqlite(db: &Database) -> AppSettings {
         let mut settings = AppSettings::default();
         let pool = &db.pool;
-        
+
         async fn get_val(pool: &sqlx::SqlitePool, key: &str) -> Option<String> {
             sqlx::query_scalar::<_, String>("SELECT value FROM settings WHERE key = ?")
                 .bind(key)
@@ -51,11 +51,11 @@ impl SettingsManager {
         if let Some(v) = get_val(pool, "theme").await { settings.theme = v; }
         if let Some(v) = get_val(pool, "mica_effect").await { settings.mica_effect = v; }
         if let Some(v) = get_val(pool, "language").await { settings.language = v; }
-        
+
         if let Some(v) = get_val(pool, "max_items").await { if let Ok(i) = v.parse() { settings.max_items = i; } }
         if let Some(v) = get_val(pool, "auto_delete_days").await { if let Ok(i) = v.parse() { settings.auto_delete_days = i; } }
         if let Some(v) = get_val(pool, "hotkey").await { settings.hotkey = v; }
-        
+
         if let Some(v) = get_val(pool, "auto_paste").await { if let Ok(b) = v.parse() { settings.auto_paste = b; } }
         if let Some(v) = get_val(pool, "ignore_ghost_clips").await { if let Ok(b) = v.parse() { settings.ignore_ghost_clips = b; } }
 
@@ -64,12 +64,12 @@ impl SettingsManager {
         if let Some(v) = get_val(pool, "ai_api_key").await { settings.ai_api_key = v; }
         if let Some(v) = get_val(pool, "ai_model").await { settings.ai_model = v; }
         if let Some(v) = get_val(pool, "ai_base_url").await { settings.ai_base_url = v; }
-        
+
         if let Some(v) = get_val(pool, "ai_prompt_summarize").await { settings.ai_prompt_summarize = v; }
         if let Some(v) = get_val(pool, "ai_prompt_translate").await { settings.ai_prompt_translate = v; }
         if let Some(v) = get_val(pool, "ai_prompt_explain_code").await { settings.ai_prompt_explain_code = v; }
         if let Some(v) = get_val(pool, "ai_prompt_fix_grammar").await { settings.ai_prompt_fix_grammar = v; }
-        
+
         if let Some(v) = get_val(pool, "ai_title_summarize").await { settings.ai_title_summarize = v; }
         if let Some(v) = get_val(pool, "ai_title_translate").await { settings.ai_title_translate = v; }
         if let Some(v) = get_val(pool, "ai_title_explain_code").await { settings.ai_title_explain_code = v; }
@@ -92,10 +92,10 @@ impl SettingsManager {
             let mut lock = self.settings.write().unwrap();
             *lock = new_settings.clone();
         }
-        
+        // TODO - what happens if multiple threads call save at the same time?
         let json = serde_json::to_string_pretty(&new_settings).map_err(|e| e.to_string())?;
         fs::write(&self.file_path, json).map_err(|e| e.to_string())?;
-        
+
         Ok(())
     }
 }

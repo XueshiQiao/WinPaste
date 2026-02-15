@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::sync::OnceLock;
-use std::sync::atomic::AtomicBool;
 
 use std::collections::HashSet;
 

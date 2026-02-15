@@ -35,36 +35,17 @@ pub async fn get_settings(app: AppHandle) -> Result<serde_json::Value, String> {
 #[tauri::command]
 pub async fn save_settings(app: AppHandle, settings: serde_json::Value) -> Result<(), String> {
     let manager = app.state::<Arc<SettingsManager>>();
-    let mut current = manager.get();
+    
+    // Deserialize incoming settings (Frontend sends full object except ignored_apps)
+    let mut new_settings: crate::models::AppSettings = serde_json::from_value(settings).map_err(|e| e.to_string())?;
 
-    if let Some(v) = settings.get("max_items").and_then(|v| v.as_i64()) { current.max_items = v; }
-    if let Some(v) = settings.get("auto_delete_days").and_then(|v| v.as_i64()) { current.auto_delete_days = v; }
-    if let Some(v) = settings.get("theme").and_then(|v| v.as_str()) { current.theme = v.to_string(); }
-    if let Some(v) = settings.get("mica_effect").and_then(|v| v.as_str()) { current.mica_effect = v.to_string(); }
-    if let Some(v) = settings.get("language").and_then(|v| v.as_str()) { current.language = v.to_string(); }
-    if let Some(v) = settings.get("hotkey").and_then(|v| v.as_str()) { current.hotkey = v.to_string(); }
-    if let Some(v) = settings.get("auto_paste").and_then(|v| v.as_bool()) { current.auto_paste = v; }
-    if let Some(v) = settings.get("ignore_ghost_clips").and_then(|v| v.as_bool()) { current.ignore_ghost_clips = v; }
-    
-    // AI
-    if let Some(v) = settings.get("ai_provider").and_then(|v| v.as_str()) { current.ai_provider = v.to_string(); }
-    if let Some(v) = settings.get("ai_api_key").and_then(|v| v.as_str()) { current.ai_api_key = v.to_string(); }
-    if let Some(v) = settings.get("ai_model").and_then(|v| v.as_str()) { current.ai_model = v.to_string(); }
-    if let Some(v) = settings.get("ai_base_url").and_then(|v| v.as_str()) { current.ai_base_url = v.to_string(); }
-    
-    if let Some(v) = settings.get("ai_prompt_summarize").and_then(|v| v.as_str()) { current.ai_prompt_summarize = v.to_string(); }
-    if let Some(v) = settings.get("ai_prompt_translate").and_then(|v| v.as_str()) { current.ai_prompt_translate = v.to_string(); }
-    if let Some(v) = settings.get("ai_prompt_explain_code").and_then(|v| v.as_str()) { current.ai_prompt_explain_code = v.to_string(); }
-    if let Some(v) = settings.get("ai_prompt_fix_grammar").and_then(|v| v.as_str()) { current.ai_prompt_fix_grammar = v.to_string(); }
-    
-    if let Some(v) = settings.get("ai_title_summarize").and_then(|v| v.as_str()) { current.ai_title_summarize = v.to_string(); }
-    if let Some(v) = settings.get("ai_title_translate").and_then(|v| v.as_str()) { current.ai_title_translate = v.to_string(); }
-    if let Some(v) = settings.get("ai_title_explain_code").and_then(|v| v.as_str()) { current.ai_title_explain_code = v.to_string(); }
-    if let Some(v) = settings.get("ai_title_fix_grammar").and_then(|v| v.as_str()) { current.ai_title_fix_grammar = v.to_string(); }
+    // Preserve ignored_apps from current state (as frontend doesn't send it in this call)
+    let current = manager.get();
+    new_settings.ignored_apps = current.ignored_apps;
 
-    // Re-apply window effect logic
-    let theme_str = current.theme.clone();
-    let mica_effect = current.mica_effect.clone();
+    // Window effect
+    let theme_str = new_settings.theme.clone();
+    let mica_effect = new_settings.mica_effect.clone();
     if let Some(win) = app.get_webview_window("main") {
         let current_theme = if theme_str == "light" {
             tauri::Theme::Light
@@ -83,36 +64,33 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value) -> Resul
     #[cfg(not(feature = "app-store"))]
     {
         use tauri_plugin_autostart::ManagerExt;
-        if let Some(startup) = settings.get("startup_with_windows").and_then(|v| v.as_bool()) {
-            current.startup_with_windows = startup;
-            let current_state = app.autolaunch().is_enabled().unwrap_or(false);
-            if startup != current_state {
-                if startup {
-                    let _ = app.autolaunch().enable();
-                } else {
-                    let _ = app.autolaunch().disable();
-                }
+        // Check if startup changed
+        let startup = new_settings.startup_with_windows;
+        let current_state = app.autolaunch().is_enabled().unwrap_or(false);
+        if startup != current_state {
+            if startup {
+                let _ = app.autolaunch().enable();
+            } else {
+                let _ = app.autolaunch().disable();
             }
         }
     }
     #[cfg(all(feature = "app-store", target_os = "macos"))]
     {
-        if let Some(startup) = settings.get("startup_with_windows").and_then(|v| v.as_bool()) {
-            current.startup_with_windows = startup;
-            use smappservice_rs::{AppService, ServiceType, ServiceStatus};
-            let app_service = AppService::new(ServiceType::MainApp);
-            let current_state = matches!(app_service.status(), ServiceStatus::Enabled);
-            if startup != current_state {
-                if startup {
-                    let _ = app_service.register();
-                } else {
-                    let _ = app_service.unregister();
-                }
+        let startup = new_settings.startup_with_windows;
+        use smappservice_rs::{AppService, ServiceType, ServiceStatus};
+        let app_service = AppService::new(ServiceType::MainApp);
+        let current_state = matches!(app_service.status(), ServiceStatus::Enabled);
+        if startup != current_state {
+            if startup {
+                let _ = app_service.register();
+            } else {
+                let _ = app_service.unregister();
             }
         }
     }
 
-    manager.save(current)?;
+    manager.save(new_settings)?;
     Ok(())
 }
 
