@@ -51,9 +51,24 @@
             </div>
 
             <div class="hero-visual">
-                <div class="screenshot-stack">
-                    <img src="screenshot_macos_light.png" alt="PastePaw Light Mode" class="screenshot-secondary">
-                    <img src="screenshot_macos_dark.png" alt="PastePaw Dark Mode" class="screenshot-main">
+                <div class="slider-container">
+                    <button class="slider-arrow prev" aria-label="Previous">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    
+                    <div class="slider-track">
+                        <img src="screenshot_macos_dark.png" alt="PastePaw Dark Mode" class="slide active">
+                        <img src="screenshot_macos_light.png" alt="PastePaw Light Mode" class="slide">
+                    </div>
+
+                    <button class="slider-arrow next" aria-label="Next">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+
+                    <div class="slider-dots">
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -188,6 +203,32 @@
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // Slider Logic
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+        const prevBtn = document.querySelector('.slider-arrow.prev');
+        const nextBtn = document.querySelector('.slider-arrow.next');
+        let currentSlide = 0;
+
+        function updateSlider(index) {
+            slides.forEach(s => s.classList.remove('active'));
+            dots.forEach(d => d.classList.remove('active'));
+            
+            currentSlide = (index + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            dots[currentSlide].classList.add('active');
+        }
+
+        prevBtn.addEventListener('click', () => updateSlider(currentSlide - 1));
+        nextBtn.addEventListener('click', () => updateSlider(currentSlide + 1));
+        dots.forEach((dot, i) => {
+            dot.addEventListener('click', () => updateSlider(i));
+        });
+
+        // Auto-slide every 5 seconds
+        setInterval(() => updateSlider(currentSlide + 1), 5000);
 
         // Scroll Reveal
         const observerOptions = {
