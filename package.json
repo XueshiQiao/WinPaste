@@ -1,6 +1,6 @@
 {
   "name": "pastepaw",
-  "version": "1.1.11",
+  "version": "1.2.0",
   "description": "A beautiful clipboard history manager",
   "license": "GPL-3.0",
   "type": "module",
