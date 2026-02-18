@@ -46,19 +46,28 @@ pub async fn save_settings(app: AppHandle, settings: serde_json::Value) -> Resul
     // Window effect
     let theme_str = new_settings.theme.clone();
     let mica_effect = new_settings.mica_effect.clone();
-    if let Some(win) = app.get_webview_window("main") {
-        let current_theme = if theme_str == "light" {
-            tauri::Theme::Light
-        } else if theme_str == "dark" {
-            tauri::Theme::Dark
-        } else {
-            let mode = dark_light::detect().map_err(|e| e.to_string())?;
-            match mode {
-                Mode::Dark => tauri::Theme::Dark,
-                _ => tauri::Theme::Light,
-            }
-        };
-        crate::apply_window_effect(&win, &mica_effect, &current_theme);
+    log::info!("save_settings: mica_effect={}, theme={}", mica_effect, theme_str);
+    match app.get_webview_window("main") {
+        Some(win) => {
+            let current_theme = if theme_str == "light" {
+                tauri::Theme::Light
+            } else if theme_str == "dark" {
+                tauri::Theme::Dark
+            } else {
+                let mode = dark_light::detect().map_err(|e| {
+                    log::error!("save_settings: dark_light::detect() failed: {:?}", e);
+                    e.to_string()
+                })?;
+                match mode {
+                    Mode::Dark => tauri::Theme::Dark,
+                    _ => tauri::Theme::Light,
+                }
+            };
+            crate::apply_window_effect(&win, &mica_effect, &current_theme);
+        }
+        None => {
+            log::warn!("save_settings: main window not found, skipping window effect");
+        }
     }
 
     #[cfg(not(feature = "app-store"))]

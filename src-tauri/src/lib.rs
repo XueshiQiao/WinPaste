@@ -155,10 +155,14 @@ pub fn run_app() {
                                 return;
                             }
 
-                            // Debounce: Ignore blur events immediately after showing (150ms grace period)
+                            // Debounce: Ignore blur events immediately after showing
                             let last_show = LAST_SHOW_TIME.load(Ordering::SeqCst);
                             let now = chrono::Local::now().timestamp_millis();
-                            if now - last_show < 150 {
+                            #[cfg(target_os = "windows")]
+                            let debounce_ms = 500;
+                            #[cfg(not(target_os = "windows"))]
+                            let debounce_ms = 150;
+                            if now - last_show < debounce_ms {
                                 return;
                             }
 
@@ -173,8 +177,40 @@ pub fn run_app() {
                                      return;
                                  }
 
-                                 // Normal blur handling (hide)
-                                 crate::animate_window_hide(&win, None);
+                                 #[cfg(target_os = "windows")]
+                                 {
+                                     // Check if cursor is on a different monitor
+                                     let current_monitor = win.current_monitor().ok().flatten();
+                                     let cursor_monitor = get_monitor_at_cursor(&win);
+
+                                     let mut moved_screens = false;
+                                     if let (Some(cm), Some(crm)) = (&current_monitor, &cursor_monitor) {
+                                         if cm.position().x != crm.position().x || cm.position().y != crm.position().y {
+                                             moved_screens = true;
+                                         }
+                                     }
+
+                                     if moved_screens {
+                                         // User clicked on another screen, move window there immediately
+                                         position_window_at_bottom(&win);
+                                         let _ = win.show();
+                                         let _ = win.set_focus();
+                                     } else {
+                                         // Normal blur handling (hide)
+                                         if win.is_visible().unwrap_or(false) {
+                                             let win_clone = win.clone();
+                                             std::thread::spawn(move || {
+                                                 crate::animate_window_hide(&win_clone, None);
+                                             });
+                                         }
+                                     }
+                                 }
+
+                                 #[cfg(not(target_os = "windows"))]
+                                 {
+                                     // Normal blur handling (hide)
+                                     crate::animate_window_hide(&win, None);
+                                 }
                             }
                         }
                     }
@@ -246,12 +282,10 @@ pub fn run_app() {
 
             #[cfg(target_os = "windows")]
             {
-                let db_for_mica = db_for_clipboard.clone();
-                let (mica_effect, theme) = get_runtime().unwrap().block_on(async {
-                    let m = db_for_mica.get_setting("mica_effect").await.ok().flatten().unwrap_or_else(|| "clear".to_string());
-                    let t = db_for_mica.get_setting("theme").await.ok().flatten().unwrap_or_else(|| "system".to_string());
-                    (m, t)
-                });
+                let manager = app_handle.state::<Arc<SettingsManager>>();
+                let settings = manager.get();
+                let mica_effect = settings.mica_effect;
+                let theme = settings.theme;
 
                 // get current system theme
                 let current_theme = if theme == "light" {
@@ -265,7 +299,7 @@ pub fn run_app() {
                     })
                 };
 
-                log::info!("THEME:Applying window effect: {} with theme: {:?} (setting:{:?}", mica_effect, current_theme, theme);
+                log::info!("THEME:Applying window effect: {} with theme: {:?} (setting:{:?})", mica_effect, current_theme, theme);
 
                 crate::apply_window_effect(&win, &mica_effect, &current_theme);
             }
@@ -357,6 +391,7 @@ pub fn position_window_at_bottom(window: &tauri::WebviewWindow) {
     animate_window_show(window);
 }
 
+#[cfg(not(target_os = "windows"))]
 fn ease_linear(x: f64) -> f64 {
     x
 }
@@ -370,85 +405,130 @@ pub fn animate_window_show(window: &tauri::WebviewWindow) {
     LAST_SHOW_TIME.store(chrono::Local::now().timestamp_millis(), Ordering::SeqCst);
 
     let window = window.clone();
-    tauri::async_runtime::spawn(async move {
-        if let Some(monitor) = get_monitor_at_cursor(&window) {
-            let scale_factor = monitor.scale_factor();
-            let screen_size = monitor.size();
-            let monitor_pos = monitor.position();
-            let work_area = monitor.work_area();
 
-            let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
-            let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
+    #[cfg(target_os = "windows")]
+    {
+        std::thread::spawn(move || {
+            if let Some(monitor) = get_monitor_at_cursor(&window) {
+                let scale_factor = monitor.scale_factor();
+                let work_area = monitor.work_area();
 
-            let screen_bottom = monitor_pos.y + screen_size.height as i32;
+                let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
+                let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
 
-            #[cfg(target_os = "macos")]
-            let (target_y, start_y) = (
-                screen_bottom - (window_height_px as i32) - window_margin_px,
-                screen_bottom,
-            );
-            #[cfg(not(target_os = "macos"))]
-            let (target_y, start_y) = {
-                let work_area_bottom = work_area.position.y + work_area.size.height as i32;
-                (
-                    work_area_bottom - (window_height_px as i32) - window_margin_px,
-                    work_area_bottom,
-                )
-            };
+                let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                    width: work_area.size.width - (window_margin_px as u32 * 2),
+                    height: window_height_px,
+                }));
 
-            let x = work_area.position.x + window_margin_px;
-            let width = work_area.size.width - (window_margin_px as u32 * 2);
+                let target_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32) - window_margin_px;
+                let start_y = work_area.position.y + (work_area.size.height as i32);
 
-            // Set initial size, position, and show window — all on main thread
-            {
-                let win = window.clone();
-                let _ = window.run_on_main_thread(move || {
-                    let _ = win.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-                        width,
-                        height: window_height_px,
-                    }));
-                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                        x,
-                        y: start_y,
-                    }));
-                    let _ = win.show();
-                    let _ = win.set_focus();
-                });
-            }
+                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                    x: work_area.position.x + window_margin_px,
+                    y: start_y,
+                }));
 
-            // Animation loop: ~=60ms total (30 steps * 2ms)
-            let steps = 30;
-            let step_duration = std::time::Duration::from_millis(2);
-            let total_dist = (target_y - start_y) as f64;
+                let _ = window.show();
+                let _ = window.set_focus();
 
-            for i in 1..=steps {
-                let progress = i as f64 / steps as f64;
-                let eased_progress = ease_linear(progress);
-                let current_y = start_y as f64 + total_dist * eased_progress;
+                let steps = 15;
+                let duration = std::time::Duration::from_millis(10);
+                let dy = (target_y - start_y) as f64 / steps as f64;
 
-                let win = window.clone();
-                let _ = window.run_on_main_thread(move || {
-                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                        x,
+                for i in 1..=steps {
+                    let current_y = start_y as f64 + dy * i as f64;
+                    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: work_area.position.x + window_margin_px,
                         y: current_y as i32,
                     }));
-                });
-                tokio::time::sleep(step_duration).await;
-            }
+                    std::thread::sleep(duration);
+                }
 
-            // Ensure final position is exact
-            {
-                let win = window.clone();
-                let _ = window.run_on_main_thread(move || {
-                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                        x,
-                        y: target_y,
-                    }));
-                });
+                // Ensure final position is exact
+                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                    x: work_area.position.x + window_margin_px,
+                    y: target_y,
+                }));
             }
-        }
-        IS_ANIMATING.store(false, Ordering::SeqCst);
-    });
+            IS_ANIMATING.store(false, Ordering::SeqCst);
+        });
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        tauri::async_runtime::spawn(async move {
+            if let Some(monitor) = get_monitor_at_cursor(&window) {
+                let scale_factor = monitor.scale_factor();
+                let work_area = monitor.work_area();
+
+                let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
+                let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
+
+                let (target_y, start_y) = {
+                    let screen_size = monitor.size();
+                    let monitor_pos = monitor.position();
+                    let screen_bottom = monitor_pos.y + screen_size.height as i32;
+                    (
+                        screen_bottom - (window_height_px as i32) - window_margin_px,
+                        screen_bottom,
+                    )
+                };
+
+                let x = work_area.position.x + window_margin_px;
+                let width = work_area.size.width - (window_margin_px as u32 * 2);
+
+                // Set initial size, position, and show window — all on main thread
+                {
+                    let win = window.clone();
+                    let _ = window.run_on_main_thread(move || {
+                        let _ = win.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                            width,
+                            height: window_height_px,
+                        }));
+                        let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                            x,
+                            y: start_y,
+                        }));
+                        let _ = win.show();
+                        let _ = win.set_focus();
+                    });
+                }
+
+                // Animation loop: ~60ms total (30 steps * 2ms)
+                let steps = 30;
+                let step_duration = std::time::Duration::from_millis(2);
+                let total_dist = (target_y - start_y) as f64;
+
+                for i in 1..=steps {
+                    let progress = i as f64 / steps as f64;
+                    let eased_progress = ease_linear(progress);
+                    let current_y = start_y as f64 + total_dist * eased_progress;
+
+                    let win = window.clone();
+                    let _ = window.run_on_main_thread(move || {
+                        let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                            x,
+                            y: current_y as i32,
+                        }));
+                    });
+                    tokio::time::sleep(step_duration).await;
+                }
+
+                // Ensure final position is exact
+                {
+                    let win = window.clone();
+                    let _ = window.run_on_main_thread(move || {
+                        let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                            x,
+                            y: target_y,
+                        }));
+                    });
+                }
+            }
+            IS_ANIMATING.store(false, Ordering::SeqCst);
+        });
+    }
 }
 
 pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dyn FnOnce() + Send>>) {
@@ -458,128 +538,151 @@ pub fn animate_window_hide(window: &tauri::WebviewWindow, on_done: Option<Box<dy
     }
 
     let window = window.clone();
-    tauri::async_runtime::spawn(async move {
-        if let Some(monitor) = window.current_monitor().ok().flatten() {
-            let scale_factor = monitor.scale_factor();
-            let work_area = monitor.work_area();
-            let screen_size = monitor.size();
-            let monitor_pos = monitor.position();
 
-            let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
-            let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
+    #[cfg(target_os = "windows")]
+    {
+        std::thread::spawn(move || {
+            if let Some(monitor) = window.current_monitor().ok().flatten() {
+                let scale_factor = monitor.scale_factor();
+                let work_area = monitor.work_area();
 
-            let screen_bottom = monitor_pos.y + screen_size.height as i32;
+                let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
+                let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
 
-            #[cfg(target_os = "macos")]
-            let (start_y, target_y) = (
-                screen_bottom - (window_height_px as i32) - window_margin_px,
-                screen_bottom,
-            );
-            #[cfg(not(target_os = "macos"))]
-            let (start_y, target_y) = {
-                let work_area_bottom = work_area.position.y + work_area.size.height as i32;
-                let dock_gap = screen_bottom - work_area_bottom;
-                (
-                    work_area_bottom - (window_height_px as i32) - window_margin_px,
-                    work_area_bottom + dock_gap,
-                )
-            };
+                let start_y = work_area.position.y + (work_area.size.height as i32) - (window_height_px as i32) - window_margin_px;
+                let target_y = work_area.position.y + (work_area.size.height as i32);
 
-            // Windows-specific setup
-            #[cfg(target_os = "windows")]
-            let mut taskbar_top_y = 0;
-            #[cfg(target_os = "windows")]
-            let taskbar_hwnd = {
-                use windows::Win32::UI::WindowsAndMessaging::{FindWindowW, GetWindowRect};
+                // Fix Z-Order: Dynamic Switch
+                use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, FindWindowW, GetWindowRect, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE};
                 use windows::Win32::Foundation::{HWND, RECT};
                 use windows::core::PCWSTR;
 
+                // 1. Find the Taskbar
                 let class_name: Vec<u16> = "Shell_TrayWnd".encode_utf16().chain(std::iter::once(0)).collect();
-                let hwnd = unsafe { FindWindowW(PCWSTR(class_name.as_ptr()), PCWSTR::null()) }.unwrap_or(HWND(std::ptr::null_mut()));
+                let taskbar_hwnd = unsafe { FindWindowW(PCWSTR(class_name.as_ptr()), PCWSTR::null()) }.unwrap_or(HWND(std::ptr::null_mut()));
 
-                if !hwnd.0.is_null() {
+                // 2. Get Taskbar Position (Top Y)
+                let mut taskbar_top_y = 0;
+                if !taskbar_hwnd.0.is_null() {
                     let mut rect = RECT::default();
-                    if unsafe { GetWindowRect(hwnd, &mut rect).is_ok() } {
+                    if unsafe { GetWindowRect(taskbar_hwnd, &mut rect).is_ok() } {
                         taskbar_top_y = rect.top;
                     }
                 }
-                hwnd
-            };
 
-            #[cfg(target_os = "windows")]
-            if let Ok(handle) = window.hwnd() {
-                 use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE};
-                 use windows::Win32::Foundation::HWND;
-                 let hwnd = HWND(handle.0 as _);
-                 let hwnd_topmost = HWND(-1 as _);
-                 unsafe {
-                    let _ = SetWindowPos(hwnd, Some(hwnd_topmost), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-                 }
-            }
-
-            // Hide animation matched to show duration: ~60ms (30 steps * 2ms)
-            let steps = 30;
-            let step_duration = std::time::Duration::from_millis(2);
-            let total_dist = (target_y - start_y) as f64;
-            #[cfg(target_os = "windows")]
-            let mut z_order_switched = false;
-
-            for i in 1..=steps {
-                let progress = i as f64 / steps as f64;
-                let eased_progress = ease_linear(progress);
-                let current_y = start_y as f64 + total_dist * eased_progress;
-
-                let win = window.clone();
-                let x = work_area.position.x + window_margin_px;
-                let _ = window.run_on_main_thread(move || {
-                    let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                        x,
-                        y: current_y as i32,
-                    }));
-                });
-
-                #[cfg(target_os = "windows")]
-                if !z_order_switched && taskbar_top_y > 0 && current_y as i32 >= taskbar_top_y {
-                     if let Ok(handle) = window.hwnd() {
-                         use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE};
-                         use windows::Win32::Foundation::HWND;
-                         let hwnd = HWND(handle.0 as _);
-                         if !taskbar_hwnd.0.is_null() {
-                             unsafe {
-                                let _ = SetWindowPos(hwnd, Some(taskbar_hwnd), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-                             }
-                             z_order_switched = true;
-                         }
+                // 3. Initially Ensure Topmost
+                if let Ok(handle) = window.hwnd() {
+                    let hwnd = HWND(handle.0 as _);
+                    let hwnd_topmost = HWND(-1 as _); // HWND_TOPMOST
+                    unsafe {
+                        let _ = SetWindowPos(hwnd, Some(hwnd_topmost), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
                     }
                 }
 
-                tokio::time::sleep(step_duration).await;
-            }
+                let steps = 15;
+                let duration = std::time::Duration::from_millis(10);
+                let dy = (target_y - start_y) as f64 / steps as f64;
 
-            {
-                let win = window.clone();
-                let _ = window.run_on_main_thread(move || {
-                    let _ = win.hide();
+                let mut z_order_switched = false;
 
-                    #[cfg(target_os = "macos")]
-                    {
-                        use cocoa::appkit::NSApplication;
-                        use cocoa::base::nil;
-                        use objc::{msg_send, sel, sel_impl};
-                        unsafe {
-                            let app = NSApplication::sharedApplication(nil);
-                            let _: () = msg_send![app, hide:nil];
+                for i in 1..=steps {
+                    let current_y = start_y as f64 + dy * i as f64;
+                    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: work_area.position.x + window_margin_px,
+                        y: current_y as i32,
+                    }));
+
+                    // Dynamic Z-Order Switch: When we hit the taskbar, drop BEHIND it
+                    if !z_order_switched && taskbar_top_y > 0 && current_y as i32 >= taskbar_top_y {
+                        if let Ok(handle) = window.hwnd() {
+                            let hwnd = HWND(handle.0 as _);
+                            if !taskbar_hwnd.0.is_null() {
+                                unsafe {
+                                    let _ = SetWindowPos(hwnd, Some(taskbar_hwnd), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                                }
+                                z_order_switched = true;
+                            }
                         }
                     }
-                });
-            }
+                    std::thread::sleep(duration);
+                }
 
-            if let Some(callback) = on_done {
-                callback();
+                let _ = window.hide();
+
+                if let Some(callback) = on_done {
+                    callback();
+                }
             }
-        }
-        IS_ANIMATING.store(false, Ordering::SeqCst);
-    });
+            IS_ANIMATING.store(false, Ordering::SeqCst);
+        });
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        tauri::async_runtime::spawn(async move {
+            if let Some(monitor) = window.current_monitor().ok().flatten() {
+                let scale_factor = monitor.scale_factor();
+                let work_area = monitor.work_area();
+                let screen_size = monitor.size();
+                let monitor_pos = monitor.position();
+
+                let window_height_px = (constants::WINDOW_HEIGHT * scale_factor) as u32;
+                let window_margin_px = (constants::WINDOW_MARGIN * scale_factor) as i32;
+
+                let screen_bottom = monitor_pos.y + screen_size.height as i32;
+
+                let (start_y, target_y) = (
+                    screen_bottom - (window_height_px as i32) - window_margin_px,
+                    screen_bottom,
+                );
+
+                // Hide animation: ~60ms total (30 steps * 2ms)
+                let steps = 30;
+                let step_duration = std::time::Duration::from_millis(2);
+                let total_dist = (target_y - start_y) as f64;
+
+                for i in 1..=steps {
+                    let progress = i as f64 / steps as f64;
+                    let eased_progress = ease_linear(progress);
+                    let current_y = start_y as f64 + total_dist * eased_progress;
+
+                    let win = window.clone();
+                    let x = work_area.position.x + window_margin_px;
+                    let _ = window.run_on_main_thread(move || {
+                        let _ = win.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                            x,
+                            y: current_y as i32,
+                        }));
+                    });
+
+                    tokio::time::sleep(step_duration).await;
+                }
+
+                {
+                    let win = window.clone();
+                    let _ = window.run_on_main_thread(move || {
+                        let _ = win.hide();
+
+                        #[cfg(target_os = "macos")]
+                        {
+                            use cocoa::appkit::NSApplication;
+                            use cocoa::base::nil;
+                            use objc::{msg_send, sel, sel_impl};
+                            unsafe {
+                                let app = NSApplication::sharedApplication(nil);
+                                let _: () = msg_send![app, hide:nil];
+                            }
+                        }
+                    });
+                }
+
+                if let Some(callback) = on_done {
+                    callback();
+                }
+            }
+            IS_ANIMATING.store(false, Ordering::SeqCst);
+        });
+    }
 }
 
 
@@ -651,23 +754,34 @@ pub fn get_monitor_at_cursor(window: &tauri::WebviewWindow) -> Option<tauri::Mon
 }
 
 pub fn apply_window_effect(window: &tauri::WebviewWindow, effect: &str, theme: &tauri::Theme) {
+    log::info!("THEME:apply_window_effect called: effect={}, theme={:?}", effect, theme);
     #[cfg(target_os = "windows")]
     {
         use window_vibrancy::{clear_mica, apply_mica, apply_tabbed};
 
         match effect {
             "clear" => {
-                let _ = clear_mica(window);
+                if let Err(e) = clear_mica(window) {
+                    log::error!("THEME:Failed to clear mica: {:?}", e);
+                }
                 log::info!("THEME:Mica effect cleared");
             },
             "mica" | "dark" => {
-                let _ = clear_mica(window);
-                let _ = apply_mica(window, Some(matches!(theme, tauri::Theme::Dark)));
+                if let Err(e) = clear_mica(window) {
+                    log::error!("THEME:Failed to clear mica: {:?}", e);
+                }
+                if let Err(e) = apply_mica(window, Some(matches!(theme, tauri::Theme::Dark))) {
+                    log::error!("THEME:Failed to apply mica: {:?}", e);
+                }
                 log::info!("THEME:Applied Mica effect (Theme: {})", theme);
             },
             "mica_alt" | "auto" | _ => {
-                let _ = clear_mica(window);
-                let _ = apply_tabbed(window, Some(matches!(theme, tauri::Theme::Dark)));
+                if let Err(e) = clear_mica(window) {
+                    log::error!("THEME:Failed to clear mica: {:?}", e);
+                }
+                if let Err(e) = apply_tabbed(window, Some(matches!(theme, tauri::Theme::Dark))) {
+                    log::error!("THEME:Failed to apply tabbed: {:?}", e);
+                }
                 log::info!("THEME:Applied Tabbed effect (Theme: {})", theme);
             }
         }
