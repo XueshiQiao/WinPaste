@@ -1,5 +1,6 @@
 import { Search, X, Keyboard } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { getModifierKey } from '../utils/platform';
 
 interface SearchBarProps {
   query: string;
@@ -38,7 +39,7 @@ export function SearchBar({ query, onQueryChange, onClear }: SearchBarProps) {
         type="text"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Search clips... (Ctrl+F)"
+        placeholder={`Search clips... (${getModifierKey()}+F)`}
         className="search-input pl-10 pr-20"
       />
       <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">

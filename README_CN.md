@@ -38,9 +38,9 @@
 ## 应用截图
 
 ### Light theme
-![docs/paste_paw_dark.png](docs/paste_paw_light.png)
+![docs/paste_paw_dark.png](docs/screenshot_win_light.png)
 ### Dark theme
-![docs/paste_paw_dark.png](docs/paste_paw_dark.png)
+![docs/paste_paw_dark.png](docs/screenshot_win_dark.png)
 
 
 ## 键盘快捷键

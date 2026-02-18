@@ -1,5 +1,6 @@
 import { X, AlertTriangle } from 'lucide-react';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -16,12 +17,14 @@ export function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText,
   onConfirm,
   onCancel,
   variant = 'danger',
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCancel();
@@ -62,7 +65,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="rounded-md border border-input bg-transparent px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
           >
-            {cancelText}
+            {cancelText || t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -72,7 +75,7 @@ export function ConfirmDialog({
                 : 'bg-primary hover:bg-primary/90'
             }`}
           >
-            {confirmText}
+            {confirmText || t('common.confirm')}
           </button>
         </div>
       </div>

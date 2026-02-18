@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Support for PastePaw - Get help, report bugs, and contact us">
+    <title>Support - PastePaw</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/64x64.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent: #007AFF;
+            --accent-hover: #0051D5;
+            --border: #e5e5e5;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2a2a2a;
+                --text-primary: #ffffff;
+                --text-secondary: #a0a0a0;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --border: #3a3a3a;
+                --shadow: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.8;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        ul {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .support-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .support-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .support-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px var(--shadow);
+        }
+
+        .support-card-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .support-card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .support-card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-primary);
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .faq-item {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .faq-answer {
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .contact-info {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .contact-info a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            border-color: var(--accent);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        code {
+            background-color: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .support-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://raw.githubusercontent.com/XueshiQiao/PastePaw/refs/heads/main/src-tauri/icons/128x128.png" alt="PastePaw Logo" class="logo">
+            <h1>Support</h1>
+            <p class="subtitle">Get help with PastePaw</p>
+        </header>
+
+        <main>
+            <div class="support-cards">
+                <div class="support-card">
+                    <div class="support-card-icon">📧</div>
+                    <h3>Email Support</h3>
+                    <p>Have a question or need help? Send us an email and we'll get back to you as soon as possible.</p>
+                    <a href="mailto:xueshi.qiao@gmail.com" class="btn">Email Us</a>
+                </div>
+
+                <div class="support-card">
+                    <div class="support-card-icon">🐛</div>
+                    <h3>Report a Bug</h3>
+                    <p>Found a bug? Report it on GitHub Issues and help us improve PastePaw.</p>
+                    <a href="https://github.com/XueshiQiao/PastePaw/issues/new" class="btn" target="_blank">Report Bug</a>
+                </div>
+
+                <div class="support-card">
+                    <div class="support-card-icon">💡</div>
+                    <h3>Feature Request</h3>
+                    <p>Have an idea for a new feature? We'd love to hear your suggestions!</p>
+                    <a href="https://github.com/XueshiQiao/PastePaw/issues/new" class="btn" target="_blank">Suggest Feature</a>
+                </div>
+            </div>
+
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: How do I open PastePaw?</div>
+                <div class="faq-answer">Press <code>⌃⇧V</code> (Control + Shift + V) on your keyboard. You can customize this hotkey in the app's Settings.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: Is my clipboard data secure?</div>
+                <div class="faq-answer">Yes! All your clipboard data is stored locally on your device in an encrypted SQLite database. Nothing is sent to any server or cloud service. Read our <a href="privacy.html">Privacy Policy</a> for more details.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: Can I exclude certain apps from being recorded?</div>
+                <div class="faq-answer">Yes! Go to Settings → Ignored Applications and add any apps you want to exclude (like password managers or banking apps). PastePaw will not record clipboard content from these apps.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: How do I delete my clipboard history?</div>
+                <div class="faq-answer">You can delete individual items by selecting them and pressing <code>Delete</code>, or clear all history from Settings → Clear All History.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: Does PastePaw work on Apple Silicon (M1/M2/M3) Macs?</div>
+                <div class="faq-answer">Yes! PastePaw is built as a Universal Binary and runs natively on both Intel and Apple Silicon Macs.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: How do I use the AI features?</div>
+                <div class="faq-answer">To use AI features (summarize, translate, explain code, fix grammar), you need to provide your own API key from an AI provider (OpenAI, DeepSeek, or compatible services). Configure this in Settings → AI Settings. Right-click any clipboard item to access AI actions.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: Why does PastePaw need Accessibility permissions?</div>
+                <div class="faq-answer">Accessibility permissions are only needed if you want to use the auto-paste feature. This allows PastePaw to simulate keyboard input (Cmd+V) to automatically paste items. You can use PastePaw without this permission and paste items manually.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: How do I uninstall PastePaw?</div>
+                <div class="faq-answer">Simply drag PastePaw from your Applications folder to the Trash. All clipboard data will be removed when you delete the app. If you want to completely remove all preferences, also delete <code>~/Library/Application Support/me.xueshi.pastepaw</code>.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: Can I sync my clipboard history across multiple Macs?</div>
+                <div class="faq-answer">Currently, PastePaw stores all data locally and does not support cloud sync. This is by design to ensure maximum privacy and security. Sync features may be considered for future versions.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Q: Is PastePaw free?</div>
+                <div class="faq-answer">Yes! PastePaw is free and open source software licensed under GPL-3.0. You can view and contribute to the source code on <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">GitHub</a>.</div>
+            </div>
+
+            <h2>System Requirements</h2>
+            <ul>
+                <li><strong>macOS Version:</strong> macOS 11.0 (Big Sur) or later</li>
+                <li><strong>Architecture:</strong> Intel and Apple Silicon (Universal Binary)</li>
+                <li><strong>Disk Space:</strong> ~20 MB for the app, plus storage for clipboard history</li>
+                <li><strong>Memory:</strong> Minimal RAM usage (~50-100 MB)</li>
+            </ul>
+
+            <h2>Getting Started</h2>
+            <ol>
+                <li>Download PastePaw from the <a href="https://github.com/XueshiQiao/PastePaw/releases/latest">latest release</a></li>
+                <li>Open the downloaded DMG file and drag PastePaw to your Applications folder</li>
+                <li>Launch PastePaw from your Applications folder</li>
+                <li>Grant Accessibility permissions if you want to use auto-paste (optional)</li>
+                <li>Press <code>⌃⇧V</code> to open your clipboard history</li>
+                <li>Start copying and enjoy unlimited clipboard history!</li>
+            </ol>
+
+            <h2>Contact Information</h2>
+            <div class="contact-info">
+                <p><strong>Developer:</strong> Xueshi Qiao</p>
+                <p><strong>Email:</strong> <a href="mailto:xueshi.qiao@gmail.com">xueshi.qiao@gmail.com</a></p>
+                <p><strong>GitHub:</strong> <a href="https://github.com/XueshiQiao/PastePaw" target="_blank">https://github.com/XueshiQiao/PastePaw</a></p>
+                <p><strong>Issues & Bug Reports:</strong> <a href="https://github.com/XueshiQiao/PastePaw/issues" target="_blank">GitHub Issues</a></p>
+            </div>
+
+            <h2>Additional Resources</h2>
+            <ul>
+                <li><a href="index.html">PastePaw Homepage</a></li>
+                <li><a href="privacy.html">Privacy Policy</a></li>
+                <li><a href="https://github.com/XueshiQiao/PastePaw/blob/main/README.md" target="_blank">Documentation</a></li>
+                <li><a href="https://github.com/XueshiQiao/PastePaw/releases" target="_blank">Release Notes</a></li>
+            </ul>
+
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </main>
+
+        <footer>
+            <p>© 2024-2026 PastePaw. Licensed under GPL-3.0.</p>
+        </footer>
+    </div>
+</body>
+</html>

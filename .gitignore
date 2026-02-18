@@ -15,7 +15,6 @@ Thumbs.db
 
 # Rust
 target/
-Cargo.lock
 
 # Local data
 data/

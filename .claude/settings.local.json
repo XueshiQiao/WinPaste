@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cut:*)",
+      "Bash(wc:*)",
+      "Bash(cargo check:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm tauri dev:*)",
+      "Bash(pnpm update:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(git -C /Users/joey/Code/PastePaw add:*)",
+      "Bash(git commit:*)",
+      "Bash(git -C /Users/joey/Code/PastePaw status)",
+      "WebSearch",
+      "WebFetch(domain:v2.tauri.app)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:it-waves.com)",
+      "Bash(git add:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(osascript:*)",
+      "Bash(swift:*)",
+      "Bash(cat:*)",
+      "Bash(cargo build:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:alexop.dev)",
+      "Bash(git push:*)",
+      "WebFetch(domain:docs.rs)",
+      "Bash(cargo clippy:*)",
+      "Bash(git restore:*)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm add:*)",
+      "Bash(git checkout:*)"
+    ]
+  }
+}

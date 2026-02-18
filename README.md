@@ -38,9 +38,9 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 ## Screenshots
 
 ### Light theme
-![docs/paste_paw_dark.png](docs/paste_paw_light.png)
+![docs/paste_paw_dark.png](docs/screenshot_win_light.png)
 ### Dark theme
-![docs/paste_paw_dark.png](docs/paste_paw_dark.png)
+![docs/paste_paw_dark.png](docs/screenshot_win_dark.png)
 
 ## Keyboard Shortcuts
 

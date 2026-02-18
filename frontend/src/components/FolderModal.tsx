@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface FolderModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface FolderModalProps {
 }
 
 export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: FolderModalProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,14 +42,14 @@ export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: Fo
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-80 rounded-xl border border-border bg-card p-6 shadow-2xl">
+      <div className="w-80 rounded-2xl border border-border bg-card p-6 shadow-2xl">
         <h3 className="mb-4 text-lg font-semibold text-foreground">
-          {mode === 'create' ? 'Create New Folder' : 'Rename Folder'}
+          {mode === 'create' ? t('folders.createFolder') : t('folders.renameFolder')}
         </h3>
         <input
           ref={inputRef}
           type="text"
-          placeholder="Folder Name"
+          placeholder={t('folders.folderNamePlaceholder')}
           defaultValue={initialName}
           className="mb-4 w-full rounded-md border border-input bg-input px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           onKeyDown={(e) => {
@@ -64,14 +66,14 @@ export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: Fo
             disabled={isSubmitting}
             className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-50"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create' : 'Save'}
+            {isSubmitting ? t('common.loading') : mode === 'create' ? t('common.create') : t('common.save')}
           </button>
         </div>
       </div>

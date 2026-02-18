@@ -1,6 +1,7 @@
 import { FolderItem } from '../types';
 import { Search, Plus, MoreHorizontal, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useTranslation } from 'react-i18next';
 
 interface ControlBarProps {
   folders: FolderItem[];
@@ -40,8 +41,10 @@ export function ControlBar({
   onFolderContextMenu,
   theme = 'dark',
 }: ControlBarProps) {
+  const { t } = useTranslation();
+
   const allCategories = [
-    { id: null, name: 'All', count: totalClipCount },
+    { id: null, name: t('folders.all'), count: totalClipCount },
     ...folders.map((f) => ({ ...f, count: f.item_count })),
   ];
 
@@ -223,7 +226,7 @@ export function ControlBar({
   };
 
   return (
-    <div className="drag-area flex min-h-[52px] items-center gap-4 border-b border-border bg-background/90 px-6 py-2">
+    <div className="drag-area flex min-h-[44px] items-center gap-4 bg-background/90 px-6 pt-2">
       {/* Search Toggle / Input */}
       <div
         className={clsx(
@@ -240,7 +243,7 @@ export function ControlBar({
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search clips..."
+              placeholder={t('common.search')}
               className="flex-1 border-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {

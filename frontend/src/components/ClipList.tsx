@@ -1,6 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ClipboardItem } from '../types';
 import { ClipCard } from './ClipCard';
+import { TOTAL_COLUMN_WIDTH } from '../constants';
 
 interface ClipListProps {
   clips: ClipboardItem[];
@@ -28,7 +30,54 @@ export function ClipList({
   onDragStart,
   onCardContextMenu,
 }: ClipListProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Scroll selected card into view when selection changes
+  useEffect(() => {
+    if (selectedClipId && containerRef.current) {
+      const selectedCard = cardRefs.current.get(selectedClipId);
+      const container = containerRef.current;
+
+      if (selectedCard) {
+        const cardLeft = selectedCard.offsetLeft;
+        const cardWidth = selectedCard.offsetWidth;
+        const scrollLeft = container.scrollLeft;
+        const containerWidth = container.clientWidth;
+
+        // Offset to reveal about 1/3 of adjacent card
+        const peekOffset = TOTAL_COLUMN_WIDTH / 3;
+
+        // Card position relative to current scroll
+        const cardStart = cardLeft;
+        const cardEnd = cardLeft + cardWidth;
+        const visibleStart = scrollLeft;
+        const visibleEnd = scrollLeft + containerWidth;
+
+        // Maximum scrollable position
+        const maxScroll = container.scrollWidth - containerWidth;
+
+        let targetScroll = scrollLeft;
+
+        // Card is beyond right edge - scroll to show it plus peek of next card
+        if (cardEnd > visibleEnd) {
+          targetScroll = cardEnd - containerWidth + peekOffset;
+        }
+        // Card is beyond left edge - scroll to show it plus peek of previous card
+        else if (cardStart < visibleStart) {
+          targetScroll = cardStart - peekOffset;
+        }
+
+        if (targetScroll !== scrollLeft) {
+          container.scrollTo({
+            left: Math.min(maxScroll, Math.max(0, targetScroll)), // Clamp to valid scroll range
+            behavior: 'smooth',
+          });
+        }
+      }
+    }
+  }, [selectedClipId]);
 
   // Native onScroll handler for infinite scroll
   const handleScroll = () => {
@@ -39,7 +88,6 @@ export function ClipList({
 
     // If scrolled within 300px of the end
     if (scrollLeft + clientWidth >= scrollWidth - 300) {
-      console.log('Scroll to end detected (native), loading more...');
       onLoadMore();
     }
   };
@@ -57,7 +105,7 @@ export function ClipList({
       <div className="flex h-full w-full items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-          <p className="text-sm text-muted-foreground">Loading clips...</p>
+          <p className="text-sm text-muted-foreground">{t('clipList.loadingClips')}</p>
         </div>
       </div>
     );
@@ -66,9 +114,9 @@ export function ClipList({
   if (clips.length === 0) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
-        <h3 className="mb-2 text-lg font-semibold text-gray-400">No clips yet</h3>
+        <h3 className="mb-2 text-lg font-semibold text-gray-400">{t('clipList.empty')}</h3>
         <p className="max-w-xs text-sm text-gray-500">
-          Copy something to your clipboard and it will appear here.
+          {t('clipList.emptyDesc')}
         </p>
       </div>
     );
@@ -88,6 +136,13 @@ export function ClipList({
       {clips.map((clip) => (
         <ClipCard
           key={clip.id}
+          ref={(el) => {
+            if (el) {
+              cardRefs.current.set(clip.id, el);
+            } else {
+              cardRefs.current.delete(clip.id);
+            }
+          }}
           clip={clip}
           isSelected={selectedClipId === clip.id}
           onSelect={() => onSelectClip(clip.id)}

@@ -1,10 +1,12 @@
+import { isMacOS } from './utils/platform';
+
 export const LAYOUT = {
-  WINDOW_HEIGHT: 298, // keep sync with backend (constants.rs)
+  WINDOW_HEIGHT: isMacOS() ? 293 : 330, // keep sync with backend (constants.rs)
   CONTROL_BAR_HEIGHT: 64,
   CARD_WIDTH: 210,
   CARD_GAP: 24,
   SIDE_PADDING: 20,
-  CARD_VERTICAL_PADDING: 12,
+  CARD_VERTICAL_PADDING: 16,
   PADDING_OPACITY: 0.2,
   WINDOW_PADDING: 16, // In pixels
   BLUR_AMOUNT: '8px', // Intensity of the blur

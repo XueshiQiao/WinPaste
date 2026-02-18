@@ -5,8 +5,8 @@ interface KeyboardOptions {
   onSearch?: () => void;
   onDelete?: () => void;
   onPin?: () => void;
-  onNavigateUp?: () => void;
-  onNavigateDown?: () => void;
+  onNavigateLeft?: () => void;
+  onNavigateRight?: () => void;
   onPaste?: () => void;
 }
 
@@ -33,14 +33,14 @@ export function useKeyboard(options: KeyboardOptions) {
         options.onPin();
       }
 
-      if (e.key === 'ArrowUp' && options.onNavigateUp) {
+      if (e.key === 'ArrowLeft' && options.onNavigateLeft) {
         e.preventDefault();
-        options.onNavigateUp();
+        options.onNavigateLeft();
       }
 
-      if (e.key === 'ArrowDown' && options.onNavigateDown) {
+      if (e.key === 'ArrowRight' && options.onNavigateRight) {
         e.preventDefault();
-        options.onNavigateDown();
+        options.onNavigateRight();
       }
 
       if (e.key === 'Enter' && options.onPaste) {

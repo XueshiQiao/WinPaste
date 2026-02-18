@@ -12,8 +12,11 @@ import { FolderModal } from './components/FolderModal';
 import { AiResultDialog } from './components/AiResultDialog';
 import { useKeyboard } from './hooks/useKeyboard';
 import { useTheme } from './hooks/useTheme';
+import { useLanguage } from './hooks/useLanguage';
+import { useTranslation } from 'react-i18next';
 import { Toaster, toast } from 'sonner';
 import { LAYOUT } from './constants';
+import { isMacOS } from './utils/platform';
 
 const base64ToBlob = (base64: string, mimeType: string = 'image/png'): Blob => {
   const byteCharacters = atob(base64);
@@ -55,6 +58,8 @@ function App() {
   });
 
   const effectiveTheme = useTheme(theme);
+  useLanguage(settings?.language);
+  const { t } = useTranslation();
 
   const appWindow = getCurrentWindow();
   const selectedFolderRef = useRef(selectedFolder);
@@ -102,6 +107,7 @@ function App() {
       height: 700,
       resizable: true,
       decorations: false, // We have our own title bar in SettingsPanel
+      transparent: false,
       center: true,
     });
 
@@ -312,12 +318,6 @@ function App() {
     };
   }, [refreshCurrentFolder, loadFolders, refreshTotalCount]);
 
-  useKeyboard({
-    onClose: () => appWindow.hide(),
-    onSearch: () => setShowSearch(true),
-    onDelete: () => handleDelete(selectedClipId),
-  });
-
   const handleDelete = async (clipId: string | null) => {
     if (!clipId) return;
     try {
@@ -327,29 +327,26 @@ function App() {
       // Refresh counts
       loadFolders();
       refreshTotalCount();
-      toast.success('Clip deleted');
+      toast.success(t('notifications.clipDeleted'));
     } catch (error) {
       console.error('Failed to delete clip:', error);
-      toast.error('Failed to delete clip');
+      toast.error(t('notifications.clipDeleteFailed'));
     }
   };
 
   const handlePaste = async (clipId: string) => {
     try {
       const clip = clips.find((c) => c.id === clipId);
-      if (clip && clip.clip_type === 'image') {
+      if (clip && clip.clip_type === 'image' && !isMacOS()) {
         try {
-           // clip.content is Base64 for images (from get_clips in commands.rs)
            const blob = base64ToBlob(clip.content, 'image/png');
            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-           console.log("Frontend clipboard write success");
         } catch (e) {
            console.error("Frontend clipboard write failed", e);
         }
       }
 
-      await invoke('paste_clip', { id: clipId });
-      // Backend now handles hiding and auto-pasting (and database update)
+      invoke('paste_clip', { id: clipId }).catch(console.error);
     } catch (error) {
       console.error('Failed to paste clip:', error);
     }
@@ -358,7 +355,7 @@ function App() {
   const handleCopy = async (clipId: string) => {
     try {
       const clip = clips.find((c) => c.id === clipId);
-      if (clip && clip.clip_type === 'image') {
+      if (clip && clip.clip_type === 'image' && !isMacOS()) {
         const blob = base64ToBlob(clip.content, 'image/png');
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
         // For copy, we might not need to call backend 'paste_clip' if we just want to copy?
@@ -398,12 +395,58 @@ function App() {
       // Note: If 'paste_clip' does Ctrl+V, then this "Copy" button actually Pastes.
       // Refactoring that is out of scope unless necessary.
 
-      toast.success('Copied to clipboard');
+      toast.success(t('common.copied'));
     } catch (error) {
       console.error('Failed to copy clip:', error);
-      toast.error('Failed to copy');
+      toast.error(t('notifications.copyFailed'));
     }
   };
+
+  // Keyboard navigation handlers
+  const handleNavigateLeft = useCallback(() => {
+    if (clips.length === 0) return;
+
+    if (!selectedClipId) {
+      // No selection, select the first clip
+      setSelectedClipId(clips[0].id);
+      return;
+    }
+
+    const currentIndex = clips.findIndex(c => c.id === selectedClipId);
+    if (currentIndex > 0) {
+      setSelectedClipId(clips[currentIndex - 1].id);
+    }
+  }, [clips, selectedClipId]);
+
+  const handleNavigateRight = useCallback(() => {
+    if (clips.length === 0) return;
+
+    if (!selectedClipId) {
+      // No selection, select the first clip
+      setSelectedClipId(clips[0].id);
+      return;
+    }
+
+    const currentIndex = clips.findIndex(c => c.id === selectedClipId);
+    if (currentIndex < clips.length - 1) {
+      setSelectedClipId(clips[currentIndex + 1].id);
+    }
+  }, [clips, selectedClipId]);
+
+  const handlePasteSelected = useCallback(() => {
+    if (selectedClipId) {
+      handlePaste(selectedClipId);
+    }
+  }, [selectedClipId, handlePaste]);
+
+  useKeyboard({
+    onClose: () => appWindow.hide(),
+    onSearch: () => setShowSearch(true),
+    onDelete: () => handleDelete(selectedClipId),
+    onNavigateLeft: handleNavigateLeft,
+    onNavigateRight: handleNavigateRight,
+    onPaste: handlePasteSelected,
+  });
 
   const handleCreateFolder = async (name: string) => {
     try {
@@ -464,7 +507,7 @@ function App() {
 
   const handleAiAction = async (clipId: string, action: string, title: string) => {
     try {
-      const toastId = toast.loading('Processing with AI...');
+      const toastId = toast.loading(t('ai.processing'));
       const result = await invoke<string>('ai_process_clip', { clipId, action });
       toast.dismiss(toastId);
       setAiResult({
@@ -475,7 +518,7 @@ function App() {
     } catch (error) {
       toast.dismiss();
       console.error('AI Processing Failed:', error);
-      toast.error(`AI Error: ${error}`);
+      toast.error(t('ai.error', { error: String(error) }));
     }
   };
 
@@ -500,19 +543,19 @@ function App() {
   const handleCreateOrRenameFolder = async (name: string) => {
     if (folderModalMode === 'create') {
       await handleCreateFolder(name);
-      toast.success(`Folder "${name}" created`);
+      toast.success(t('folders.folderCreated', { name }));
       setShowAddFolderModal(false);
       setNewFolderName('');
     } else if (folderModalMode === 'rename' && editingFolderId) {
       try {
         await invoke('rename_folder', { id: editingFolderId, name });
         await loadFolders();
-        toast.success(`Renamed to "${name}"`);
+        toast.success(t('folders.folderRenamed', { name }));
         setShowAddFolderModal(false);
         setNewFolderName('');
       } catch (error) {
         console.error('Failed to rename folder:', error);
-        toast.error('Failed to rename folder');
+        toast.error(t('notifications.folderRenameFailed'));
       }
     }
   };
@@ -526,33 +569,35 @@ function App() {
       }
       await loadFolders();
       refreshTotalCount();
-      toast.success('Folder deleted');
+      toast.success(t('folders.folderDeleted'));
     } catch (error) {
       console.error('Failed to delete folder:', error);
-      toast.error('Failed to delete folder');
+      toast.error(t('notifications.folderDeleteFailed'));
     }
   };
 
+  const mac = isMacOS();
+
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/*
-      Background Layer with Blur:
-      The Limitation: Standard CSS backdrop-filter:
-      blur() works by blurring elements behind the div. However, on a transparent app window,
-      the "element behind" is the OS desktop, which the browser engine cannot see or blur for security and
-      performance reasons. This is why you see "no blur" right now—it's trying to blur transparent pixels.
-      */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundColor: 'transparent',
-          backdropFilter: 'blur(2px)',
-        }}
-      />
+      {/* Blur layer: Windows only */}
+      {!mac && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundColor: 'transparent',
+            backdropFilter: 'blur(2px)',
+          }}
+        />
+      )}
 
       {/* Content Container */}
-      <div className="relative h-full w-full" style={{ padding: `${LAYOUT.WINDOW_PADDING}px` }}>
-        <div className="flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-border/10 bg-background/80 font-sans text-foreground shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]">
+      <div className="relative h-full w-full" style={{ padding: mac ? '0px' : `${LAYOUT.WINDOW_PADDING}px` }}>
+        <div className={`flex h-full w-full flex-col overflow-hidden font-sans text-foreground ${
+          mac
+            ? 'rounded-[16px] bg-background'
+            : 'rounded-[16px] border border-border/10 bg-background/80 shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]'
+        }`}>
           {draggingClipId && (
             <DragPreview
               clip={clips.find((c) => c.id === draggingClipId)!}
@@ -569,34 +614,34 @@ function App() {
                 contextMenu.type === 'card'
                   ? [
                       {
-                        label: `${settings?.ai_title_summarize || 'Summarize'} (AI)`,
+                        label: `${settings?.ai_title_summarize || t('contextMenu.summarize')}`,
                         onClick: () =>
-                          handleAiAction(contextMenu.itemId, 'summarize', 'AI Summary'),
+                          handleAiAction(contextMenu.itemId, 'summarize', t('ai.summary')),
                       },
                       {
-                        label: `${settings?.ai_title_translate || 'Translate'} (AI)`,
+                        label: `${settings?.ai_title_translate || t('contextMenu.translate')}`,
                         onClick: () =>
-                          handleAiAction(contextMenu.itemId, 'translate', 'AI Translation'),
+                          handleAiAction(contextMenu.itemId, 'translate', t('ai.translation')),
                       },
                       {
-                        label: `${settings?.ai_title_explain_code || 'Explain Code'} (AI)`,
+                        label: `${settings?.ai_title_explain_code || t('contextMenu.explainCode')}`,
                         onClick: () =>
-                          handleAiAction(contextMenu.itemId, 'explain_code', 'Code Explanation'),
+                          handleAiAction(contextMenu.itemId, 'explain_code', t('ai.codeExplanation')),
                       },
                       {
-                        label: `${settings?.ai_title_fix_grammar || 'Fix Grammar'} (AI)`,
+                        label: `${settings?.ai_title_fix_grammar || t('contextMenu.fixGrammar')}`,
                         onClick: () =>
-                          handleAiAction(contextMenu.itemId, 'fix_grammar', 'Grammar Check'),
+                          handleAiAction(contextMenu.itemId, 'fix_grammar', t('ai.grammarCheck')),
                       },
                       {
-                        label: 'Delete',
+                        label: t('contextMenu.delete'),
                         danger: true,
                         onClick: () => handleDelete(contextMenu.itemId),
                       },
                     ]
                   : [
                       {
-                        label: 'Rename',
+                        label: t('contextMenu.rename'),
                         onClick: () => {
                           setFolderModalMode('rename');
                           setEditingFolderId(contextMenu.itemId);
@@ -606,7 +651,7 @@ function App() {
                         },
                       },
                       {
-                        label: 'Delete',
+                        label: t('contextMenu.delete'),
                         danger: true,
                         onClick: () => handleDeleteFolder(contextMenu.itemId),
                       },
@@ -647,7 +692,7 @@ function App() {
             theme={effectiveTheme}
           />
 
-          <main className="no-scrollbar relative flex-1">
+          <main className="no-scrollbar relative flex-1 overflow-hidden">
             <ClipList
               clips={clips}
               isLoading={isLoading}

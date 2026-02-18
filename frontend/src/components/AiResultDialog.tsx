@@ -1,6 +1,7 @@
 import { X, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface AiResultDialogProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface AiResultDialogProps {
 }
 
 export function AiResultDialog({ isOpen, title, content, onClose }: AiResultDialogProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -32,11 +34,11 @@ export function AiResultDialog({ isOpen, title, content, onClose }: AiResultDial
       // But this is new content.
       await navigator.clipboard.writeText(content);
       setCopied(true);
-      toast.success('Copied to clipboard');
+      toast.success(t('common.copied'));
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
-      toast.error('Failed to copy');
+      toast.error(t('notifications.copyFailed'));
     }
   };
 
@@ -44,14 +46,14 @@ export function AiResultDialog({ isOpen, title, content, onClose }: AiResultDial
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="flex h-[80vh] w-[90vw] max-w-2xl flex-col rounded-xl border border-border bg-background shadow-2xl">
+      <div className="flex h-[80vh] w-[90vw] max-w-2xl flex-col rounded-2xl border border-border bg-background shadow-2xl">
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="text-lg font-semibold">{title}</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
               className="rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
-              title="Copy content"
+              title={t('settings.copyContent')}
             >
               {copied ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
             </button>

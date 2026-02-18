@@ -6,21 +6,33 @@ use std::sync::Arc;
 use crate::database::Database;
 use uuid::Uuid;
 use sha2::{Digest, Sha256};
+#[cfg(target_os = "windows")]
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+#[cfg(target_os = "windows")]
 use windows::Win32::Foundation::MAX_PATH;
+#[cfg(target_os = "windows")]
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
+#[cfg(target_os = "windows")]
 use windows::Win32::System::ProcessStatus::{GetModuleBaseNameW, GetModuleFileNameExW};
+#[cfg(target_os = "windows")]
 use windows::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
+#[cfg(target_os = "windows")]
 use windows::Win32::System::DataExchange::GetClipboardOwner;
+#[cfg(target_os = "windows")]
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId, DestroyIcon, DrawIconEx, DI_NORMAL, GetIconInfo, ICONINFO};
+#[cfg(target_os = "windows")]
 use windows::Win32::UI::Input::KeyboardAndMouse::{SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_SHIFT, VK_INSERT};
+#[cfg(target_os = "windows")]
 use windows::Win32::UI::Shell::{SHGetFileInfoW, SHGFI_ICON, SHGFI_LARGEICON, SHFILEINFOW, SHGFI_USEFILEATTRIBUTES};
+#[cfg(target_os = "windows")]
 use windows::Win32::Graphics::Gdi::{
     GetObjectW, GetDC, ReleaseDC, CreateCompatibleDC, SelectObject, DeleteDC,
     GetDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
     BITMAP, HBITMAP, CreateCompatibleBitmap, DeleteObject
 };
+#[cfg(target_os = "windows")]
 use std::ffi::OsStr;
+#[cfg(target_os = "windows")]
 use std::os::windows::ffi::OsStrExt;
 use once_cell::sync::Lazy;
 
@@ -66,6 +78,11 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
         let app = app_clone.clone();
         let db = db_clone.clone();
 
+        // Capture source app info IMMEDIATELY at event time, before debounce delay.
+        // If we wait until after the delay, the user may have already switched to PastePaw,
+        // causing frontmostApplication to return our own app instead of the real source.
+        let source_app_info = get_clipboard_owner_app_info();
+
         // DEBOUNCE LOGIC:
         let current_count = DEBOUNCE_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
 
@@ -77,12 +94,14 @@ pub fn init(app: &AppHandle, db: Arc<Database>) {
                 return;
             }
 
-            process_clipboard_change(app, db).await;
+            process_clipboard_change(app, db, source_app_info).await;
         });
     });
 }
 
-async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
+type SourceAppInfo = (Option<String>, Option<String>, Option<String>, Option<String>, bool);
+
+async fn process_clipboard_change(app: AppHandle, db: Arc<Database>, source_app_info: SourceAppInfo) {
     let _guard = CLIPBOARD_SYNC.lock().await;
 
     let mut clip_type = "text";
@@ -162,34 +181,36 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
         }
     }
 
-    // capture source app info
-    let (source_app, source_icon, exe_name, full_path, is_explicit_owner) = get_clipboard_owner_app_info();
+    // Source app info was captured at event time (before debounce) to avoid race conditions
+    let (source_app, source_icon, exe_name, full_path, is_explicit_owner) = source_app_info;
     log::info!("CLIPBOARD: Source app: {:?}, exe_name: {:?}, full_path: {:?}, explicit: {}", source_app, exe_name, full_path, is_explicit_owner);
 
-    // Check ignore_ghost_clips setting
-    let pool = &db.pool;
-    let ignore_ghost_clips = sqlx::query_scalar::<_, String>(r#"SELECT value FROM settings WHERE key = 'ignore_ghost_clips'"#)
-        .fetch_optional(pool)
-        .await
-        .unwrap_or(None)
-        .and_then(|v| v.parse::<bool>().ok())
-        .unwrap_or(false);
+    // Check settings (cached via SettingsManager)
+    use tauri::Manager;
+    use crate::settings_manager::SettingsManager;
+    let manager = app.state::<Arc<SettingsManager>>();
+    let settings = manager.get();
 
-    if ignore_ghost_clips && !is_explicit_owner {
+    if settings.ignore_ghost_clips && !is_explicit_owner {
         log::info!("CLIPBOARD: Ignoring ghost clip (unknown owner)");
         return;
     }
 
-    // Check if the app is in the ignore list
+    // Check if the app is in the ignore list (Case Insensitive)
+    let is_ignored = |name: &str| {
+        let name_lower = name.to_lowercase();
+        settings.ignored_apps.iter().any(|app| app.to_lowercase() == name_lower)
+    };
+
     if let Some(ref path) = full_path {
-        if let Ok(true) = db.is_app_ignored(path).await {
+        if is_ignored(path) {
              log::info!("CLIPBOARD: Ignoring content from ignored app (path match): {}", path);
              return;
         }
     }
 
     if let Some(ref exe) = exe_name {
-        if let Ok(true) = db.is_app_ignored(exe).await {
+        if is_ignored(exe) {
              log::info!("CLIPBOARD: Ignoring content from ignored app (exe match): {}", exe);
              return;
         }
@@ -205,7 +226,9 @@ async fn process_clipboard_change(app: AppHandle, db: Arc<Database>) {
         .unwrap_or(None);
 
     if let Some(existing_id) = existing_uuid {
-        let _ = sqlx::query(r#"UPDATE clips SET created_at = CURRENT_TIMESTAMP, is_deleted = 0 WHERE uuid = ?"#)
+        let _ = sqlx::query(r#"UPDATE clips SET created_at = CURRENT_TIMESTAMP, is_deleted = 0, source_app = ?, source_icon = ? WHERE uuid = ?"#)
+            .bind(&source_app)
+            .bind(&source_icon)
             .bind(&existing_id)
             .execute(pool)
             .await;
@@ -254,6 +277,7 @@ fn calculate_hash(content: &[u8]) -> String {
     format!("{:x}", result)
 }
 
+#[cfg(target_os = "windows")]
 fn get_clipboard_owner_app_info() -> (Option<String>, Option<String>, Option<String>, Option<String>, bool) {
     unsafe {
         let (hwnd, is_explicit) = match GetClipboardOwner() {
@@ -315,6 +339,7 @@ fn get_clipboard_owner_app_info() -> (Option<String>, Option<String>, Option<Str
     }
 }
 
+#[cfg(target_os = "windows")]
 unsafe fn get_app_description(path: &str) -> Option<String> {
     use std::ffi::c_void;
 
@@ -376,6 +401,7 @@ unsafe fn get_app_description(path: &str) -> Option<String> {
     None
 }
 
+#[cfg(target_os = "windows")]
 unsafe fn extract_icon(path: &str) -> Option<String> {
     use image::ImageEncoder;
 
@@ -503,4 +529,101 @@ pub fn send_paste_input() {
 
         SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
     }
+}
+
+#[cfg(target_os = "macos")]
+fn get_clipboard_owner_app_info() -> (Option<String>, Option<String>, Option<String>, Option<String>, bool) {
+    crate::source_app_macos::get_frontmost_app_info()
+}
+
+#[cfg(target_os = "macos")]
+pub fn write_png_to_pasteboard(png_bytes: &[u8]) -> Result<(), String> {
+    use cocoa::base::{nil, id, BOOL};
+    use cocoa::foundation::NSString;
+    use objc::{msg_send, sel, sel_impl, class};
+
+    // Write PNG to a temp file so target apps can read via file URL (fast SSD path)
+    let tmp_dir = std::env::temp_dir().join("pastepaw_images");
+    let _ = std::fs::create_dir_all(&tmp_dir);
+    let tmp_path = tmp_dir.join(format!("paste_{}.png", std::process::id()));
+    std::fs::write(&tmp_path, png_bytes)
+        .map_err(|e| format!("Failed to write temp PNG: {}", e))?;
+    let file_url_str = format!("file://{}", tmp_path.to_string_lossy());
+
+    unsafe {
+        let pasteboard: id = msg_send![class!(NSPasteboard), generalPasteboard];
+        let _: i64 = msg_send![pasteboard, clearContents];
+
+        let png_data: id = msg_send![class!(NSData), dataWithBytes:png_bytes.as_ptr() length:png_bytes.len()];
+        let url_nsstring = NSString::alloc(nil).init_str(&file_url_str);
+
+        let png_type = NSString::alloc(nil).init_str("public.png");
+        let file_url_type = NSString::alloc(nil).init_str("public.file-url");
+
+        let _: BOOL = msg_send![pasteboard, setData:png_data forType:png_type];
+
+        // Set file URL as UTF-8 data — target apps read the image from disk directly
+        let url_data: id = msg_send![url_nsstring, dataUsingEncoding:4u64]; // NSUTF8StringEncoding = 4
+        let _: BOOL = msg_send![pasteboard, setData:url_data forType:file_url_type];
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+pub fn send_paste_input() {
+    use core_graphics::event::{CGEvent, CGEventTapLocation, CGEventFlags, CGKeyCode};
+    use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
+
+    #[cfg(feature = "app-store")]
+    {
+        if !crate::source_app_macos::is_accessibility_enabled() {
+            log::warn!("CLIPBOARD: Auto-paste failed because Accessibility permissions are not granted.");
+            return;
+        }
+    }
+
+    // Give a brief delay for focus to switch
+    std::thread::sleep(std::time::Duration::from_millis(20));
+
+    // kVK_ANSI_V = 0x09
+    let v_key: CGKeyCode = 0x09;
+    // kVK_Command = 0x37 (55)
+    let cmd_key: CGKeyCode = 0x37;
+
+    let source = match CGEventSource::new(CGEventSourceStateID::HIDSystemState) {
+        Ok(src) => src,
+        Err(e) => {
+            log::error!("CLIPBOARD: Failed to create CGEventSource: {:?}", e);
+            return;
+        }
+    };
+
+    // 1. Cmd Down
+    if let Ok(event) = CGEvent::new_keyboard_event(source.clone(), cmd_key, true) {
+        event.set_flags(CGEventFlags::CGEventFlagCommand); 
+        event.post(CGEventTapLocation::HID);
+    } else {
+        log::error!("CLIPBOARD: Failed to create Cmd Down event");
+    }
+
+    // 2. V Down
+    if let Ok(event) = CGEvent::new_keyboard_event(source.clone(), v_key, true) {
+        event.set_flags(CGEventFlags::CGEventFlagCommand);
+        event.post(CGEventTapLocation::HID);
+    } else {
+        log::error!("CLIPBOARD: Failed to create V Down event");
+    }
+
+    // 3. V Up
+    if let Ok(event) = CGEvent::new_keyboard_event(source.clone(), v_key, false) {
+        event.set_flags(CGEventFlags::CGEventFlagCommand);
+        event.post(CGEventTapLocation::HID);
+    }
+
+    // 4. Cmd Up
+    if let Ok(event) = CGEvent::new_keyboard_event(source, cmd_key, false) {
+        event.post(CGEventTapLocation::HID);
+    }
+
+    log::info!("CLIPBOARD: Sent Cmd+V via CoreGraphics");
 }

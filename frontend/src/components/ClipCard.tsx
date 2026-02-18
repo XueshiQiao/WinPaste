@@ -1,6 +1,7 @@
 import { ClipboardItem } from '../types';
 import { clsx } from 'clsx';
-import { useMemo, memo, useState } from 'react';
+import { useMemo, memo, useState, forwardRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LAYOUT, TOTAL_COLUMN_WIDTH, PREVIEW_CHAR_LIMIT } from '../constants';
 import { Copy, Check } from 'lucide-react';
 
@@ -14,7 +15,7 @@ interface ClipCardProps {
   onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-export const ClipCard = memo(function ClipCard({
+export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function ClipCard({
   clip,
   isSelected,
   onSelect,
@@ -22,7 +23,8 @@ export const ClipCard = memo(function ClipCard({
   onCopy,
   onDragStart,
   onContextMenu,
-}: ClipCardProps) {
+}: ClipCardProps, ref) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const title = clip.source_app || clip.clip_type.toUpperCase();
 
@@ -88,9 +90,10 @@ export const ClipCard = memo(function ClipCard({
 
   return (
     <div
+      ref={ref}
       style={{
         width: TOTAL_COLUMN_WIDTH - LAYOUT.CARD_GAP,
-        height: LAYOUT.WINDOW_HEIGHT - LAYOUT.CONTROL_BAR_HEIGHT - LAYOUT.CARD_VERTICAL_PADDING * 2,
+        height: 'calc(100% - 32px)',
       }}
       className="flex-shrink-0"
     >
@@ -100,7 +103,7 @@ export const ClipCard = memo(function ClipCard({
         onDoubleClick={onPaste}
         onContextMenu={handleContextMenu}
         className={clsx(
-          'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all',
+          'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all',
           isSelected
             ? 'z-10 scale-[1.02] transform ring-4 ring-blue-500'
             : 'hover:-translate-y-1 hover:ring-2 hover:ring-primary/30',
@@ -115,7 +118,7 @@ export const ClipCard = memo(function ClipCard({
               className="h-4 w-4 object-contain"
             />
           )}
-          <span className="flex-1 truncate text-[11px] font-bold uppercase tracking-wider text-foreground shadow-sm">
+          <span className="flex-1 truncate text-[11px] font-bold uppercase tracking-wider text-foreground">
             {title}
           </span>
           <button
@@ -144,11 +147,11 @@ export const ClipCard = memo(function ClipCard({
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card via-card/100 to-transparent/0 px-3 py-1.5">
           <span className="text-[11px] font-medium text-muted-foreground/50">
             {clip.clip_type === 'image'
-              ? `Image (${Math.round((clip.content.length * 0.75) / 1024)}KB)`
-              : `${clip.content.length} characters`}
+              ? t('clipList.imageSize', { size: Math.round((clip.content.length * 0.75) / 1024) })
+              : t('clipList.textLength', { count: clip.content.length })}
           </span>
         </div>
       </div>
     </div>
   );
-});
+}));
