@@ -596,7 +596,7 @@ function App() {
         <div className={`flex h-full w-full flex-col overflow-hidden font-sans text-foreground ${
           mac
             ? 'rounded-[16px] bg-background'
-            : 'rounded-[16px] border border-border/10 bg-background/80 shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]'
+            : 'rounded-[16px] border border-border/10 bg-background/95 shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]'
         }`}>
           {draggingClipId && (
             <DragPreview
