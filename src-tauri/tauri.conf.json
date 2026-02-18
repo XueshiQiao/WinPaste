@@ -20,7 +20,7 @@
         "resizable": false,
         "fullscreen": false,
         "decorations": false,
-        "transparent": false,
+        "transparent": true,
         "shadow": false,
         "visible": false,
         "center": false,
