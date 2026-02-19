@@ -147,7 +147,7 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
         <div
           className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-200 dark:hidden"
           style={{
-            opacity: 'calc(var(--ambient-opacity) * 0.78)',
+            opacity: '0',
             background: `
               radial-gradient(300px circle at var(--ambient-x) var(--ambient-y), hsl(var(--foreground) / 0.09), transparent 68%),
               radial-gradient(150px circle at var(--ambient-x) var(--ambient-y), hsl(var(--app-hue) 88% 60% / 0.12), transparent 74%)
