@@ -49,33 +49,20 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
     }
   }, [clip.clip_type, clip.content]);
 
-  // Generate distinct color based on source app name
-  const getAppColor = (name: string) => {
+  // Generate stable color index based on source app name
+  const getAppColorIndex = (name: string) => {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const colors = [
-      'bg-red-400',
-      'bg-orange-400',
-      'bg-amber-400',
-      'bg-green-400',
-      'bg-emerald-400',
-      'bg-teal-400',
-      'bg-cyan-400',
-      'bg-sky-400',
-      'bg-blue-400',
-      'bg-indigo-400',
-      'bg-violet-400',
-      'bg-purple-400',
-      'bg-fuchsia-400',
-      'bg-pink-400',
-      'bg-rose-400',
-    ];
-    return colors[Math.abs(hash) % colors.length];
+    return Math.abs(hash) % 15;
   };
 
-  const headerColor = getAppColor(title);
+  const appHue = useMemo(() => {
+    const index = getAppColorIndex(title);
+    const hueStep = 360 / 15;
+    return Math.round(index * hueStep);
+  }, [title]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     // Only left click
@@ -86,6 +73,41 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     onContextMenu?.(e);
+  };
+
+  const handleAmbientMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const leftDistance = x;
+    const rightDistance = rect.width - x;
+    const topDistance = y;
+    const bottomDistance = rect.height - y;
+    const minDistance = Math.min(leftDistance, rightDistance, topDistance, bottomDistance);
+
+    let edgeX = x;
+    let edgeY = y;
+
+    if (minDistance === leftDistance) {
+      edgeX = 0;
+    } else if (minDistance === rightDistance) {
+      edgeX = rect.width;
+    } else if (minDistance === topDistance) {
+      edgeY = 0;
+    } else {
+      edgeY = rect.height;
+    }
+
+    e.currentTarget.style.setProperty('--ambient-x', `${x}px`);
+    e.currentTarget.style.setProperty('--ambient-y', `${y}px`);
+    e.currentTarget.style.setProperty('--edge-x', `${edgeX}px`);
+    e.currentTarget.style.setProperty('--edge-y', `${edgeY}px`);
+    e.currentTarget.style.setProperty('--ambient-opacity', '1');
+  };
+
+  const handleAmbientLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.setProperty('--ambient-opacity', '0');
   };
 
   return (
@@ -99,18 +121,74 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
     >
       <div
         onMouseDown={handleMouseDown}
+        onMouseMove={handleAmbientMove}
+        onMouseLeave={handleAmbientLeave}
         onClick={onSelect}
         onDoubleClick={onPaste}
         onContextMenu={handleContextMenu}
+        style={{
+          '--ambient-x': '50%',
+          '--ambient-y': '50%',
+          '--edge-x': '50%',
+          '--edge-y': '0%',
+          '--ambient-opacity': 0,
+          '--app-hue': `${appHue}`,
+        } as React.CSSProperties}
         className={clsx(
           'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all',
           isSelected
             ? 'z-10 scale-[1.02] transform ring-4 ring-blue-500'
-            : 'hover:-translate-y-1 hover:ring-2 hover:ring-primary/30',
+            : 'hover:-translate-y-1',
           'group'
         )}
       >
-        <div className={clsx(headerColor, 'flex flex-shrink-0 items-center gap-2 px-2 py-1.5')}>
+        <div
+          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-200 dark:hidden"
+          style={{
+            opacity: 'calc(var(--ambient-opacity) * 0.78)',
+            background: `
+              radial-gradient(300px circle at var(--ambient-x) var(--ambient-y), hsl(var(--foreground) / 0.09), transparent 68%),
+              radial-gradient(150px circle at var(--ambient-x) var(--ambient-y), hsl(var(--app-hue) 88% 60% / 0.12), transparent 74%)
+            `,
+            mixBlendMode: 'normal',
+          }}
+        />
+
+        <div
+          className="pointer-events-none absolute inset-0 z-20 hidden transition-opacity duration-200 dark:block"
+          style={{
+            opacity: 'calc(var(--ambient-opacity) * 0.95)',
+            background: `
+              radial-gradient(260px circle at var(--ambient-x) var(--ambient-y), hsl(var(--app-hue) 88% 62% / 0.22), transparent 68%),
+              radial-gradient(140px circle at var(--ambient-x) var(--ambient-y), hsl(var(--foreground) / 0.12), transparent 72%)
+            `,
+            mixBlendMode: 'screen',
+          }}
+        />
+
+        <div
+          className={clsx(
+            'pointer-events-none absolute inset-0 z-20 rounded-2xl p-[1.25px] transition-opacity duration-200',
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          )}
+          style={{
+            background: `
+              radial-gradient(170px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 90% 64% / 0.92), transparent 62%),
+              radial-gradient(120px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 86% 58% / 0.52), transparent 70%),
+              radial-gradient(95px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 82% 50% / 0.46), transparent 76%)
+            `,
+            WebkitMask:
+              'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+            filter: 'saturate(1.2) blur(0.2px)',
+          } as React.CSSProperties}
+        />
+
+        <div
+          className="relative z-10 flex flex-shrink-0 items-center gap-2 px-2 py-1.5"
+          style={{ backgroundColor: `hsl(${appHue} 82% 60%)` }}
+        >
           {clip.source_icon && (
             <img
               src={`data:image/png;base64,${clip.source_icon}`}
@@ -139,12 +217,12 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
           </button>
         </div>
 
-        <div className="relative flex-1 overflow-hidden bg-card p-2">
+        <div className="relative z-10 flex-1 overflow-hidden bg-card/90 p-2">
           {renderedContent}
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card/100 to-card/30" />
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card via-card/100 to-transparent/0 px-3 py-1.5">
+        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-card via-card/100 to-transparent/0 px-3 py-1.5">
           <span className="text-[11px] font-medium text-muted-foreground/50">
             {clip.clip_type === 'image'
               ? t('clipList.imageSize', { size: Math.round((clip.content.length * 0.75) / 1024) })
