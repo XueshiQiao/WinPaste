@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect, useMemo } from 'react';
+import { CSSProperties, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Grid, GridProps, useGridCallbackRef } from 'react-window';
 import { ClipboardItem } from '../types';
@@ -33,6 +33,8 @@ export function ClipList({
 }: ClipListProps) {
   const { t } = useTranslation();
   const [gridApi, setGridApi] = useGridCallbackRef();
+  const wheelTargetRef = useRef(0);
+  const wheelRafRef = useRef<number | null>(null);
   const selectedClipIndex = useMemo(
     () => (selectedClipId ? clips.findIndex((clip) => clip.id === selectedClipId) : -1),
     [clips, selectedClipId]
@@ -49,13 +51,60 @@ export function ClipList({
   }, [gridApi, selectedClipIndex]);
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (e.deltaY !== 0) {
-      const element = gridApi?.element;
-      if (!element) return;
-      e.preventDefault();
-      element.scrollLeft += e.deltaY;
+    const element = gridApi?.element;
+    if (!element) return;
+
+    const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (rawDelta === 0) return;
+
+    e.preventDefault();
+
+    let deltaPx = rawDelta;
+    if (e.deltaMode === 1) {
+      deltaPx *= 16;
+    } else if (e.deltaMode === 2) {
+      deltaPx *= element.clientWidth;
     }
+
+    // Smaller per-notch travel with a single RAF-driven animation target.
+    const scrollStep = deltaPx * 0.52;
+    const estimatedMax = Math.max(0, clips.length * TOTAL_COLUMN_WIDTH - element.clientWidth);
+    const measuredMax = Math.max(0, element.scrollWidth - element.clientWidth);
+    const maxScrollLeft = Math.max(estimatedMax, measuredMax);
+
+    const baseTarget = wheelRafRef.current === null ? element.scrollLeft : wheelTargetRef.current;
+    wheelTargetRef.current = Math.min(maxScrollLeft, Math.max(0, baseTarget + scrollStep));
+
+    if (wheelRafRef.current !== null) return;
+
+    const tick = () => {
+      const el = gridApi?.element;
+      if (!el) {
+        wheelRafRef.current = null;
+        return;
+      }
+
+      const diff = wheelTargetRef.current - el.scrollLeft;
+      if (Math.abs(diff) < 0.5) {
+        el.scrollLeft = wheelTargetRef.current;
+        wheelRafRef.current = null;
+        return;
+      }
+
+      el.scrollLeft += diff * 0.24;
+      wheelRafRef.current = requestAnimationFrame(tick);
+    };
+
+    wheelRafRef.current = requestAnimationFrame(tick);
   };
+
+  useEffect(() => {
+    return () => {
+      if (wheelRafRef.current !== null) {
+        cancelAnimationFrame(wheelRafRef.current);
+      }
+    };
+  }, []);
 
   const handleCellsRendered: GridProps<{}>['onCellsRendered'] = (_visibleCells, allCells) => {
     if (!hasMore || isLoading) return;
