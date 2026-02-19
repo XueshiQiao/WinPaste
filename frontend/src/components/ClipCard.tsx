@@ -170,14 +170,15 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
 
         <div
           className={clsx(
-            'pointer-events-none absolute inset-0 z-20 rounded-2xl p-[1.25px] transition-opacity duration-200',
+            'pointer-events-none absolute -inset-px z-20 rounded-[16.5px] p-[2.5px] transition-opacity duration-200 dark:p-[1.5px]',
             isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           )}
           style={{
             background: `
               radial-gradient(170px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 90% 64% / 0.92), transparent 62%),
               radial-gradient(120px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 86% 58% / 0.52), transparent 70%),
-              radial-gradient(95px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 82% 50% / 0.46), transparent 76%)
+              radial-gradient(95px circle at var(--edge-x) var(--edge-y), hsl(var(--app-hue) 82% 50% / 0.46), transparent 76%),
+              linear-gradient(hsl(var(--app-hue) 84% 56% / 0.28), hsl(var(--app-hue) 84% 56% / 0.28))
             `,
             WebkitMask:
               'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
