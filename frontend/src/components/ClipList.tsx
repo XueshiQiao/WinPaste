@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
+import { CSSProperties, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Grid, GridProps, useGridCallbackRef } from 'react-window';
 import { ClipboardItem } from '../types';
 import { ClipCard } from './ClipCard';
 import { TOTAL_COLUMN_WIDTH } from '../constants';
@@ -31,73 +32,61 @@ export function ClipList({
   onCardContextMenu,
 }: ClipListProps) {
   const { t } = useTranslation();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [gridApi, setGridApi] = useGridCallbackRef();
+  const selectedClipIndex = useMemo(
+    () => (selectedClipId ? clips.findIndex((clip) => clip.id === selectedClipId) : -1),
+    [clips, selectedClipId]
+  );
 
-  // Scroll selected card into view when selection changes
   useEffect(() => {
-    if (selectedClipId && containerRef.current) {
-      const selectedCard = cardRefs.current.get(selectedClipId);
-      const container = containerRef.current;
-
-      if (selectedCard) {
-        const cardLeft = selectedCard.offsetLeft;
-        const cardWidth = selectedCard.offsetWidth;
-        const scrollLeft = container.scrollLeft;
-        const containerWidth = container.clientWidth;
-
-        // Offset to reveal about 1/3 of adjacent card
-        const peekOffset = TOTAL_COLUMN_WIDTH / 3;
-
-        // Card position relative to current scroll
-        const cardStart = cardLeft;
-        const cardEnd = cardLeft + cardWidth;
-        const visibleStart = scrollLeft;
-        const visibleEnd = scrollLeft + containerWidth;
-
-        // Maximum scrollable position
-        const maxScroll = container.scrollWidth - containerWidth;
-
-        let targetScroll = scrollLeft;
-
-        // Card is beyond right edge - scroll to show it plus peek of next card
-        if (cardEnd > visibleEnd) {
-          targetScroll = cardEnd - containerWidth + peekOffset;
-        }
-        // Card is beyond left edge - scroll to show it plus peek of previous card
-        else if (cardStart < visibleStart) {
-          targetScroll = cardStart - peekOffset;
-        }
-
-        if (targetScroll !== scrollLeft) {
-          container.scrollTo({
-            left: Math.min(maxScroll, Math.max(0, targetScroll)), // Clamp to valid scroll range
-            behavior: 'smooth',
-          });
-        }
-      }
+    if (selectedClipIndex >= 0) {
+      gridApi?.scrollToColumn({
+        index: selectedClipIndex,
+        align: 'smart',
+        behavior: 'smooth',
+      });
     }
-  }, [selectedClipId]);
+  }, [gridApi, selectedClipIndex]);
 
-  // Native onScroll handler for infinite scroll
-  const handleScroll = () => {
-    if (!containerRef.current || !hasMore || isLoading) return;
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.deltaY !== 0) {
+      const element = gridApi?.element;
+      if (!element) return;
+      e.preventDefault();
+      element.scrollLeft += e.deltaY;
+    }
+  };
 
-    // We check native scroll properties
-    const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
-
-    // If scrolled within 300px of the end
-    if (scrollLeft + clientWidth >= scrollWidth - 300) {
+  const handleCellsRendered: GridProps<{}>['onCellsRendered'] = (_visibleCells, allCells) => {
+    if (!hasMore || isLoading) return;
+    if (allCells.columnStopIndex >= clips.length - 2) {
       onLoadMore();
     }
   };
 
-  // Map vertical mouse wheel to horizontal scroll for better UX
-  const handleWheel = (e: React.WheelEvent) => {
-    if (containerRef.current && e.deltaY !== 0) {
-      // Multiply by 2 for faster scrolling as requested
-      containerRef.current.scrollLeft += e.deltaY * 1;
-    }
+  const Cell = ({
+    columnIndex,
+    style,
+  }: {
+    columnIndex: number;
+    style: CSSProperties;
+  }) => {
+    const clip = clips[columnIndex];
+    if (!clip) return null;
+
+    return (
+      <div style={style} className="flex h-full items-center justify-center">
+        <ClipCard
+          clip={clip}
+          isSelected={selectedClipId === clip.id}
+          onSelect={() => onSelectClip(clip.id)}
+          onPaste={() => onPaste(clip.id)}
+          onCopy={() => onCopy(clip.id)}
+          onDragStart={onDragStart}
+          onContextMenu={(e: React.MouseEvent) => onCardContextMenu?.(e, clip.id)}
+        />
+      </div>
+    );
   };
 
   if (isLoading && clips.length === 0) {
@@ -123,45 +112,28 @@ export function ClipList({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="no-scrollbar flex h-full w-full flex-1 items-center gap-4 overflow-x-auto overflow-y-hidden px-4"
-      onScroll={handleScroll}
+    <Grid
+      className="no-scrollbar h-full w-full flex-1 overflow-x-auto overflow-y-hidden px-4"
+      defaultHeight={240}
+      defaultWidth={1000}
+      gridRef={setGridApi}
+      rowCount={1}
+      rowHeight="100%"
+      columnCount={clips.length}
+      columnWidth={TOTAL_COLUMN_WIDTH}
+      overscanCount={4}
+      cellComponent={({ columnIndex, style }) => (
+        <Cell
+          columnIndex={columnIndex}
+          style={style}
+        />
+      )}
+      cellProps={{}}
+      onCellsRendered={handleCellsRendered}
       onWheel={handleWheel}
       style={{
-        // Smooth scrolling disabled per user request
         scrollBehavior: 'auto',
       }}
-    >
-      {clips.map((clip) => (
-        <ClipCard
-          key={clip.id}
-          ref={(el) => {
-            if (el) {
-              cardRefs.current.set(clip.id, el);
-            } else {
-              cardRefs.current.delete(clip.id);
-            }
-          }}
-          clip={clip}
-          isSelected={selectedClipId === clip.id}
-          onSelect={() => onSelectClip(clip.id)}
-          onPaste={() => onPaste(clip.id)}
-          onCopy={() => onCopy(clip.id)}
-          onDragStart={onDragStart}
-          onContextMenu={(e: React.MouseEvent) => onCardContextMenu?.(e, clip.id)}
-        />
-      ))}
-
-      {/* Loading indicator at the end */}
-      {isLoading && clips.length > 0 && (
-        <div className="flex h-full min-w-[100px] items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-        </div>
-      )}
-
-      {/* Spacer end */}
-      <div className="h-full min-w-[20px] flex-shrink-0" />
-    </div>
+    />
   );
 }
