@@ -133,11 +133,13 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
           '--edge-y': '0%',
           '--ambient-opacity': 0,
           '--app-hue': `${appHue}`,
+          borderColor: isSelected ? `hsl(${appHue} 82% 60%)` : undefined,
+          borderWidth: isSelected ? '2px' : undefined,
         } as React.CSSProperties}
         className={clsx(
           'relative flex h-full w-full cursor-pointer select-none flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all',
           isSelected
-            ? 'z-10 scale-[1.02] transform ring-4 ring-blue-500'
+            ? 'z-10 scale-[1.02] transform'
             : 'hover:-translate-y-1',
           'group'
         )}
