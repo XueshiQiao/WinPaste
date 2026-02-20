@@ -61,8 +61,7 @@ A beautiful clipboard history manager for Windows, built with Rust + Tauri + Rea
 #### 1. Install via Homebrew (macOS)
 
 ```bash
-brew tap XueshiQiao/homebrew-tap
-brew install --cask pastepaw
+brew install xueshiqiao/tap/hypercapslock
 ```
 
 #### 2. Download from GitHub Releases (macOS and Windows)
