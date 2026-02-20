@@ -354,6 +354,7 @@ pub fn run_app() {
             commands::ping,
             commands::get_clips,
             commands::get_clip,
+            commands::get_clip_detail,
             commands::paste_clip,
             commands::delete_clip,
             commands::move_to_folder,

@@ -4,10 +4,11 @@ version = 4
 
 [[package]]
 name = "PastePaw"
-version = "1.2.1"
+version = "1.2.4"
 dependencies = [
  "base64 0.22.1",
  "chrono",
+ "clipboard-rs",
  "cocoa",
  "core-graphics 0.23.2",
  "dark-light",

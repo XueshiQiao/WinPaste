@@ -28,6 +28,19 @@ const base64ToBlob = (base64: string, mimeType: string = 'image/png'): Blob => {
   return new Blob([byteArray], { type: mimeType });
 };
 
+const getImageMimeType = (metadata: string | null): string => {
+  if (!metadata) return 'image/png';
+  try {
+    const parsed = JSON.parse(metadata) as { format?: string };
+    const format = parsed.format?.toLowerCase();
+    if (format === 'jpeg' || format === 'jpg') return 'image/jpeg';
+    if (format === 'webp') return 'image/webp';
+  } catch {
+    // Ignore metadata parse errors and fall back.
+  }
+  return 'image/png';
+};
+
 function App() {
   const [clips, setClips] = useState<AppClipboardItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
@@ -152,7 +165,7 @@ function App() {
             filterId: folderId,
             limit: 20,
             offset: currentOffset,
-            previewOnly: false,
+            previewOnly: true,
           });
           if (perfLogEnabled) invokeEnd = performance.now();
         }
@@ -388,15 +401,24 @@ function App() {
     }
   };
 
+  const getFullImageBlob = useCallback(
+    async (clipId: string, fallbackClip: AppClipboardItem): Promise<Blob> => {
+      const detail = await invoke<AppClipboardItem>('get_clip_detail', { id: clipId });
+      const mimeType = getImageMimeType(detail.metadata ?? fallbackClip.metadata);
+      return base64ToBlob(detail.content, mimeType);
+    },
+    []
+  );
+
   const handlePaste = async (clipId: string) => {
     try {
       const clip = clips.find((c) => c.id === clipId);
       if (clip && clip.clip_type === 'image' && !isMacOS()) {
         try {
-           const blob = base64ToBlob(clip.content, 'image/png');
-           await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+          const blob = await getFullImageBlob(clipId, clip);
+          await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
         } catch (e) {
-           console.error("Frontend clipboard write failed", e);
+          console.error('Frontend clipboard write failed', e);
         }
       }
 
@@ -410,44 +432,11 @@ function App() {
     try {
       const clip = clips.find((c) => c.id === clipId);
       if (clip && clip.clip_type === 'image' && !isMacOS()) {
-        const blob = base64ToBlob(clip.content, 'image/png');
+        const blob = await getFullImageBlob(clipId, clip);
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-        // For copy, we might not need to call backend 'paste_clip' if we just want to copy?
-        // But 'paste_clip' also updates 'last_pasted' timestamp and moves it to top.
-        // The original code called 'paste_clip'. Let's keep consistency but maybe backend copy logic differs?
-        // Actually handleCopy calls 'paste_clip' in original code, which is weird if it simulates Ctrl+V?
-        // 'handleCopy' usually just puts it on clipboard.
-        // If 'paste_clip' simulates input, then 'handleCopy' executing 'paste_clip' would PASTE it.
-        // Let's look at the original code:
-        // await invoke('paste_clip', { id: clipId });
-        // toast.success('Copied to clipboard');
-        // This implies 'paste_clip' MIGHT NOT always paste? Or the user logic was flawed?
-        // Wait, if it's "Copy", we shouldn't simulate Ctrl+V.
-        // Let's assuming for now we just want to write to clipboard.
-
-        // If we write to clipboard here, we might still want to update DB timestamp.
-        // But let's follow the existing pattern: invoke 'paste_clip' but we know we modify it to NOT write image.
-        // Wait, if backend 'paste_clip' performs Ctrl+V, then 'handleCopy' doing 'paste_clip' is wrong?
-        // Let's assume the user just wants to put it on clipboard.
       }
 
-      // We still invoke paste_clip because it probably handles DB updates.
-      // However, if paste_clip simulates Ctrl+V, that would be bad for "Copy".
-      // Let's assume the backend 'paste_clip' logic is "Put to clipboard AND Paste".
-      // Use 'copy_clip_to_clipboard' if it exists?
-      // Checking grep results... no 'copy_clip' found.
-      // It seems 'handleCopy' uses 'paste_clip' which is PROBABLY WRONG if it pastes.
-      // But I will stick to the plan: Frontend writes image.
-
-      // If the backend 'paste_clip' does Paste Input, then 'handleCopy' is actually "Paste" in the current app?
-      // Or maybe 'paste_clip' determines intention? No.
-
-      // Let's just implement the Write Image part.
-      // If it's an image, we write it.
-
       await invoke('paste_clip', { id: clipId });
-      // Note: If 'paste_clip' does Ctrl+V, then this "Copy" button actually Pastes.
-      // Refactoring that is out of scope unless necessary.
 
       toast.success(t('common.copied'));
     } catch (error) {

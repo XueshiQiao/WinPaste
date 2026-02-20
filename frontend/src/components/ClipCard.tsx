@@ -27,17 +27,33 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const title = clip.source_app || clip.clip_type.toUpperCase();
+  const imageSizeKb = useMemo(() => {
+    if (clip.clip_type !== 'image') return 0;
+    try {
+      const parsed = clip.metadata ? (JSON.parse(clip.metadata) as { size_bytes?: number }) : null;
+      if (parsed?.size_bytes && parsed.size_bytes > 0) {
+        return Math.round(parsed.size_bytes / 1024);
+      }
+    } catch {
+      // Ignore invalid metadata and fall back to payload length estimate.
+    }
+    return Math.round((clip.content.length * 0.75) / 1024);
+  }, [clip.clip_type, clip.content.length, clip.metadata]);
 
   // Memoize the content rendering
   const renderedContent = useMemo(() => {
     if (clip.clip_type === 'image') {
       return (
         <div className="flex h-full w-full select-none items-center justify-center">
-          <img
-            src={`data:image/png;base64,${clip.content}`}
-            alt="Clipboard Image"
-            className="max-h-full max-w-full object-contain"
-          />
+          {clip.content ? (
+            <img
+              src={`data:image/png;base64,${clip.content}`}
+              alt="Clipboard Image"
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground/70">Image</span>
+          )}
         </div>
       );
     } else {
@@ -193,7 +209,7 @@ export const ClipCard = memo(forwardRef<HTMLDivElement, ClipCardProps>(function 
         <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-card via-card/100 to-transparent/0 px-3 py-1.5">
           <span className="text-[11px] font-medium text-muted-foreground/50">
             {clip.clip_type === 'image'
-              ? t('clipList.imageSize', { size: Math.round((clip.content.length * 0.75) / 1024) })
+              ? t('clipList.imageSize', { size: imageSizeKb })
               : t('clipList.textLength', { count: clip.content.length })}
           </span>
         </div>
