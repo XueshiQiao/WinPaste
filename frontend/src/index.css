@@ -66,7 +66,6 @@
     @apply m-0 h-full w-full overflow-hidden bg-transparent p-0;
   }
 
-
   body {
     @apply font-sans text-foreground antialiased;
   }

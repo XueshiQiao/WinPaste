@@ -73,7 +73,11 @@ export function FolderModal({ isOpen, mode, initialName, onClose, onSubmit }: Fo
             disabled={isSubmitting}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {isSubmitting ? t('common.loading') : mode === 'create' ? t('common.create') : t('common.save')}
+            {isSubmitting
+              ? t('common.loading')
+              : mode === 'create'
+                ? t('common.create')
+                : t('common.save')}
           </button>
         </div>
       </div>

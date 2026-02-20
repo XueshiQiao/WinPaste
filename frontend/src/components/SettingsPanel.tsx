@@ -235,7 +235,7 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
           console.error('Failed to check accessibility permissions', e);
         }
       };
-      
+
       checkPermissions();
       const interval = setInterval(checkPermissions, 2000);
       return () => clearInterval(interval);
@@ -409,7 +409,7 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
         }}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
       />
-      <div className="flex h-full flex-col select-none bg-background text-foreground">
+      <div className="flex h-full select-none flex-col bg-background text-foreground">
         {/* Header */}
         <div
           className="flex items-center justify-between border-b border-border p-4"
@@ -533,9 +533,15 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
 
                     <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
                       <div>
-                        <span className="text-sm font-medium">{isMacOS() ? t('settings.launchAtLogin') : t('settings.startupWithWindows')}</span>
+                        <span className="text-sm font-medium">
+                          {isMacOS()
+                            ? t('settings.launchAtLogin')
+                            : t('settings.startupWithWindows')}
+                        </span>
                         <p className="text-xs text-muted-foreground">
-                          {isMacOS() ? t('settings.launchAtLoginDesc') : t('settings.startupWithWindowsDesc')}
+                          {isMacOS()
+                            ? t('settings.launchAtLoginDesc')
+                            : t('settings.startupWithWindowsDesc')}
                         </p>
                       </div>
                       <button
@@ -553,7 +559,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                     {isMacOS() && !isAccessibilityEnabled && (
                       <div className="flex items-center justify-between rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3">
                         <div className="flex-1">
-                          <span className="text-sm font-medium text-yellow-600 dark:text-yellow-500">{t('settings.accessibilityPermission')}</span>
+                          <span className="text-sm font-medium text-yellow-600 dark:text-yellow-500">
+                            {t('settings.accessibilityPermission')}
+                          </span>
                           <p className="text-xs text-muted-foreground">
                             {t('settings.accessibilityPermissionDesc')}
                           </p>
@@ -586,7 +594,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
 
                     <div className="flex items-center justify-between rounded-lg border border-border bg-accent/20 p-3">
                       <div>
-                        <span className="text-sm font-medium">{t('settings.ignoreGhostClips')}</span>
+                        <span className="text-sm font-medium">
+                          {t('settings.ignoreGhostClips')}
+                        </span>
                         <p className="text-xs text-muted-foreground">
                           {t('settings.ignoreGhostClipsDesc')}
                         </p>
@@ -605,7 +615,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">{t('settings.shortcuts')}</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t('settings.shortcuts')}
+                    </h3>
                     <div className="space-y-3">
                       <label className="block">
                         <span className="text-sm font-medium">{t('settings.hotkey')}</span>
@@ -692,7 +704,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                       <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
                         {ignoredApps.length === 0 ? (
                           <div className="rounded-lg border border-dashed border-border p-4 text-center">
-                            <p className="text-xs text-muted-foreground">{t('settings.noIgnoredApps')}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {t('settings.noIgnoredApps')}
+                            </p>
                           </div>
                         ) : (
                           ignoredApps.map((app) => (
@@ -715,7 +729,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-sm font-medium text-red-500/80">{t('settings.dataManagement')}</h3>
+                    <h3 className="text-sm font-medium text-red-500/80">
+                      {t('settings.dataManagement')}
+                    </h3>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={confirmClearHistory}
@@ -750,7 +766,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
               {activeTab === 'ai' && (
                 <>
                   <section className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">{t('settings.aiConfiguration')}</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t('settings.aiConfiguration')}
+                    </h3>
 
                     <div className="space-y-3">
                       <label className="block">
@@ -835,7 +853,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
                   </section>
 
                   <section className="space-y-4 border-t border-border/50 pt-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">{t('settings.customPrompts')}</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      {t('settings.customPrompts')}
+                    </h3>
                     <p className="text-xs italic text-muted-foreground">
                       {t('settings.customPromptsDesc')}
                     </p>
@@ -884,7 +904,9 @@ export function SettingsPanel({ settings: initialSettings, onClose }: SettingsPa
               {/* --- FOLDERS TAB --- */}
               {activeTab === 'folders' && (
                 <section className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">{t('settings.manageFolders')}</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    {t('settings.manageFolders')}
+                  </h3>
 
                   <div className="flex gap-2">
                     <input

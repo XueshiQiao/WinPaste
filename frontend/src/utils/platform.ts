@@ -1,4 +1,5 @@
-const _isMacOS = navigator.platform.toUpperCase().includes('MAC') ||
+const _isMacOS =
+  navigator.platform.toUpperCase().includes('MAC') ||
   navigator.userAgent.toUpperCase().includes('MAC');
 
 export function isMacOS(): boolean {

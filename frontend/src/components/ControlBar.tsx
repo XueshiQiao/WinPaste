@@ -338,7 +338,7 @@ export function ControlBar({
       </div>
 
       {/* Actions */}
-      <div 
+      <div
         className="flex flex-shrink-0 items-center gap-2"
         style={{ WebkitAppRegion: 'no-drag' } as any}
         onDoubleClick={(e) => e.stopPropagation()}

@@ -134,13 +134,7 @@ export function ClipList({
     }
   };
 
-  const Cell = ({
-    columnIndex,
-    style,
-  }: {
-    columnIndex: number;
-    style: CSSProperties;
-  }) => {
+  const Cell = ({ columnIndex, style }: { columnIndex: number; style: CSSProperties }) => {
     const clip = clips[columnIndex];
     if (!clip) return null;
 
@@ -174,9 +168,7 @@ export function ClipList({
     return (
       <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
         <h3 className="mb-2 text-lg font-semibold text-gray-400">{t('clipList.empty')}</h3>
-        <p className="max-w-xs text-sm text-gray-500">
-          {t('clipList.emptyDesc')}
-        </p>
+        <p className="max-w-xs text-sm text-gray-500">{t('clipList.emptyDesc')}</p>
       </div>
     );
   }
@@ -192,12 +184,7 @@ export function ClipList({
       columnCount={clips.length}
       columnWidth={TOTAL_COLUMN_WIDTH}
       overscanCount={4}
-      cellComponent={({ columnIndex, style }) => (
-        <Cell
-          columnIndex={columnIndex}
-          style={style}
-        />
-      )}
+      cellComponent={({ columnIndex, style }) => <Cell columnIndex={columnIndex} style={style} />}
       cellProps={{}}
       onCellsRendered={handleCellsRendered}
       onWheel={handleWheel}

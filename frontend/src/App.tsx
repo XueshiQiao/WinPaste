@@ -170,7 +170,9 @@ function App() {
           if (perfLogEnabled) invokeEnd = performance.now();
         }
 
-        const imageCount = perfLogEnabled ? data.filter((item) => item.clip_type === 'image').length : 0;
+        const imageCount = perfLogEnabled
+          ? data.filter((item) => item.clip_type === 'image').length
+          : 0;
         const totalContentChars = perfLogEnabled
           ? data.reduce((sum, item) => sum + (item.content?.length ?? 0), 0)
           : 0;
@@ -455,7 +457,7 @@ function App() {
       return;
     }
 
-    const currentIndex = clips.findIndex(c => c.id === selectedClipId);
+    const currentIndex = clips.findIndex((c) => c.id === selectedClipId);
     if (currentIndex > 0) {
       setSelectedClipId(clips[currentIndex - 1].id);
     }
@@ -470,7 +472,7 @@ function App() {
       return;
     }
 
-    const currentIndex = clips.findIndex(c => c.id === selectedClipId);
+    const currentIndex = clips.findIndex((c) => c.id === selectedClipId);
     if (currentIndex < clips.length - 1) {
       setSelectedClipId(clips[currentIndex + 1].id);
     }
@@ -635,12 +637,17 @@ function App() {
       )}
 
       {/* Content Container */}
-      <div className="relative h-full w-full" style={{ padding: mac ? '0px' : `${LAYOUT.WINDOW_PADDING}px` }}>
-        <div className={`flex h-full w-full flex-col overflow-hidden font-sans text-foreground ${
-          mac
-            ? 'rounded-[16px] bg-background'
-            : 'rounded-[16px] border border-border/10 bg-background/95 shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]'
-        }`}>
+      <div
+        className="relative h-full w-full"
+        style={{ padding: mac ? '0px' : `${LAYOUT.WINDOW_PADDING}px` }}
+      >
+        <div
+          className={`flex h-full w-full flex-col overflow-hidden font-sans text-foreground ${
+            mac
+              ? 'rounded-[16px] bg-background'
+              : 'rounded-[16px] border border-border/10 bg-background/95 shadow-[0_0_24px_rgba(0,0,0,0.2)] dark:shadow-[0_0_24px_rgba(0,0,0,0.4)]'
+          }`}
+        >
           {draggingClipId && (
             <DragPreview
               clip={clips.find((c) => c.id === draggingClipId)!}
@@ -669,7 +676,11 @@ function App() {
                       {
                         label: `${settings?.ai_title_explain_code || t('contextMenu.explainCode')}`,
                         onClick: () =>
-                          handleAiAction(contextMenu.itemId, 'explain_code', t('ai.codeExplanation')),
+                          handleAiAction(
+                            contextMenu.itemId,
+                            'explain_code',
+                            t('ai.codeExplanation')
+                          ),
                       },
                       {
                         label: `${settings?.ai_title_fix_grammar || t('contextMenu.fixGrammar')}`,

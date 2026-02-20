@@ -17,7 +17,14 @@ interface SelectProps {
   disabled?: boolean;
 }
 
-export function Select({ value, onChange, options, placeholder, className, disabled }: SelectProps) {
+export function Select({
+  value,
+  onChange,
+  options,
+  placeholder,
+  className,
+  disabled,
+}: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -45,28 +52,31 @@ export function Select({ value, onChange, options, placeholder, className, disab
   };
 
   return (
-    <div className={twMerge("relative w-full", className)} ref={containerRef}>
+    <div className={twMerge('relative w-full', className)} ref={containerRef}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={clsx(
-          "flex w-full items-center justify-between rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring",
-          disabled && "opacity-50 cursor-not-allowed",
-          isOpen && "ring-2 ring-ring border-ring"
+          'flex w-full items-center justify-between rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring',
+          disabled && 'cursor-not-allowed opacity-50',
+          isOpen && 'border-ring ring-2 ring-ring'
         )}
       >
-        <span className={clsx(!selectedOption && "text-muted-foreground")}>
-          {selectedOption ? selectedOption.label : placeholder || "Select..."}
+        <span className={clsx(!selectedOption && 'text-muted-foreground')}>
+          {selectedOption ? selectedOption.label : placeholder || 'Select...'}
         </span>
-        <ChevronDown 
-          size={16} 
-          className={clsx("text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} 
+        <ChevronDown
+          size={16}
+          className={clsx(
+            'text-muted-foreground transition-transform duration-200',
+            isOpen && 'rotate-180'
+          )}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 duration-100">
+        <div className="animate-in fade-in-0 zoom-in-95 absolute left-0 top-full z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md duration-100">
           <div className="max-h-60 overflow-y-auto py-1">
             {options.map((option) => (
               <button
@@ -74,8 +84,8 @@ export function Select({ value, onChange, options, placeholder, className, disab
                 type="button"
                 onClick={() => handleSelect(option.value)}
                 className={clsx(
-                  "relative flex w-full cursor-default select-none items-center py-1.5 pl-3 pr-8 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
-                  option.value === value && "bg-accent/50 text-accent-foreground font-medium"
+                  'relative flex w-full cursor-default select-none items-center py-1.5 pl-3 pr-8 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground',
+                  option.value === value && 'bg-accent/50 font-medium text-accent-foreground'
                 )}
               >
                 <span className="truncate">{option.label}</span>
