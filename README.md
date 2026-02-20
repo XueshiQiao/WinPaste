@@ -224,48 +224,59 @@ We use `Shift + Insert` as the default paste trigger instead of `Ctrl + V`.
 -   **Terminal Compatibility**: `Ctrl+V` often fails in terminal emulators (PowerShell, WSL, VS Code Terminal), sending a control character instead of pasting.
 -   **Legacy Standard**: `Shift+Insert` is the universal paste standard recognized by virtually all Windows applications, including terminals and legacy software.
 
-### Sequence Diagram for Image Pasting
+### Sequence Diagram for Image Pasting (Windows)
 
 ```mermaid
 sequenceDiagram
     actor User
     participant FE as Frontend (React/App.tsx)
-    participant BROWSER as WebView2 / Browser
     participant BE as Backend (Rust/commands.rs)
+    participant BROWSER as WebView2 Clipboard API
     participant OS as OS / Target App
 
-    User->>FE: Double Click Image Clip
+    User->>FE: Double click image clip
     activate FE
-
-    Note over FE: 1. Prepare Data
-    FE->>FE: base64ToBlob(content)
-
-    Note over FE, BROWSER: 2. Write to Clipboard (Stable)
-    FE->>BROWSER: navigator.clipboard.write([Blob])
-    BROWSER->>OS: Set Clipboard Data (Image/PNG)
-
-    Note over FE: 3. Notify Backend
+    FE->>BE: invoke('get_clip_detail', { id })
+    BE-->>FE: Full image (base64)
+    FE->>FE: base64ToBlob(...)
+    FE->>BROWSER: navigator.clipboard.write([ClipboardItem])
+    BROWSER->>OS: Clipboard image data set
     FE->>BE: invoke('paste_clip', { id })
     deactivate FE
+
     activate BE
-
-    Note over BE: 4. Database Updates
-    BE->>BE: Update 'last_pasted' & LRU
-
-    Note over BE: 5. Skip Legacy Write
-    BE->>BE: Log "Frontend handled image"
-
-    Note over BE, OS: 6. Window Management
-    BE->>OS: Hide Window
-    BE->>BE: sleep(200ms) (Wait for focus)
-
-    Note over BE, OS: 7. Trigger Paste
-    BE->>OS: Send Input (Shift + Insert)
+    BE->>BE: Update clip timestamp/LRU
+    Note over BE: On Windows, backend does not rewrite image bytes
+    BE->>OS: Hide window
+    BE->>OS: Send Shift+Insert (when auto-paste is enabled)
     deactivate BE
 
-    activate OS
-    OS->>OS: Receive Shift+Insert
-    OS->>OS: Read Clipboard (Image)
-    OS->>User: Display Pasted Image
-    deactivate OS
+    OS->>User: Pasted image appears
+```
+
+### Sequence Diagram for Image Pasting (macOS)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend (React/App.tsx)
+    participant BE as Backend (Rust/commands.rs)
+    participant PB as NSPasteboard
+    participant OS as macOS / Target App
+
+    User->>FE: Double click image clip
+    activate FE
+    FE->>BE: invoke('paste_clip', { id })
+    deactivate FE
+
+    activate BE
+    BE->>BE: Load full image bytes from file (clip_images.file_path)
+    BE->>PB: setData(public.png)
+    BE->>PB: setData(public.file-url)
+    BE->>BE: Update clip timestamp/LRU
+    BE->>OS: Hide window
+    BE->>OS: Send Cmd+V (when auto-paste is enabled)
+    deactivate BE
+
+    OS->>User: Pasted image appears
 ```

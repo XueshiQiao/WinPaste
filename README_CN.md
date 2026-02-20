@@ -211,50 +211,61 @@ Tauri v2 在 JavaScript/TypeScript 和 Rust 之间强制执行严格的大小写
 -   **终端兼容性**: `Ctrl+V` 在许多终端模拟器（如 PowerShell, WSL, VS Code Integrated Terminal）中经常失效，它发送的是控制字符而不是执行粘贴命令。
 -   **传统标准**: `Shift+Insert` 是几乎所有 Windows 应用程序（包括所有终端和旧版软件）都认可的通用粘贴标准。
 
-### 粘贴图片的时序图 (Sequence Diagram)
+### 粘贴图片的时序图（Windows）
 
 ```mermaid
 sequenceDiagram
     actor User
     participant FE as 前端 (React/App.tsx)
-    participant BROWSER as WebView2 / 浏览器引擎
     participant BE as 后端 (Rust/commands.rs)
+    participant BROWSER as WebView2 Clipboard API
     participant OS as 操作系统 / 目标应用
 
     User->>FE: 双击图片卡片
     activate FE
-
-    Note over FE: 1. 准备数据
-    FE->>FE: base64ToBlob(content)
-
-    Note over FE, BROWSER: 2. 写入系统剪贴板 (稳定)
-    FE->>BROWSER: navigator.clipboard.write([Blob])
-    BROWSER->>OS: 设置剪贴板数据 (Image/PNG)
-
-    Note over FE: 3. 通知后端
+    FE->>BE: invoke('get_clip_detail', { id })
+    BE-->>FE: 返回完整图片 (base64)
+    FE->>FE: base64ToBlob(...)
+    FE->>BROWSER: navigator.clipboard.write([ClipboardItem])
+    BROWSER->>OS: 写入系统剪贴板 (图片数据)
     FE->>BE: invoke('paste_clip', { id })
     deactivate FE
+
     activate BE
-
-    Note over BE: 4. 数据库更新
-    BE->>BE: 更新 'last_pasted' 时间戳 & LRU
-
-    Note over BE: 5. 跳过旧版写入逻辑
-    BE->>BE: 记录日志 "Frontend handled image"
-
-    Note over BE, OS: 6. 窗口管理
+    BE->>BE: 更新时间戳 / LRU
+    Note over BE: Windows 下后端不重复写入图片字节
     BE->>OS: 隐藏窗口
-    BE->>BE: sleep(200ms) (等待焦点切换)
-
-    Note over BE, OS: 7. 触发粘贴
-    BE->>OS: 发送模拟按键 (Shift + Insert)
+    BE->>OS: 发送 Shift+Insert（开启自动粘贴时）
     deactivate BE
 
-    activate OS
-    OS->>OS: 接收 Shift+Insert
-    OS->>OS: 读取剪贴板 (Image)
-    OS->>User: 显示粘贴的图片
-    deactivate OS
+    OS->>User: 显示粘贴后的图片
+```
+
+### 粘贴图片的时序图（macOS）
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as 前端 (React/App.tsx)
+    participant BE as 后端 (Rust/commands.rs)
+    participant PB as NSPasteboard
+    participant OS as macOS / 目标应用
+
+    User->>FE: 双击图片卡片
+    activate FE
+    FE->>BE: invoke('paste_clip', { id })
+    deactivate FE
+
+    activate BE
+    BE->>BE: 从文件系统读取完整图片 (clip_images.file_path)
+    BE->>PB: setData(public.png)
+    BE->>PB: setData(public.file-url)
+    BE->>BE: 更新时间戳 / LRU
+    BE->>OS: 隐藏窗口
+    BE->>OS: 发送 Cmd+V（开启自动粘贴时）
+    deactivate BE
+
+    OS->>User: 显示粘贴后的图片
 ```
 
 ### Buy me a coffee
