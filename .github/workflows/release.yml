@@ -121,5 +121,5 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GALLERY_UPDATE_PAT }}
-          repository: XueshiQiao/apps_gallery
+          repository: XueshiQiao/XueshiQiao.github.io
           event-type: app_released
