@@ -481,6 +481,7 @@ pub async fn get_clip(
     }
 }
 
+// TODO(xueshi) get_clip is same as get_clip_detail???
 #[tauri::command]
 pub async fn get_clip_detail(
     id: String,
